@@ -11,8 +11,8 @@ export async function signIn(page: Page, who: Who): Promise<void> {
 }
 
 export const test = base.extend<{ signIn: (who: Who) => Promise<void> }>({
-  signIn: async ({ page }, use) => {
-    await use((who) => signIn(page, who));
+  signIn: async ({ page }, provide) => {
+    await provide((who) => signIn(page, who));
   },
 });
 
