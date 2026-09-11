@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -19,7 +19,7 @@ test.beforeEach(async () => {
 test("admin edits a batch from the yard and a sale from the customer page", async ({ page, signIn }) => {
   await signIn("admin");
   await page.goto("/yard?slot=5FT");
-  await page.getByRole("button", { name: "Edit JB-FIVE-01" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Edit JB-FIVE-01" }));
   await page.getByLabel("Unit Quantity").fill("8");
   await page.getByLabel("Unit Purchase Price (₹)").fill("2500");
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -28,7 +28,7 @@ test("admin edits a batch from the yard and a sale from the customer page", asyn
 
   await page.goto("/customers");
   await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
-  await page.getByRole("button", { name: "Edit sale of BP-OLD-01" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-OLD-01" }));
   await page.getByLabel("Quantity").fill("3");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Sale updated")).toBeVisible();

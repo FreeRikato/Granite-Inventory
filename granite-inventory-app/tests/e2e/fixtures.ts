@@ -1,4 +1,4 @@
-import { test as base, type Page } from "@playwright/test";
+import { expect as baseExpect, test as base, type Locator, type Page } from "@playwright/test";
 import { ensureTestUsers, resetDomainData, TEST_USERS } from "../seam/harness";
 
 export type Who = keyof typeof TEST_USERS;
@@ -18,3 +18,12 @@ export const test = base.extend<{ signIn: (who: Who) => Promise<void> }>({
 
 export { expect } from "@playwright/test";
 export { ensureTestUsers, resetDomainData };
+
+/* Clicks a trigger until its dialog shows. Guards against a click landing before hydration
+   on a cold dev server, which drops the handler silently. */
+export async function openDialog(page: Page, trigger: Locator): Promise<void> {
+  await baseExpect(async () => {
+    await trigger.click();
+    await baseExpect(page.getByRole("dialog")).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+}

@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -25,7 +25,7 @@ test("customers list, add, and detail with sales", async ({ page, signIn }) => {
   await expect(murugan).toContainText("3 days ago");
   await expect(murugan).toContainText("Contractor");
 
-  await page.getByRole("button", { name: "Add Customer" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Add Customer" }));
   await page.getByLabel("Name").fill("St. Xavier's Trust");
   await page.getByLabel("Phone").fill("+91 90000 11223");
   await page.getByRole("radio", { name: "Trust" }).click();
@@ -44,7 +44,7 @@ test("customers list, add, and detail with sales", async ({ page, signIn }) => {
 test("duplicate phone is refused with a clear message", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/customers");
-  await page.getByRole("button", { name: "Add Customer" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Add Customer" }));
   await page.getByLabel("Name").fill("Someone Else");
   await page.getByLabel("Phone").fill("9876543210");
   await page.getByRole("button", { name: "Add customer" }).click();

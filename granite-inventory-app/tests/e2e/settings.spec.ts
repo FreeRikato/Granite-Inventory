@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -18,7 +18,7 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByText("Signed in with Google")).toBeVisible();
 
-  await page.getByRole("button", { name: "Invite a Google account" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Invite a Google account" }));
   await page.getByLabel("Google email").fill("Meena@test.local");
   await page.getByRole("dialog").getByLabel("Name", { exact: true }).fill("Meena Kumar");
   await page.getByRole("button", { name: "Add member" }).click();
