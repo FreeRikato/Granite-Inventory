@@ -21,7 +21,7 @@ describe("customers: v_customers and deletion rules", () => {
     const supplierId = await createSupplier(operator, "Madurai Quarry");
     const { data: batch } = await createBatch(operator, { productId, supplierId, units: 20 });
     const murugan = await createCustomer(operator, { name: "Murugan", phone: "9876543210", type: "CONTRACTOR" });
-    const trust = await createCustomer(operator, { name: "St. Xavier's Trust", type: "TRUST" });
+    await createCustomer(operator, { name: "St. Xavier's Trust", type: "TRUST" });
     await recordSale(operator, { batchId: batch?.id ?? "", customerId: murugan, quantity: 2, salePrice: 1000, saleDate: daysAgo(10) });
     await recordSale(operator, { batchId: batch?.id ?? "", customerId: murugan, quantity: 1, salePrice: 1500, saleDate: daysAgo(3), stickering: { cost: 100, price: 250 } });
 
@@ -29,7 +29,6 @@ describe("customers: v_customers and deletion rules", () => {
     const byName = Object.fromEntries((data ?? []).map((r) => [r.name, r]));
     expect(byName["Murugan"]).toMatchObject({ last_purchase_date: daysAgo(3), sale_count: 2, lifetime_revenue: 3750 });
     expect(byName["St. Xavier's Trust"]).toMatchObject({ last_purchase_date: null, sale_count: 0, lifetime_revenue: 0 });
-    void trust;
   });
 
   it("operators may rename and retype; only admin deletes, and never a customer with sales", async () => {

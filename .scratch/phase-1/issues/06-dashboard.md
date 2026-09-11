@@ -4,10 +4,10 @@
 
 **Blocked by:** 03 — Yard view with ageing; 04 — Sell stone
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Dashboard views or functions implement every KPI exactly as defined in the Phase 1 decisions doc, including active stock at a past date for the month comparison
-- [ ] Four KPI tiles, donut, bar chart and Stale panel laid out per the design on desktop and mobile
-- [ ] Charts use the shadcn chart wrapper over Recharts, no animation that repaints continuously
-- [ ] Stale panel link opens the yard with the Stale age filter applied
-- [ ] Seam tests against a seeded dataset with hand-computed answers for each KPI, including a month boundary case
+- [x] Dashboard views or functions implement every KPI exactly as defined in the Phase 1 decisions doc, including active stock at a past date for the month comparison
+- [x] Four KPI tiles, donut, bar chart and Stale panel laid out per the design on desktop and mobile
+- [x] Charts use the shadcn chart wrapper over Recharts, no animation that repaints continuously
+- [x] Stale panel link opens the yard with the Stale age filter applied
+- [x] Seam tests against a seeded dataset with hand-computed answers for each KPI, including a month boundary case

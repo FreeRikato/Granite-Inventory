@@ -544,6 +544,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_dashboard_kpis: {
+        Row: {
+          active_stock: number | null
+          active_stock_last_month_end: number | null
+          inventory_value: number | null
+          month_start: string | null
+          mtd_margin: number | null
+          mtd_margin_pct: number | null
+          mtd_revenue: number | null
+          mtd_sales: number | null
+          units_sold_total: number | null
+        }
+        Relationships: []
+      }
       v_public_business: {
         Row: {
           business_name: string | null
@@ -710,6 +724,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fast_moving: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          label: string
+          units: number
+        }[]
       }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
