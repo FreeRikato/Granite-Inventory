@@ -4,14 +4,14 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Follow `docs/local-dev.md`: local Supabase already scaffolded with Google enabled; add `.env.local`, migrations, `seed.sql`; TypeScript types generated from the database
-- [ ] `team_members` table (email, role as text with check) with RLS; seeded Admin is aravinthanrc@gmail.com (swap for the client before handover)
-- [ ] `settings` single row seeded with default ageing thresholds, catalog off and empty WhatsApp number
-- [ ] Google is the only sign-in provider; session persists across browser restarts
-- [ ] Sidebar (Overview, Inward Stock, Sell Stone, Yard Slots, Customers, Public View Link, profile block with Settings) and mobile tab bar (Overview, Inward, Sell, Yard, More) with empty pages
-- [ ] Global CSS variables carry the Pencil tokens: Geist, JetBrains Mono, primary orange, light and dark palettes, radii
-- [ ] Vitest seam harness signs in as Admin, Yard Operator, non-member and anon against local Supabase
-- [ ] Seam test: non-member and anon read nothing from `team_members` and `settings`; Admin reads both
-- [ ] Playwright harness signs in programmatically with an email test user (see local-dev.md), never through the Google consent screen
+- [x] Follow `docs/local-dev.md`: local Supabase already scaffolded with Google enabled; add `.env.local`, migrations, `seed.sql`; TypeScript types generated from the database
+- [x] `team_members` table (email, role as text with check) with RLS; seeded Admin is aravinthanrc@gmail.com (swap for the client before handover)
+- [x] `settings` single row seeded with default ageing thresholds, catalog off and empty WhatsApp number
+- [x] Google is the only sign-in provider; session persists across browser restarts
+- [x] Sidebar (Overview, Inward Stock, Sell Stone, Yard Slots, Customers, Public View Link, profile block with Settings) and mobile tab bar (Overview, Inward, Sell, Yard, More) with empty pages
+- [x] Global CSS variables carry the Pencil tokens: Geist, JetBrains Mono, primary orange, light and dark palettes, radii
+- [x] Vitest seam harness signs in as Admin, Yard Operator, non-member and anon against local Supabase
+- [x] Seam test: non-member and anon read nothing from `team_members` and `settings`; Admin reads both
+- [x] Playwright harness signs in programmatically with an email test user (see local-dev.md), never through the Google consent screen
