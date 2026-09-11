@@ -13,7 +13,6 @@ import {
   sizeKey,
   sizesIn,
   sortBatches,
-  stockLineKey,
   summariseSlots,
   type YardBatch,
 } from "@/lib/yard";
@@ -126,7 +125,7 @@ export default async function YardPage(props: PageProps<"/yard">) {
           ) : (
             visible.map((batch, i) => {
               const prev = visible[i - 1];
-              const sameLine = prev && stockLineKey(prev) === stockLineKey(batch);
+              const sameLine = prev && prev.line_key === batch.line_key;
               const gap = sameLine ? Math.abs(daysBetween(prev.purchase_date, batch.purchase_date)) : null;
               return (
                 <div key={batch.id ?? batch.batch_code} className="flex flex-col gap-3">

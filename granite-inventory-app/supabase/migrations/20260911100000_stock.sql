@@ -237,6 +237,7 @@ create view public.v_batches with (security_invoker = true) as
     b.id, b.batch_code, b.purchase_date, b.slot,
     b.length_ft, b.breadth_ft, b.thickness_mm,
     b.initial_units, b.units_sold, b.initial_units - b.units_sold as available,
+    b.variant_id || '|' || coalesce(b.length_ft::text, '') || '|' || coalesce(b.breadth_ft::text, '') || '|' || coalesce(b.thickness_mm::text, '') as line_key,
     b.unit_purchase_price, b.freight_cost, b.landed_cost, b.notes,
     b.created_at, b.created_by, b.updated_at, b.updated_by,
     v.id as variant_id, v.name as variant_name,

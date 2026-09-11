@@ -91,8 +91,3 @@ export function sizesIn(list: readonly YardBatch[]): string[] {
   return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
 }
 
-/* Consecutive batches in the same stock line get a Clamp between them. Recomputed on the
-   visible, sorted list so the label is right whatever the filters. */
-export function stockLineKey(b: YardBatch): string {
-  return `${b.variant_id}|${b.length_ft}|${b.breadth_ft}|${b.thickness_mm}`;
-}

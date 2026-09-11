@@ -61,3 +61,42 @@ export function daysAgo(days: number): string {
   d.setUTCDate(d.getUTCDate() - days);
   return d.toISOString().slice(0, 10);
 }
+
+export async function createCustomer(
+  db: Db,
+  input: { name: string; phone?: string; type?: "REGULAR" | "CONTRACTOR" | "ENGINEER" | "TRUST" | "RETAIL" },
+): Promise<string> {
+  const { data, error } = await db
+    .from("customers")
+    .insert({ name: input.name, phone: input.phone ?? null, customer_type: input.type ?? "REGULAR" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export type SaleInput = {
+  batchId: string;
+  customerId: string;
+  saleDate?: string;
+  quantity?: number;
+  salePrice?: number;
+  paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
+  stickering?: { cost: number; price: number };
+  misc?: number;
+};
+
+export function recordSale(db: Db, input: SaleInput) {
+  return db.rpc("record_sale", {
+    p_batch_id: input.batchId,
+    p_customer_id: input.customerId,
+    p_sale_date: input.saleDate ?? today(),
+    p_quantity: input.quantity ?? 1,
+    p_sale_price: input.salePrice ?? 1650,
+    p_payment_mode: input.paymentMode ?? "CASH",
+    p_has_stickering: input.stickering !== undefined,
+    p_stickering_cost: input.stickering?.cost ?? 0,
+    p_stickering_price: input.stickering?.price ?? 0,
+    p_misc_expense: input.misc ?? 0,
+  });
+}

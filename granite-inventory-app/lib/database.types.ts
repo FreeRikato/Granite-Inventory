@@ -131,6 +131,20 @@ export type Database = {
             foreignKeyName: "batches_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "batches_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_stock_lines"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "batches_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "v_yard_batches"
             referencedColumns: ["variant_id"]
           },
@@ -142,6 +156,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customers: {
+        Row: {
+          created_at: string
+          customer_type: string
+          id: string
+          is_walk_in: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_type?: string
+          id?: string
+          is_walk_in?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_type?: string
+          id?: string
+          is_walk_in?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -169,6 +216,109 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      sales: {
+        Row: {
+          batch_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          has_stickering: boolean
+          id: string
+          landed_cost: number
+          misc_expense: number
+          notes: string | null
+          payment_mode: string
+          quantity: number
+          sale_date: string
+          sale_price: number
+          stickering_cost: number
+          stickering_price: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          has_stickering?: boolean
+          id?: string
+          landed_cost: number
+          misc_expense?: number
+          notes?: string | null
+          payment_mode: string
+          quantity: number
+          sale_date: string
+          sale_price: number
+          stickering_cost?: number
+          stickering_price?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          has_stickering?: boolean
+          id?: string
+          landed_cost?: number
+          misc_expense?: number
+          notes?: string | null
+          payment_mode?: string
+          quantity?: number
+          sale_date?: string
+          sale_price?: number
+          stickering_cost?: number
+          stickering_price?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "v_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["batch_id"]
+          },
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "v_yard_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       settings: {
         Row: {
@@ -292,6 +442,20 @@ export type Database = {
             foreignKeyName: "variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_stock_lines"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "v_yard_batches"
             referencedColumns: ["product_id"]
           },
@@ -312,6 +476,7 @@ export type Database = {
           initial_units: number | null
           landed_cost: number | null
           length_ft: number | null
+          line_key: string | null
           notes: string | null
           product_abbreviation: string | null
           product_id: string | null
@@ -351,6 +516,69 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sales: {
+        Row: {
+          batch_code: string | null
+          batch_id: string | null
+          breadth_ft: number | null
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_type: string | null
+          has_stickering: boolean | null
+          id: string | null
+          landed_cost: number | null
+          length_ft: number | null
+          margin: number | null
+          margin_pct: number | null
+          misc_expense: number | null
+          notes: string | null
+          payment_mode: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          purchase_date: string | null
+          quantity: number | null
+          revenue: number | null
+          sale_date: string | null
+          sale_price: number | null
+          slot: string | null
+          stickering_cost: number | null
+          stickering_margin: number | null
+          stickering_price: number | null
+          stickering_total: number | null
+          stone_margin: number | null
+          stone_total: number | null
+          thickness_mm: number | null
+          updated_at: string | null
+          updated_by: string | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_stock_lines: {
+        Row: {
+          available: number | null
+          batch_count: number | null
+          batches_with_stock: number | null
+          breadth_ft: number | null
+          category: string | null
+          length_ft: number | null
+          line_key: string | null
+          oldest_purchase_date: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          thickness_mm: number | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
       v_yard_batches: {
         Row: {
           age_days: number | null
@@ -367,6 +595,7 @@ export type Database = {
           initial_units: number | null
           landed_cost: number | null
           length_ft: number | null
+          line_key: string | null
           notes: string | null
           previous_purchase_date: string | null
           product_abbreviation: string | null
@@ -439,6 +668,46 @@ export type Database = {
       preview_batch_code: {
         Args: { p_date: string; p_product_id: string }
         Returns: string
+      }
+      record_sale: {
+        Args: {
+          p_batch_id: string
+          p_customer_id: string
+          p_has_stickering?: boolean
+          p_misc_expense?: number
+          p_notes?: string
+          p_payment_mode: string
+          p_quantity: number
+          p_sale_date: string
+          p_sale_price: number
+          p_stickering_cost?: number
+          p_stickering_price?: number
+        }
+        Returns: {
+          batch_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          has_stickering: boolean
+          id: string
+          landed_cost: number
+          misc_expense: number
+          notes: string | null
+          payment_mode: string
+          quantity: number
+          sale_date: string
+          sale_price: number
+          stickering_cost: number
+          stickering_price: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       suggest_slot: {
         Args: { p_category: string; p_length_ft: number }

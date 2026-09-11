@@ -76,6 +76,7 @@ export async function resetDomainData(): Promise<void> {
   const names = tables.map((t) => `public.${t.table_name}`).join(", ");
   await sql(`truncate ${names} restart identity cascade`);
   await sql(`update public.settings set ageing_after_days = 90, stale_after_days = 180, catalog_public = false, whatsapp_number = ''`);
+  await sql(`insert into public.customers (name, customer_type, is_walk_in) values ('Walk-in Customer', 'RETAIL', true) on conflict do nothing`);
 }
 
 export function expectError<T>(result: { error: T | null }): T {
