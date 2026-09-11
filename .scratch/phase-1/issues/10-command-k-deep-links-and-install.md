@@ -4,11 +4,11 @@
 
 **Blocked by:** 05 — Customers
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Palette lists pages, Stock Lines with Available and Customers with phone; keyboard navigable; absent on mobile
-- [ ] Yard row action deep-links into the Sell form with Batch preselected and the FIFO Listing still visible
-- [ ] Dashboard Stale panel and palette Stock Line results both open the yard with the right filters in the URL
-- [ ] Web app manifest with name, icons and theme colour; no service worker
-- [ ] More sheet on mobile wired to Customers, Public Link, Settings, Sign out
-- [ ] Playwright: palette jump to a Stock Line lands on the filtered yard
+- [x] Palette lists pages, Stock Lines with Available and Customers with phone; keyboard navigable; absent on mobile
+- [x] Yard row action deep-links into the Sell form with Batch preselected and the FIFO Listing still visible
+- [x] Dashboard Stale panel and palette Stock Line results both open the yard with the right filters in the URL
+- [x] Web app manifest with name, icons and theme colour; no service worker
+- [x] More sheet on mobile wired to Customers, Public Link, Settings, Sign out
+- [x] Playwright: palette jump to a Stock Line lands on the filtered yard

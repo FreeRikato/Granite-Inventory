@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/shell/page-header";
 import { createClient } from "@/lib/supabase/server";
+import { AddCustomerButton } from "./add-customer-button";
 import { CustomerList } from "./customer-list";
 
 export default async function CustomersPage() {
@@ -11,9 +12,9 @@ export default async function CustomersPage() {
 
   return (
     <>
+      <PageHeader title="Customers" actions={<AddCustomerButton />} />
       <CustomerList
         customers={customers}
-        header={<PageHeader title="Customers" />}
         kpis={[
           { label: "Total Customers", value: customers.length },
           { label: "Contractors", value: contractors },

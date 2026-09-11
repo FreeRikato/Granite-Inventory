@@ -3,6 +3,7 @@ import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge"
 import { getSession } from "@/lib/auth";
 import { formatDate, formatRupees, formatSize, relativeDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { CommandPalette } from "@/components/shell/command-palette";
 import { CustomerActions } from "./customer-actions";
 import { SaleActions, type SaleEditLists } from "./sale-actions";
 
@@ -36,10 +37,13 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
           </div>
           <CustomerTypeBadge type={customer.customer_type} />
         </div>
-        <CustomerActions
+        <div className="flex items-center gap-2">
+          <CommandPalette />
+          <CustomerActions
           customer={{ id: customer.id ?? id, name: customer.name ?? "", phone: customer.phone, customer_type: customer.customer_type ?? "REGULAR", is_walk_in: customer.is_walk_in ?? false }}
           canDelete={isAdmin && !customer.is_walk_in && (customer.sale_count ?? 0) === 0}
-        />
+          />
+        </div>
       </div>
 
       <dl className="flex divide-x divide-border">

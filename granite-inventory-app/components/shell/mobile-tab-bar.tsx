@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, MoreHorizontal } from "lucide-react";
@@ -10,6 +11,7 @@ import { MOBILE_MORE, MOBILE_TABS, isActivePath } from "@/lib/nav";
 export function MobileTabBar() {
   const pathname = usePathname();
   const moreActive = MOBILE_MORE.some((item) => isActivePath(pathname, item.href));
+  const [open, setOpen] = useState(false);
 
   return (
     <nav
@@ -26,7 +28,7 @@ export function MobileTabBar() {
           <item.icon className="size-5" />
         </TabLink>
       ))}
-      <Sheet>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           className={cn(
             "flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium",
@@ -43,6 +45,7 @@ export function MobileTabBar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setOpen(false)}
                 className={cn(
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
                   isActivePath(pathname, item.href) ? "bg-accent text-accent-foreground" : "",

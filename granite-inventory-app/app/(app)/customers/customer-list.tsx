@@ -1,12 +1,9 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
-import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
+import { Search } from "lucide-react";
 import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Tables } from "@/lib/database.types";
 import { relativeDays } from "@/lib/format";
@@ -15,14 +12,11 @@ type Row = Tables<"v_customers">;
 
 type Props = {
   readonly customers: readonly Row[];
-  readonly header: ReactNode;
   readonly kpis: readonly { label: string; value: number }[];
 };
 
-export function CustomerList({ customers, header, kpis }: Props) {
-  const router = useRouter();
+export function CustomerList({ customers, kpis }: Props) {
   const [query, setQuery] = useState("");
-  const [draft, setDraft] = useState<CustomerDraft | null>(null);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -32,12 +26,6 @@ export function CustomerList({ customers, header, kpis }: Props) {
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {header}
-        <Button className="h-10 font-semibold" onClick={() => setDraft({ name: "", phone: "", customerType: "REGULAR" })}>
-          <Plus className="size-4" /> Add Customer
-        </Button>
-      </div>
 
       <dl className="flex divide-x divide-border">
         {kpis.map((k) => (
@@ -79,7 +67,6 @@ export function CustomerList({ customers, header, kpis }: Props) {
         )}
       </div>
 
-      <CustomerDialog draft={draft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); router.refresh(); }} />
     </>
   );
 }

@@ -111,15 +111,15 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   }
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-      <div className="flex flex-col gap-4">
+    <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="flex min-w-0 flex-col gap-4">
         <Card>
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label="Sale Date" htmlFor="saleDate">
               <Input id="saleDate" type="date" max={todayIso()} value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-11" />
             </Field>
             <Field label="Payment Mode">
-              <div className="flex h-11 items-center gap-2" role="radiogroup" aria-label="Payment Mode">
+              <div className="flex min-h-11 flex-wrap items-center gap-2" role="radiogroup" aria-label="Payment Mode">
                 {PAYMENT_MODES.map((m) => (
                   <Chip key={m} active={paymentMode === m} onClick={() => setPaymentMode(m)}>{PAYMENT_MODE_LABEL[m]}</Chip>
                 ))}
@@ -199,7 +199,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                     data-testid="fifo-batch"
                     onClick={() => setBatchId(b.id)}
                     className={cn(
-                      "flex items-center gap-3 rounded-tile border bg-card px-4 py-3 text-left",
+                      "flex w-full min-w-0 items-center gap-3 rounded-tile border bg-card px-4 py-3 text-left",
                       active ? "border-primary ring-1 ring-primary" : "border-border hover:bg-secondary/60",
                     )}
                   >
@@ -301,7 +301,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <section className="rounded-card bg-card p-5 shadow-sm">{children}</section>;
+  return <section className="min-w-0 rounded-card bg-card p-5 shadow-sm">{children}</section>;
 }
 
 function Chip({ active, onClick, disabled, children }: { active: boolean; onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
