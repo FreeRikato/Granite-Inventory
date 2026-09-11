@@ -22,7 +22,7 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
  ┌──────────────────────────────────────────────┐
  │ Next.js 16 App Router · React 19 · TS        │
  │ Tailwind v4 · shadcn/ui · Recharts           │
- │ react-hook-form + zod (forms)                │
+ │ controlled forms + zod (shared schemas)      │
  └───────────────┬──────────────────────────────┘
                  │ @supabase/ssr (server components + server actions)
  ┌───────────────▼──────────────────────────────┐
@@ -43,7 +43,7 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
 
 2. **shadcn/ui + Tailwind v4**. The Pencil components are shadcn, so `npx shadcn add sidebar command combobox dialog tabs badge chart data-table` gives the full design vocabulary. Theme tokens from the Pencil file go into `globals.css` as CSS vars.
 
-3. **Supabase Auth, Google provider only**. Allowlist is a `team_members(email, role)` table. An RLS policy of the form `auth.jwt()->>'email' in (select email from team_members)` on every table means an unlisted Google account signs in successfully but sees nothing. Role checks (`ADMIN` sees prices and margins, `YARD_OPERATOR` does not) are additional RLS predicates.
+3. **Supabase Auth, Google provider only**. Allowlist is a `team_members(email, role)` table. An RLS policy of the form `auth.jwt()->>'email' in (select email from team_members)` on every table means an unlisted Google account signs in successfully but sees nothing. Both roles read everything including costs (decided in the grilling session); only `ADMIN` passes the write policies and the correction functions.
 
 4. **Postgres owns the business rules.** The FIFO/no-merge rule and margin math must never be wrong, so:
    - `record_sale(batch_id, qty, ...)` is a `plpgsql` function: locks the batch row, checks `available_units >= qty`, decrements, snapshots purchase price, computes stone margin and stickering margin. One transaction, no race between two operators.
@@ -54,15 +54,14 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
 
 6. **Charts**: Recharts through shadcn's `chart` wrapper. Only a donut and a horizontal bar chart are needed.
 
-7. **Forms**: `react-hook-form` + `zod`. The same zod schema is reused in the server action so validation is typed end to end.
+7. **Forms**: small controlled components + `zod`. The same zod schema is reused in the server action so validation is typed end to end (react-hook-form was tried and dropped as unneeded).
 
 8. **PWA**: `manifest.json` + icons so operators can pin the app to the home screen. No service worker or offline mode in Phase 1.
 
 9. **Hosting**: Vercel free tier for the app, Supabase in Mumbai for the database. Supabase provides daily backups; point-in-time recovery is a Pro add-on if the client wants it.
 
-10. **Tests**: Vitest against `record_sale` and the stale/FIFO views using a local `supabase start` Postgres. Playwright for the three core flows (inward, sell, public catalog). Testing the SQL functions directly is where the value is.
+10. **Tests**: Vitest against the SQL functions and views using a local `supabase start` Postgres (the primary seam). Playwright holds one thin flow per ticket. Testing the SQL functions directly is where the value is.
 
-## Open decisions before schema work
+## Decisions since
 
-1. Should `YARD_OPERATOR` see purchase prices at all? The Settings screen implies no, but the Sell screen shows "Stone Purchase Price (auto)" to everyone.
-2. Is the stale threshold global or per slot category? Settings shows one global picker; keeping it global is the default.
+Both open questions were settled in `docs/phase1_decisions.md`: Yard Operators see costs and margins (only Corrections, Settings and team management are Admin-only), and the ageing thresholds are global, with two values (Ageing after N days, Stale after M days).
