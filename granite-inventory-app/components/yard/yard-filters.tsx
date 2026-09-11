@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -59,6 +60,11 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
             aria-label="Search batches"
           />
         </div>
+        {query.line ? (
+          <Button type="button" variant="outline" size="sm" className="h-10 rounded-full bg-card" onClick={() => update({ line: null })}>
+            <X className="size-3.5" /> Clear stock line
+          </Button>
+        ) : null}
         <FilterSelect label="Product" value={query.product} options={products} onChange={(v) => update({ product: v, variant: null })} />
         <FilterSelect label="Variant" value={query.variant} options={variants} onChange={(v) => update({ variant: v })} />
         <FilterSelect
@@ -70,13 +76,14 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
         <FilterSelect label="Supplier" value={query.supplier} options={suppliers} onChange={(v) => update({ supplier: v })} />
         <FilterSelect
           label="Age"
-          value={query.age === null ? null : String(query.age)}
+          value={query.band === "STALE" ? "stale" : query.age === null ? null : String(query.age)}
           options={[
             { value: "90", label: "Over 90 days" },
             { value: "180", label: "Over 180 days" },
             { value: "365", label: "Over 365 days" },
+            { value: "stale", label: "Stale band" },
           ]}
-          onChange={(v) => update({ age: v, band: null })}
+          onChange={(v) => update({ age: v })}
         />
         <Select value={query.sort} onValueChange={(v) => update({ sort: v === "newest" ? "newest" : null })}>
           <SelectTrigger className="h-10 rounded-full bg-card" aria-label="Sort">

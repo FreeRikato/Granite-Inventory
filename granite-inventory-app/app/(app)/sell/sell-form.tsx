@@ -211,7 +211,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                         {b.product_name} · {b.variant_name} · {b.batch_code} · {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {b.available} present · from {b.supplier_name}
+                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {b.available} available · from {b.supplier_name}
                       </span>
                     </span>
                     <AgeingBadge band={b.ageing_band} days={b.age_days} />
@@ -258,7 +258,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         <h2 className="text-base font-bold">Order Summary</h2>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <Row label="Stone Sale Price" value={formatRupees(figures.stoneTotal)} />
-          <Row label="Stone Purchase Price (auto)" sub="Landed cost, auto-filled" value={batch ? formatRupees(figures.landedTotal) : "—"} muted />
+          <Row label="Landed Cost (auto)" sub="From the batch, freight included" value={batch ? formatRupees(figures.landedTotal) : "Pick a batch"} muted />
           <Row label="Base Margin" value={formatRupees(figures.stoneMargin)} />
           <Row label="Misc Expense" sub="Tracked separately, not part of margin" value={formatRupees(num(miscExpense))} />
           {stickering ? <Row label="Stickering Margin" value={formatRupees(figures.stickeringMargin)} /> : null}
@@ -278,7 +278,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               health === "none" && "bg-muted text-muted-foreground",
             )}
           >
-            {figures.marginPct === null || !batch ? "—" : `${figures.marginPct.toFixed(1)}%`}
+            {figures.marginPct === null || !batch ? "0%" : `${figures.marginPct.toFixed(1)}%`}
           </span>
         </div>
         {error ? <Notice tone="error" icon="alert" className="mt-4">{error}</Notice> : null}

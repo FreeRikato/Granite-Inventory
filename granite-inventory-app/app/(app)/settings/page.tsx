@@ -13,12 +13,13 @@ export default async function SettingsPage() {
   const member = session.status === "member" ? session.member : null;
   const isAdmin = member?.role === "ADMIN";
   const supabase = await createClient();
+  const empty = Promise.resolve({ data: [] });
   const [{ data: team }, { data: settings }, products, variants, suppliers] = await Promise.all([
-    supabase.from("team_members").select("*").order("created_at"),
+    isAdmin ? supabase.from("team_members").select("*").order("created_at") : empty,
     supabase.from("settings").select("*").maybeSingle(),
-    isAdmin ? supabase.from("products").select("id, name, abbreviation, category").order("name") : Promise.resolve({ data: [] }),
-    isAdmin ? supabase.from("variants").select("id, name, product_id").order("name") : Promise.resolve({ data: [] }),
-    isAdmin ? supabase.from("suppliers").select("id, name").order("name") : Promise.resolve({ data: [] }),
+    isAdmin ? supabase.from("products").select("id, name, abbreviation, category").order("name") : empty,
+    isAdmin ? supabase.from("variants").select("id, name, product_id").order("name") : empty,
+    isAdmin ? supabase.from("suppliers").select("id, name").order("name") : empty,
   ]);
 
   return (
@@ -50,13 +51,15 @@ export default async function SettingsPage() {
         <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">Signed in with Google</p>
       </section>
 
-      <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} canEdit={isAdmin} />
-
-      <InventoryRules ageing={settings?.ageing_after_days ?? 90} stale={settings?.stale_after_days ?? 180} canEdit={isAdmin} />
-
       {isAdmin ? (
-        <AdminLists products={products.data ?? []} variants={variants.data ?? []} suppliers={suppliers.data ?? []} />
-      ) : null}
+        <>
+          <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} />
+          <InventoryRules ageing={settings?.ageing_after_days ?? 90} stale={settings?.stale_after_days ?? 180} />
+          <AdminLists products={products.data ?? []} variants={variants.data ?? []} suppliers={suppliers.data ?? []} />
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Team access and inventory rules are managed by an Admin.</p>
+      )}
     </>
   );
 }

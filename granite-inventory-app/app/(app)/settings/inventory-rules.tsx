@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { updateSettingsAction } from "./actions";
 
-type Props = { readonly ageing: number; readonly stale: number; readonly canEdit: boolean };
+type Props = { readonly ageing: number; readonly stale: number };
 
 const PRESETS = [90, 180, 365] as const;
 
-export function InventoryRules({ ageing, stale, canEdit }: Props) {
+export function InventoryRules({ ageing, stale }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState({ ageing: String(ageing), stale: String(stale) });
@@ -46,7 +46,6 @@ export function InventoryRules({ ageing, stale, canEdit }: Props) {
               type="button"
               role="radio"
               aria-checked={s === p}
-              disabled={!canEdit}
               onClick={() => setForm({ ageing: String(Math.min(a || 1, Math.floor(p / 2))), stale: String(p) })}
               className={cn(
                 "inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium",
@@ -59,22 +58,20 @@ export function InventoryRules({ ageing, stale, canEdit }: Props) {
         </div>
         <div className="mt-4 grid max-w-md gap-4 sm:grid-cols-2">
           <Field label="Ageing after (days)" htmlFor="ageing">
-            <Input id="ageing" type="number" min="1" step="1" value={form.ageing} disabled={!canEdit} onChange={(e) => setForm({ ...form, ageing: e.target.value })} />
+            <Input id="ageing" type="number" min="1" step="1" value={form.ageing}  onChange={(e) => setForm({ ...form, ageing: e.target.value })} />
           </Field>
           <Field label="Stale after (days)" htmlFor="stale" error={Number.isFinite(a) && Number.isFinite(s) && a >= s ? "Must be after ageing" : undefined}>
-            <Input id="stale" type="number" min="2" step="1" value={form.stale} disabled={!canEdit} onChange={(e) => setForm({ ...form, stale: e.target.value })} />
+            <Input id="stale" type="number" min="2" step="1" value={form.stale}  onChange={(e) => setForm({ ...form, stale: e.target.value })} />
           </Field>
         </div>
-        {canEdit ? (
-          <Button className="mt-3" disabled={pending || !dirty || !(a < s)} onClick={save}>Save rules</Button>
-        ) : null}
+        <Button className="mt-3" disabled={pending || !dirty || !(a < s)} onClick={save}>Save rules</Button>
       </div>
       <div className="mt-6 border-t border-border pt-4">
         <h3 className="text-sm font-semibold">Ageing colours</h3>
         <ul className="mt-2 flex flex-col gap-2 text-sm">
-          <Band color="bg-fresh" label="Fresh" text={`under ${Number.isFinite(a) ? a : ageing} days`} />
-          <Band color="bg-ageing" label="Ageing" text={`${Number.isFinite(a) ? a : ageing} to ${Number.isFinite(s) ? s : stale} days`} />
-          <Band color="bg-stale" label="Stale" text={`over ${Number.isFinite(s) ? s : stale} days`} />
+          <Band color="bg-fresh" label="Fresh" text={`0 to ${(Number.isFinite(a) ? a : ageing) - 1} days`} />
+          <Band color="bg-ageing" label="Ageing" text={`${Number.isFinite(a) ? a : ageing} to ${(Number.isFinite(s) ? s : stale) - 1} days`} />
+          <Band color="bg-stale" label="Stale" text={`${Number.isFinite(s) ? s : stale} days and over`} />
         </ul>
       </div>
     </section>

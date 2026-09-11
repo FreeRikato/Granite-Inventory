@@ -8,6 +8,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import type { Role } from "@/lib/domain";
 
 export type NavItem = {
   readonly href: string;
@@ -22,7 +23,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/sell", label: "Sell Stone", shortLabel: "Sell", icon: MinusCircle },
   { href: "/yard", label: "Yard Slots", shortLabel: "Yard", icon: MapIcon },
   { href: "/customers", label: "Customers", shortLabel: "Customers", icon: Users },
-  { href: "/public-link", label: "Public View Link", shortLabel: "Public Link", icon: Globe },
+  { href: "/public-link", label: "Public Catalog", shortLabel: "Catalog", icon: Globe },
 ];
 
 export const SETTINGS_ITEM: NavItem = {
@@ -40,6 +41,6 @@ export function isActivePath(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function roleLabel(role: "ADMIN" | "YARD_OPERATOR"): string {
-  return role === "ADMIN" ? "Owner" : "Yard operator";
+export function roleLabel(role: Role): string {
+  return role === "ADMIN" ? "Admin" : "Yard operator";
 }

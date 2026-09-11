@@ -18,7 +18,7 @@ test("yard shows batches per slot with ageing, a clamp, and filters", async ({ p
   const cards = page.getByTestId("yard-batch");
   await expect(cards).toHaveCount(2);
   await expect(cards.nth(0)).toHaveAttribute("data-batch-code", "BP-OLD-01");
-  await expect(cards.nth(0)).toContainText(/Old stock warning · 232 days active/i);
+  await expect(cards.nth(0)).toContainText(/Stale stock · 232 days in the yard/i);
   await expect(cards.nth(1)).toContainText("New stock");
   await expect(page.getByTestId("clamp")).toContainText("New batch arrived 229 days later");
 

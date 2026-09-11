@@ -38,7 +38,7 @@ create table public.batches (
   batch_code text not null unique,
   variant_id uuid not null references public.variants (id) on delete restrict,
   supplier_id uuid not null references public.suppliers (id) on delete restrict,
-  purchase_date date not null check (purchase_date <= current_date),
+  purchase_date date not null check (purchase_date <= private.ist_today()),
   length_ft numeric(5, 2) check (length_ft > 0),
   breadth_ft numeric(5, 2) check (breadth_ft > 0),
   thickness_mm integer check (thickness_mm > 0),
@@ -144,6 +144,26 @@ as $$
   select private.next_batch_code(p_product_id, p_date);
 $$;
 
+-- Find or create a Variant; two operators typing the same new name at once both land on
+-- the single row thanks to the conflict clause on the case-insensitive index.
+create or replace function private.find_or_create_variant(p_product_id uuid, p_name text)
+returns uuid
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_id uuid;
+begin
+  insert into public.variants (product_id, name)
+  values (p_product_id, trim(p_name))
+  on conflict (product_id, lower(name)) do nothing;
+  select id into v_id
+  from public.variants
+  where product_id = p_product_id and lower(name) = lower(trim(p_name));
+  return v_id;
+end;
+$$;
+
 create or replace function public.create_batch(
   p_product_id uuid,
   p_variant_name text,
@@ -172,14 +192,7 @@ begin
     raise exception 'Unknown product' using errcode = 'foreign_key_violation';
   end if;
 
-  -- Find or create the Variant; two operators typing the same new name at once both land
-  -- on the single row thanks to the conflict clause on the case-insensitive index.
-  insert into public.variants (product_id, name)
-  values (p_product_id, trim(p_variant_name))
-  on conflict (product_id, lower(name)) do nothing;
-  select id into v_variant_id
-  from public.variants
-  where product_id = p_product_id and lower(name) = lower(trim(p_variant_name));
+  v_variant_id := private.find_or_create_variant(p_product_id, p_variant_name);
 
   insert into public.batches (
     batch_code, variant_id, supplier_id, purchase_date,
@@ -198,7 +211,8 @@ begin
 end;
 $$;
 
--- Access: every member reads and creates; only Admin edits or deletes (Corrections, admin lists).
+-- Access: every member reads and creates. Batches are only ever edited or deleted through the
+-- correction functions (ticket 08), so there is deliberately no update or delete policy.
 alter table public.products enable row level security;
 alter table public.variants enable row level security;
 alter table public.suppliers enable row level security;
@@ -221,8 +235,6 @@ create policy suppliers_delete on public.suppliers for delete to authenticated u
 
 create policy batches_select on public.batches for select to authenticated using ((select public.is_member()));
 create policy batches_insert on public.batches for insert to authenticated with check ((select public.is_member()));
-create policy batches_update on public.batches for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
-create policy batches_delete on public.batches for delete to authenticated using ((select public.is_admin()));
 
 revoke execute on function public.create_batch(uuid, text, uuid, date, numeric, numeric, integer, text, integer, numeric, numeric, text) from public, anon;
 revoke execute on function public.preview_batch_code(uuid, date) from public, anon;

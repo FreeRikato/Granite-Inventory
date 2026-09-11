@@ -42,7 +42,7 @@ create trigger customers_protect_walk_in
 
 create table public.sales (
   id uuid primary key default gen_random_uuid(),
-  sale_date date not null check (sale_date <= current_date),
+  sale_date date not null check (sale_date <= private.ist_today()),
   batch_id uuid not null references public.batches (id) on delete restrict,
   customer_id uuid not null references public.customers (id) on delete restrict,
   quantity integer not null check (quantity > 0),
@@ -78,11 +78,9 @@ create policy customers_insert on public.customers for insert to authenticated w
 create policy customers_update on public.customers for update to authenticated using ((select public.is_member())) with check ((select public.is_member()));
 create policy customers_delete on public.customers for delete to authenticated using ((select public.is_admin()));
 
--- Sales are written only through record_sale (and the Correction functions later); no
--- insert policy on purpose.
+-- Sales are written only through record_sale and the correction functions; no insert,
+-- update or delete policy on purpose, so Available can never drift.
 create policy sales_select on public.sales for select to authenticated using ((select public.is_member()));
-create policy sales_update on public.sales for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
-create policy sales_delete on public.sales for delete to authenticated using ((select public.is_admin()));
 
 -- Security definer because operators may not update batches directly, yet a sale must
 -- decrement the batch. The member check is the first thing it does.
@@ -180,3 +178,7 @@ create view public.v_stock_lines with (security_invoker = true) as
   from public.v_batches b
   group by b.line_key, b.variant_id, b.length_ft, b.breadth_ft, b.thickness_mm,
     b.product_id, b.product_name, b.product_abbreviation, b.category, b.variant_name;
+
+insert into public.customers (name, customer_type, is_walk_in)
+values ('Walk-in Customer', 'RETAIL', true)
+on conflict do nothing;

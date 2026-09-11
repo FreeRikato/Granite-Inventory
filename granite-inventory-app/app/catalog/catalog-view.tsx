@@ -79,8 +79,8 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
                 <div key={l.line_key} className="flex flex-col gap-2">
                   <StoneTile line={l} />
                   {link ? (
-                    <a href={link} target="_blank" rel="noreferrer" className="text-center text-xs font-medium text-muted-foreground hover:text-foreground">
-                      Ask about this stone
+                    <a href={link} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-border bg-card text-xs font-semibold hover:bg-secondary">
+                      <MessageCircle className="size-3.5" /> Call to Inquire about this stone
                     </a>
                   ) : null}
                 </div>
@@ -92,7 +92,7 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
 
       {generalLink ? (
         <a href={generalLink} target="_blank" rel="noreferrer" className="fixed bottom-4 right-4 inline-flex h-12 items-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-white shadow-lg md:hidden">
-          <MessageCircle className="size-4" /> Call to Inquire / Reserve
+          <MessageCircle className="size-4" /> Call to Inquire
         </a>
       ) : null}
     </main>

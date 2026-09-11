@@ -29,7 +29,7 @@ export function AgeingBanner({ band, days }: { band: string | null; days: number
     return (
       <div className="flex items-center gap-2 rounded-lg bg-stale-soft px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stale">
         <AlertTriangle className="size-4" />
-        Old stock warning · {days} days active
+        Stale stock · {days} days in the yard
       </div>
     );
   }

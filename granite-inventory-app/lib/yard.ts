@@ -1,6 +1,6 @@
 import type { Tables } from "@/lib/database.types";
 import { formatDims } from "@/lib/format";
-import { SLOTS, isSlot, type Slot } from "@/lib/domain";
+import { SLOTS, isAgeFilter, isSlot, type AgeFilter, type Slot } from "@/lib/domain";
 
 export type YardBatch = Tables<"v_yard_batches">;
 
@@ -12,8 +12,9 @@ export type YardQuery = {
   readonly variant: string | null;
   readonly thickness: number | null;
   readonly supplier: string | null;
-  readonly age: 90 | 180 | 365 | null;
+  readonly age: AgeFilter | null;
   readonly band: "STALE" | null;
+  readonly line: string | null;
   readonly sort: "oldest" | "newest";
   readonly sold: boolean;
 };
@@ -29,6 +30,7 @@ function one(raw: Raw, key: string): string | null {
 export function parseYardQuery(raw: Raw): YardQuery {
   const slot = one(raw, "slot");
   const age = one(raw, "age");
+  const ageNumber = age && /^\d+$/.test(age) ? Number(age) : null;
   const thickness = one(raw, "thickness");
   return {
     slot: isSlot(slot) ? slot : "4FT",
@@ -38,8 +40,9 @@ export function parseYardQuery(raw: Raw): YardQuery {
     variant: one(raw, "variant"),
     thickness: thickness ? Number.parseInt(thickness, 10) : null,
     supplier: one(raw, "supplier"),
-    age: age === "90" || age === "180" || age === "365" ? Number(age) as 90 | 180 | 365 : null,
-    band: one(raw, "band") === "STALE" ? "STALE" : null,
+    age: ageNumber !== null && isAgeFilter(ageNumber) ? ageNumber : null,
+    band: age === "stale" ? "STALE" : null,
+    line: one(raw, "line"),
     sort: one(raw, "sort") === "newest" ? "newest" : "oldest",
     sold: one(raw, "sold") === "1",
   };
@@ -58,6 +61,7 @@ export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   if (q.supplier && b.supplier_id !== q.supplier) return false;
   if (q.age !== null && (b.age_days ?? 0) <= q.age) return false;
   if (q.band && b.ageing_band !== q.band) return false;
+  if (q.line && b.line_key !== q.line) return false;
   if (q.q) {
     const hay = `${b.product_name} ${b.variant_name} ${b.supplier_name} ${b.batch_code}`.toLowerCase();
     if (!hay.includes(q.q.toLowerCase())) return false;
@@ -65,11 +69,23 @@ export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   return true;
 }
 
+/* Batches of one Stock Line stay together (so the Clamp sits between deliveries of the same
+   stone), lines ordered by their oldest batch, batches within a line by date. */
 export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"]): YardBatch[] {
   const dir = sort === "oldest" ? 1 : -1;
+  const byDate = (a: YardBatch, b: YardBatch) => {
+    const d = (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "");
+    return d !== 0 ? d : (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  };
+  const lineStart = new Map<string, YardBatch>();
+  for (const b of [...list].sort(byDate)) {
+    if (!lineStart.has(b.line_key ?? "")) lineStart.set(b.line_key ?? "", b);
+  }
   return [...list].sort((a, b) => {
-    const byDate = (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "") * dir;
-    return byDate !== 0 ? byDate : (a.created_at ?? "").localeCompare(b.created_at ?? "") * dir;
+    if (a.line_key !== b.line_key) {
+      return byDate(lineStart.get(a.line_key ?? "") ?? a, lineStart.get(b.line_key ?? "") ?? b) * dir;
+    }
+    return byDate(a, b) * dir;
   });
 }
 

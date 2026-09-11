@@ -175,8 +175,8 @@ A responsive web app, signed into with Google by a short list of Team Members, w
 ### UI
 
 - Design tokens (Geist, JetBrains Mono, orange primary, light and dark palettes, radii) copied from the Pencil file into global CSS variables. shadcn components map one to one to the Pencil library.
-- Forms use react-hook-form with zod schemas shared with the server actions.
-- Charts via Recharts through the shadcn chart wrapper: one donut, one horizontal bar.
+- Forms are small controlled components; zod schemas are shared with the server actions (react-hook-form was dropped as unneeded).
+- Charts: the donut via Recharts through the shadcn chart wrapper; the ranked units-sold bars are plain elements in a single hue (one series, no legend).
 - Breakpoint at 768 px switches sidebar to tab bar. A manifest and icons provide the home-screen install; no service worker.
 - Command K palette present on desktop only.
 

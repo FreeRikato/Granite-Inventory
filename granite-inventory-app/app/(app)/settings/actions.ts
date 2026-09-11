@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { CATEGORIES, ROLES, type Role } from "@/lib/domain";
 import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
 import { settingsSchema } from "@/lib/schemas/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ export async function updateSettingsAction(input: unknown): Promise<ActionResult
 const memberSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a Google email"),
   name: z.string().trim().max(80).optional(),
-  role: z.enum(["ADMIN", "YARD_OPERATOR"]),
+  role: z.enum(ROLES),
 });
 
 export async function addMemberAction(input: unknown): Promise<ActionResult<Tables<"team_members">>> {
@@ -51,7 +52,7 @@ export async function addMemberAction(input: unknown): Promise<ActionResult<Tabl
   return ok(data);
 }
 
-export async function setMemberRoleAction(id: string, role: "ADMIN" | "YARD_OPERATOR"): Promise<ActionResult<null>> {
+export async function setMemberRoleAction(id: string, role: Role): Promise<ActionResult<null>> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("team_members").update({ role }).eq("id", id).select("id");
   if (error) return fail(messageOf(error));
@@ -76,7 +77,7 @@ const renameSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1, "Name is required").max(80),
   abbreviation: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{1,4}$/, "1 to 4 letters or digits").optional(),
-  category: z.enum(["GRANITE", "MEMORIAL", "TILES"]).optional(),
+  category: z.enum(CATEGORIES).optional(),
 });
 
 export async function renameRowAction(input: unknown): Promise<ActionResult<null>> {
@@ -100,7 +101,7 @@ export async function renameRowAction(input: unknown): Promise<ActionResult<null
 export async function deleteRowAction(table: "products" | "variants" | "suppliers", id: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
-  if (error) return fail(/foreign key/.test(error.message) ? "Still used by batches in the yard" : messageOf(error));
+  if (error) return fail(messageOf(error));
   if (!data || data.length === 0) return fail("Only an Admin can delete");
   revalidatePath("/", "layout");
   return ok(null);

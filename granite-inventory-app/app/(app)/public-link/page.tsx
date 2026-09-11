@@ -22,7 +22,7 @@ export default async function PublicLinkPage() {
 
   return (
     <>
-      <PageHeader title="Public View Link" />
+      <PageHeader title="Public Catalog" />
       <PublicLinkControls
         url={url}
         catalogPublic={settings?.catalog_public ?? false}

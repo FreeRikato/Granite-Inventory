@@ -26,7 +26,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.
 - Products, Variants, Suppliers and Customers are created inline from the inward and sell forms. A minimal admin list allows rename; delete only when nothing references the row (FK restrict). No merge tool.
-- Customer phone is unique when present. Walk-in Customer is a seeded row with no phone.
+- Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone.
 
 ## Selling
 
@@ -35,7 +35,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Margin = qty × (sale_price − landed_cost) + qty × (stickering_price − stickering_cost). Margin % = margin / (qty × (sale_price + stickering_price)).
 - FIFO Listing shows Batches of the chosen Stock Line with Available > 0, oldest first, with Ageing Band. Any Batch may be picked; nothing is blocked or confirmed.
 - Payment Mode enum: CASH, UPI, BANK_TRANSFER. All Sales are considered paid. No credit or dues.
-- Dates are `date` columns in IST. Past dates allowed without limit; future dates rejected by check constraint.
+- Dates are `date` columns in IST: `private.ist_today()` is the reference for future-date checks and Age, whatever zone the server runs in. Past dates allowed without limit; future dates rejected by check constraint.
 
 ## Corrections
 
@@ -82,7 +82,8 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Tabs per Slot; inside a Slot, sub-tabs per L × B; Batches oldest first (Newest first as the only alternative sort).
 - Filters: search text, Product, Variant, Thickness, Supplier, Age.
 - Sold Out Batches hidden by default, "Show sold out" toggle.
-- A Clamp separator between every pair of consecutive Batches in the same Stock Line, labelled "New batch arrived N days later".
+- Within a size group, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
+- `/yard?line=<line_key>` deep-links to one Stock Line and lands on its slot; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.
 
 ## Navigation
 

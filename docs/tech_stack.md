@@ -7,7 +7,7 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
 | Design signal | Where | Implication |
 |---|---|---|
 | Components are the Pencil shadcn library (`Button/Default`, `Data Table`, `Dialog`, `Combobox`, `Tabs`, `Sidebar Item`) | `00 · Components` | shadcn/ui maps 1:1, no custom design system |
-| Fonts: Geist (UI) + JetBrains Mono (numbers), primary `#FF8400`, Light/Dark themes | variables | `next/font` + CSS vars in Tailwind v4 |
+| Fonts: Geist (UI) + JetBrains Mono (numbers), primary `#FF8400`, Light/Dark themes | variables | `next/font` + CSS vars in Tailwind v4. The operator screens use the copper `f-*` palette; its text tones were darkened slightly (copper `#b04e27`, amber `#96620f`, green `#1b7a43`, grey `#6b6b6b`) to clear WCAG AA 4.5:1 on their soft backgrounds. |
 | "Continue with Google", "Only these Google accounts can sign in", roles `ADMIN` / `YARD OPERATOR` | Auth, Settings | Google OAuth + allowlist table + roles |
 | `⌘K` "Search or jump to..." on every desktop screen | all desktop | shadcn `Command` |
 | Donut + horizontal bar charts | Dashboard | Recharts via shadcn `chart` |

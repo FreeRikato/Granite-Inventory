@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -64,35 +64,35 @@
   --card-foreground: #181818;
   --popover: #ffffff;
   --popover-foreground: #181818;
-  --primary: #c1592f;
+  --primary: #b04e27;
   --primary-foreground: #ffffff;
   --secondary: #f0f0f0;
   --secondary-foreground: #181818;
   --muted: #f0f0f0;
-  --muted-foreground: #767676;
+  --muted-foreground: #6b6b6b;
   --accent: #fceee8;
-  --accent-foreground: #c1592f;
+  --accent-foreground: #ad4a20;
   --destructive: #c23b2e;
   --border: #e9e9e9;
   --input: #dcdcda;
-  --ring: #c1592f;
+  --ring: #b04e27;
   --chart-1: #c1592f;
-  --chart-2: #b8791f;
+  --chart-2: #96620f;
   --chart-3: #767676;
-  --chart-4: #1f8b4c;
+  --chart-4: #1b7a43;
   --chart-5: #dcdcda;
   --radius: 0.625rem;
   --sidebar: #fafafa;
   --sidebar-foreground: #181818;
-  --sidebar-primary: #c1592f;
+  --sidebar-primary: #b04e27;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #fceee8;
-  --sidebar-accent-foreground: #c1592f;
+  --sidebar-accent-foreground: #ad4a20;
   --sidebar-border: #e9e9e9;
-  --sidebar-ring: #c1592f;
-  --fresh: #1f8b4c;
+  --sidebar-ring: #b04e27;
+  --fresh: #1b7a43;
   --fresh-soft: #e9f5ec;
-  --ageing: #b8791f;
+  --ageing: #96620f;
   --ageing-soft: #fbf1e3;
   --stale: #c23b2e;
   --stale-soft: #fbeae8;
@@ -140,6 +140,50 @@
   --whatsapp: #25d366;
 }
 
+/* Dark mode follows the device unless a class pins a mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #111111;
+    --foreground: #ffffff;
+    --card: #1a1a1a;
+    --card-foreground: #ffffff;
+    --popover: #1a1a1a;
+    --popover-foreground: #ffffff;
+    --primary: #ff8400;
+    --primary-foreground: #111111;
+    --secondary: #2e2e2e;
+    --secondary-foreground: #ffffff;
+    --muted: #2e2e2e;
+    --muted-foreground: #b8b9b6;
+    --accent: #291c0f;
+    --accent-foreground: #ff8400;
+    --destructive: #ff5c33;
+    --border: #2e2e2e;
+    --input: #3a3a36;
+    --ring: #ff8400;
+    --chart-1: #ff8400;
+    --chart-2: #ffb020;
+    --chart-3: #8a8a86;
+    --chart-4: #3ecf6e;
+    --chart-5: #3a3a36;
+    --sidebar: #18181b;
+    --sidebar-foreground: #fafafa;
+    --sidebar-primary: #ff8400;
+    --sidebar-primary-foreground: #111111;
+    --sidebar-accent: #291c0f;
+    --sidebar-accent-foreground: #ff8400;
+    --sidebar-border: #2e2e2e;
+    --sidebar-ring: #ff8400;
+    --fresh: #3ecf6e;
+    --fresh-soft: #222924;
+    --ageing: #ffb020;
+    --ageing-soft: #291c0f;
+    --stale: #ff5d4a;
+    --stale-soft: #24100b;
+    --whatsapp: #25d366;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -152,6 +196,7 @@
   }
   html {
     @apply font-sans;
+    color-scheme: light dark;
   }
 }
 

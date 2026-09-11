@@ -29,7 +29,7 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByLabel("Stale after (days)")).toHaveValue("365");
   await page.getByRole("button", { name: "Save rules" }).click();
   await expect(page.getByText("Inventory rules saved")).toBeVisible();
-  await expect(page.getByText("over 365 days")).toBeVisible();
+  await expect(page.getByText("365 days and over")).toBeVisible();
 
   await page.goto("/yard?slot=4FT");
   await expect(page.locator('[data-batch-code="BP-OLD-01"]')).toContainText("Ageing · 232 days");
@@ -43,7 +43,7 @@ test("admin invites a member, changes thresholds and renames a product", async (
 
   await page.getByTestId("suppliers-row").filter({ hasText: "Madurai Quarry" }).getByRole("button", { name: "Delete" }).click();
   await page.getByRole("button", { name: "Delete" }).last().click();
-  await expect(page.getByText("Still used by batches in the yard")).toBeVisible();
+  await expect(page.getByText("Still used by batches or sales in the yard")).toBeVisible();
 });
 
 test("an operator only sees their profile and the read-only rules", async ({ page, signIn }) => {
@@ -51,6 +51,6 @@ test("an operator only sees their profile and the read-only rules", async ({ pag
   await page.goto("/settings");
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Invite a Google account" })).toHaveCount(0);
-  await expect(page.getByLabel("Stale after (days)")).toBeDisabled();
-  await expect(page.getByRole("heading", { name: "Products, variants and suppliers" })).toHaveCount(0);
+  await expect(page.getByLabel("Stale after (days)")).toHaveCount(0);
+  await expect(page.getByText("Team access and inventory rules are managed by an Admin.")).toBeVisible();
 });

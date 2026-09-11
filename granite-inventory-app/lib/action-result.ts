@@ -17,7 +17,6 @@ export function messageOf(error: unknown): string {
     const m = (error as { message: unknown }).message;
     if (typeof m === "string") return cleanPgMessage(m);
   }
-  if (error instanceof Error) return cleanPgMessage(error.message);
   return "Something went wrong";
 }
 
@@ -26,7 +25,7 @@ function cleanPgMessage(message: string): string {
   if (/duplicate key.*products_abbreviation_key/.test(message)) return "That abbreviation is already used";
   if (/duplicate key.*suppliers_name_key/.test(message)) return "A supplier with that name already exists";
   if (/duplicate key.*customers_phone_key/.test(message)) return "A customer with that phone already exists";
-  if (/violates foreign key constraint/.test(message)) return "Still in use by other records";
+  if (/violates foreign key constraint/.test(message)) return "Still used by batches or sales in the yard";
   if (/violates check constraint "batches_purchase_date_check"/.test(message)) return "Purchase date cannot be in the future";
   if (/violates check constraint "sales_sale_date_check"/.test(message)) return "Sale date cannot be in the future";
   return message;

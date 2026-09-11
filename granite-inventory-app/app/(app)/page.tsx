@@ -52,7 +52,7 @@ export default async function OverviewPage() {
           <div className="flex flex-col gap-1 py-5">
             <span className="text-sm text-muted-foreground">MTD Margin</span>
             <span className="text-2xl font-bold tabular" data-testid="kpi-margin">
-              {k?.mtd_margin_pct !== null && k?.mtd_margin_pct !== undefined ? formatPercent(k.mtd_margin_pct) : "—"}
+              {k?.mtd_margin_pct !== null && k?.mtd_margin_pct !== undefined ? formatPercent(k.mtd_margin_pct) : "0%"}
               <span className="ml-2 text-sm font-medium text-muted-foreground">{formatRupeesCompact(k?.mtd_margin ?? 0)}</span>
             </span>
           </div>
@@ -80,7 +80,7 @@ export default async function OverviewPage() {
       <section className="rounded-card bg-card p-6 shadow-sm">
         <div className="flex items-baseline justify-between">
           <h2 className="text-base font-bold">Stale stock ({stale?.length ?? 0})</h2>
-          <Link href="/yard?band=STALE&slot=4FT" className="text-xs text-muted-foreground hover:text-foreground">
+          <Link href={`/yard?age=stale${stale?.[0]?.slot ? `&slot=${stale[0].slot}` : ""}`} className="text-xs text-muted-foreground hover:text-foreground">
             Batches over {settings?.stale_after_days ?? 180} days · view in yard
           </Link>
         </div>
@@ -90,14 +90,14 @@ export default async function OverviewPage() {
           <ul className="mt-3 divide-y divide-border">
             {stale.map((b) => (
               <li key={b.id}>
-                <Link href={`/yard?slot=${b.slot}&q=${encodeURIComponent(b.batch_code ?? "")}`} className="flex items-center gap-4 py-3 hover:bg-secondary/40" data-testid="stale-row">
+                <Link href={`/yard?line=${encodeURIComponent(b.line_key ?? "")}&q=${encodeURIComponent(b.batch_code ?? "")}`} className="flex items-center gap-4 py-3 hover:bg-secondary/40" data-testid="stale-row">
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-stale-soft text-xs font-bold text-stale">
                     {b.product_abbreviation}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-semibold">{b.product_name} · {b.variant_name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {b.batch_code} · {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })} · {b.available} present
+                      {b.batch_code} · {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })} · {b.available} available
                     </span>
                   </span>
                   <AgeingBadge band={b.ageing_band} days={b.age_days} />

@@ -26,6 +26,6 @@ test("overview shows KPIs, donut, fast moving bars and the stale panel linking t
   await expect(page.getByTestId("stale-row")).toHaveCount(1);
   await expect(page.getByTestId("stale-row")).toContainText("BP-OLD-01");
   await page.getByTestId("stale-row").click();
-  await expect(page).toHaveURL(/\/yard\?slot=4FT&q=BP-OLD-01/);
+  await expect(page).toHaveURL(/\/yard\?line=.*&q=BP-OLD-01/);
   await expect(page.getByTestId("yard-batch")).toHaveCount(1);
 });

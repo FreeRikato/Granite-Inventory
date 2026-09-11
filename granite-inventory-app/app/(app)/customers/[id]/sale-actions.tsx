@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { PAYMENT_MODES, PAYMENT_MODE_LABEL, type PaymentMode } from "@/lib/domain";
+import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatSize, todayIso } from "@/lib/format";
 import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
@@ -74,7 +74,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
     saleDate: sale.sale_date ?? todayIso(),
     quantity: sale.quantity?.toString() ?? "1",
     salePrice: sale.sale_price?.toString() ?? "",
-    paymentMode: (PAYMENT_MODES.includes(sale.payment_mode as PaymentMode) ? sale.payment_mode : "CASH") as PaymentMode,
+    paymentMode: isPaymentMode(sale.payment_mode) ? sale.payment_mode : "CASH",
     hasStickering: sale.has_stickering ?? false,
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
     stickeringPrice: sale.stickering_price?.toString() ?? "0",
@@ -109,7 +109,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
           <Input id="es-date" type="date" max={todayIso()} value={form.saleDate} onChange={(e) => set("saleDate", e.target.value)} />
         </Field>
         <Field label="Payment Mode" htmlFor="es-payment">
-          <Select value={form.paymentMode} onValueChange={(v) => { if (PAYMENT_MODES.includes(v as PaymentMode)) set("paymentMode", v as PaymentMode); }}>
+          <Select value={form.paymentMode} onValueChange={(v) => { if (isPaymentMode(v)) set("paymentMode", v); }}>
             <SelectTrigger id="es-payment" className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{PAYMENT_MODE_LABEL[m]}</SelectItem>)}</SelectContent>
           </Select>

@@ -44,6 +44,14 @@ describe("yard: v_yard_batches", () => {
     expect(data?.map((r) => r.days_since_previous)).toEqual([null, 3, null]);
   });
 
+  it("age and date rules use the Indian calendar day", async () => {
+    const { data } = await operator.rpc("preview_batch_code", { p_product_id: productId, p_date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) });
+    expect(data).toMatch(/-01$/);
+    const istTomorrow = new Date(Date.now() + 36 * 3_600_000).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const future = await createBatch(operator, { productId, supplierId, purchaseDate: istTomorrow });
+    expect(future.error?.message).toMatch(/purchase_date_check|future/);
+  });
+
   it("sold out is derived from available", async () => {
     const { data: batch } = await createBatch(operator, { productId, supplierId, units: 2 });
     await sql(`update public.batches set units_sold = 2 where id = $1`, [batch?.id]);

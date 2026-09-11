@@ -23,7 +23,7 @@ Working rules:
 
 - Do not ask the user for setup facts; everything needed is in `local-dev.md`. Docker Desktop and the Supabase CLI are installed; run `supabase start` if the stack is down.
 - No Postgres enum types; use text with check constraints. Store raw facts, derive in views.
-- Tests: Vitest against local Supabase for rules and RLS (primary seam), Playwright for the three flows named in the spec only.
+- Tests: Vitest against local Supabase for rules and RLS (primary seam); Playwright holds one thin flow per ticket (wiring, not rules) plus `capture.spec.ts`, a screenshot tool for design comparison that only runs with `CAPTURE=<dir>`.
 - Update `../CONTEXT.md` and `../docs/phase1_decisions.md` in the same commit whenever a rule changes.
 - No em dashes anywhere. Match the existing code style.
 - Design tokens and screens come from the Pencil file; if the pencil MCP is available, use it to read exact values instead of guessing.

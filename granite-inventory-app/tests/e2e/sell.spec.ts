@@ -51,7 +51,7 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await page.goto("/yard?slot=4FT");
   const old = page.locator('[data-batch-code="BP-OLD-01"]');
   await expect(old).toContainText("Sold:9");
-  await expect(old).toContainText("Present:6");
+  await expect(old).toContainText("Available:6");
 });
 
 test("selling more than available is refused by the database", async ({ page, signIn }) => {

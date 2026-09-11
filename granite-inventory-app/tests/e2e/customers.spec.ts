@@ -41,12 +41,13 @@ test("customers list, add, and detail with sales", async ({ page, signIn }) => {
   await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
 });
 
-test("duplicate phone is refused with a clear message", async ({ page, signIn }) => {
+test("an existing phone selects that customer instead of creating a duplicate", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/customers");
   await openDialog(page, page.getByRole("button", { name: "Add Customer" }));
   await page.getByLabel("Name").fill("Someone Else");
   await page.getByLabel("Phone").fill("9876543210");
   await page.getByRole("button", { name: "Add customer" }).click();
-  await expect(page.getByText("A customer with that phone already exists")).toBeVisible();
+  await expect(page.getByText(/Murugan Constructions already has that phone number/)).toBeVisible();
+  await expect(page.getByTestId("customer-row")).toHaveCount(2);
 });

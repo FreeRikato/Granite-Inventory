@@ -35,6 +35,13 @@ export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
   BANK_TRANSFER: "Bank Transfer",
 };
 
+export const ROLES = ["ADMIN", "YARD_OPERATOR"] as const;
+export type Role = (typeof ROLES)[number];
+export const ROLE_LABEL: Record<Role, string> = { ADMIN: "Admin", YARD_OPERATOR: "Yard operator" };
+
+export const AGE_FILTERS = [90, 180, 365] as const;
+export type AgeFilter = (typeof AGE_FILTERS)[number];
+
 export const AGEING_BANDS = ["FRESH", "AGEING", "STALE"] as const;
 export type AgeingBand = (typeof AGEING_BANDS)[number];
 
@@ -46,6 +53,15 @@ export function isSlot(value: unknown): value is Slot {
 }
 export function isCustomerType(value: unknown): value is CustomerType {
   return CUSTOMER_TYPES.includes(value as CustomerType);
+}
+export function isPaymentMode(value: unknown): value is PaymentMode {
+  return PAYMENT_MODES.includes(value as PaymentMode);
+}
+export function isRole(value: unknown): value is Role {
+  return ROLES.includes(value as Role);
+}
+export function isAgeFilter(value: unknown): value is AgeFilter {
+  return AGE_FILTERS.includes(value as AgeFilter);
 }
 export function isAgeingBand(value: unknown): value is AgeingBand {
   return AGEING_BANDS.includes(value as AgeingBand);

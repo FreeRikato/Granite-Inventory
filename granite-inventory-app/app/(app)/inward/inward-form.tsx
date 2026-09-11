@@ -257,7 +257,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
           <Input id="unitPurchasePrice" type="number" inputMode="decimal" step="1" min="0" placeholder="0" value={form.unitPurchasePrice}
             onChange={(e) => set("unitPurchasePrice", e.target.value)} className="h-11" />
         </Field>
-        <Field label="Misc / Freight Cost (₹)" htmlFor="freightCost" hint="Spread across the pieces into landed cost">
+        <Field label="Freight Cost (₹)" htmlFor="freightCost" hint="Lorry and handling, spread across the pieces into landed cost">
           <Input id="freightCost" type="number" inputMode="decimal" step="1" min="0" placeholder="Optional" value={form.freightCost}
             onChange={(e) => set("freightCost", e.target.value)} className="h-11" />
         </Field>

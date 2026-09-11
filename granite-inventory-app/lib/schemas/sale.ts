@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { CUSTOMER_TYPES, PAYMENT_MODES } from "@/lib/domain";
-
-const money = z.coerce.number().min(0, "Cannot be negative");
+import { isoDate, money } from "./common";
 
 export const customerSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
@@ -18,7 +17,7 @@ export const customerSchema = z.object({
 export const saleSchema = z.object({
   batchId: z.string().uuid("Pick a batch"),
   customerId: z.string().uuid("Pick a customer"),
-  saleDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
+  saleDate: isoDate,
   quantity: z.coerce.number().int().positive("At least 1 piece"),
   salePrice: money,
   paymentMode: z.enum(PAYMENT_MODES),

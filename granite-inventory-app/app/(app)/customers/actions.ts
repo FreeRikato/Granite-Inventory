@@ -7,10 +7,19 @@ import { customerSchema } from "@/lib/schemas/sale";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 
-export async function createCustomerAction(input: unknown): Promise<ActionResult<Tables<"customers">>> {
+export type CreatedCustomer = Tables<"customers"> & { readonly existed: boolean };
+
+/* A phone that is already on file selects that customer instead of creating a duplicate. */
+export async function createCustomerAction(input: unknown): Promise<ActionResult<CreatedCustomer>> {
   const parsed = customerSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid customer");
   const supabase = await createClient();
+  if (parsed.data.phone) {
+    const digits = parsed.data.phone.replace(/\D/g, "").slice(-10);
+    const { data: existing } = await supabase.from("customers").select("*").not("phone", "is", null);
+    const match = (existing ?? []).find((c) => (c.phone ?? "").replace(/\D/g, "").slice(-10) === digits);
+    if (match) return ok({ ...match, existed: true });
+  }
   const { data, error } = await supabase
     .from("customers")
     .insert({ name: parsed.data.name, phone: parsed.data.phone ?? null, customer_type: parsed.data.customerType })
@@ -18,7 +27,7 @@ export async function createCustomerAction(input: unknown): Promise<ActionResult
     .single();
   if (error) return fail(messageOf(error));
   revalidatePath("/customers");
-  return ok(data);
+  return ok({ ...data, existed: false });
 }
 
 const updateSchema = customerSchema.extend({ id: z.string().uuid() });

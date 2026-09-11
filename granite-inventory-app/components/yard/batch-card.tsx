@@ -38,7 +38,7 @@ export function BatchCard({ batch, actions }: Props) {
           {batch.thickness_mm !== null ? <Stat label="Thickness" value={`${batch.thickness_mm}mm`} /> : null}
           <Stat label="Bought" value={String(batch.initial_units ?? 0)} />
           <Stat label="Sold" value={String(batch.units_sold ?? 0)} />
-          <Stat label="Present" value={String(batch.available ?? 0)} strong />
+          <Stat label="Available" value={String(batch.available ?? 0)} strong />
           <Stat label="On" value={batch.purchase_date ? formatDate(batch.purchase_date) : ""} />
           <Stat label="From" value={batch.supplier_name ?? ""} />
         </dl>

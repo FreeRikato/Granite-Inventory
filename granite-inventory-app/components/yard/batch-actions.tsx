@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SLOTS, SLOT_LABEL, isCategory, isSlot, type Slot } from "@/lib/domain";
+import { SLOTS, SLOT_LABEL, isCategory, isSlot } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
 import type { YardBatch } from "@/lib/yard";
 import { correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
@@ -80,7 +80,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: Edit
     lengthFt: batch.length_ft?.toString() ?? "",
     breadthFt: batch.breadth_ft?.toString() ?? "",
     thicknessMm: batch.thickness_mm?.toString() ?? "",
-    slot: (isSlot(batch.slot) ? batch.slot : "CUSTOM") as Slot,
+    slot: isSlot(batch.slot) ? batch.slot : "CUSTOM",
     initialUnits: batch.initial_units?.toString() ?? "",
     unitPurchasePrice: batch.unit_purchase_price?.toString() ?? "",
     freightCost: batch.freight_cost?.toString() ?? "0",
@@ -132,7 +132,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: Edit
           <Input id="eb-units" type="number" step="1" min={batch.units_sold ?? 1} value={form.initialUnits} onChange={(e) => set("initialUnits", e.target.value)} />
         </Field>
         <Field label="Unit Purchase Price (₹)" htmlFor="eb-price"><Input id="eb-price" type="number" step="1" min="0" value={form.unitPurchasePrice} onChange={(e) => set("unitPurchasePrice", e.target.value)} /></Field>
-        <Field label="Misc / Freight Cost (₹)" htmlFor="eb-freight"><Input id="eb-freight" type="number" step="1" min="0" value={form.freightCost} onChange={(e) => set("freightCost", e.target.value)} /></Field>
+        <Field label="Freight Cost (₹)" htmlFor="eb-freight"><Input id="eb-freight" type="number" step="1" min="0" value={form.freightCost} onChange={(e) => set("freightCost", e.target.value)} /></Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Yard slot" htmlFor="eb-slot">

@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { CATEGORIES, SLOTS } from "@/lib/domain";
+import { isoDate, money, positiveNumber } from "./common";
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date");
-const money = z.coerce.number().min(0, "Cannot be negative");
-const positiveNumber = z.coerce.number().positive("Must be more than 0");
 
 export const productSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),

@@ -19,7 +19,7 @@ test("palette jumps to a stock line in the yard and to a customer; sell deep lin
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByPlaceholder("Type a page, stone or customer...").fill("jet black");
   await page.getByRole("option", { name: /Jet Black · Premium/ }).click();
-  await expect(page).toHaveURL(/\/yard\?slot=5FT&variant=.*&size=5/);
+  await expect(page).toHaveURL(/\/yard\?line=/);
   await expect(page.getByTestId("yard-batch")).toHaveCount(1);
   await expect(page.getByTestId("yard-batch")).toHaveAttribute("data-batch-code", "JB-FIVE-01");
 

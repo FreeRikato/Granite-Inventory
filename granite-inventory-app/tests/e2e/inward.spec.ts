@@ -32,7 +32,7 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await page.getByLabel("Thickness (mm)").fill("16");
   await page.getByLabel("Unit Quantity").fill("15");
   await page.getByLabel("Unit Purchase Price (₹)").fill("1400");
-  await page.getByLabel("Misc / Freight Cost (₹)").fill("750");
+  await page.getByLabel("Freight Cost (₹)").fill("750");
 
   await expect(page.getByRole("combobox", { name: "Yard slot" })).toHaveText("4 ft Slot");
   await expect(page.getByTestId("batch-code-preview")).toHaveText(/^BP-\d{2}[A-Z]{3}\d{2}-01$/);

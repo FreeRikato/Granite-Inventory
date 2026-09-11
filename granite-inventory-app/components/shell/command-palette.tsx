@@ -13,7 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/lib/nav";
-import { formatDims, formatSize } from "@/lib/format";
+import { formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/database.types";
 
@@ -88,8 +88,7 @@ export function CommandPalette() {
           <CommandGroup heading="Stock lines">
             {(lines ?? []).map((l) => {
               const size = formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
-              const slot = l.category === "MEMORIAL" ? "DOOM" : l.length_ft !== null && l.length_ft >= 5 && l.length_ft < 6 ? "5FT" : l.length_ft !== null && l.length_ft >= 4 && l.length_ft < 5 ? "4FT" : "CUSTOM";
-              const href = `/yard?slot=${slot}&variant=${l.variant_id}&size=${encodeURIComponent(formatDims(l.length_ft, l.breadth_ft))}`;
+              const href = `/yard?line=${encodeURIComponent(l.line_key ?? "")}`;
               return (
                 <CommandItem key={l.line_key} value={`stone ${l.product_name} ${l.variant_name} ${size}`} onSelect={() => go(href)}>
                   <span className="flex min-w-0 flex-1 flex-col">

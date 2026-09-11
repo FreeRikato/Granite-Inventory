@@ -22,7 +22,7 @@ create or replace view public.v_yard_batches with (security_invoker = true) as
   with base as (
     select
       b.*,
-      (current_date - b.purchase_date)::integer as age_days,
+      (private.ist_today() - b.purchase_date)::integer as age_days,
       lag(b.purchase_date) over (
         partition by b.variant_id, b.length_ft, b.breadth_ft, b.thickness_mm
         order by b.purchase_date, b.created_at

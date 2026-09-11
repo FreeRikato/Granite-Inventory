@@ -56,12 +56,7 @@ begin
     raise exception 'Unknown product' using errcode = 'foreign_key_violation';
   end if;
 
-  insert into public.variants (product_id, name)
-  values (p_product_id, trim(p_variant_name))
-  on conflict (product_id, lower(name)) do nothing;
-  select id into v_variant_id
-  from public.variants
-  where product_id = p_product_id and lower(name) = lower(trim(p_variant_name));
+  v_variant_id := private.find_or_create_variant(p_product_id, p_variant_name);
 
   -- The Batch Code is kept: it is written on the physical stack.
   update public.batches set

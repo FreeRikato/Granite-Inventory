@@ -7,6 +7,18 @@ create schema if not exists private;
 -- schema. Nothing in it is exposed through the API (only public is).
 grant usage on schema private to authenticated, service_role;
 
+-- Every date rule in the yard is "today in India", whatever zone the server runs in.
+create or replace function private.ist_today()
+returns date
+language sql
+stable
+set search_path = ''
+as $$
+  select (now() at time zone 'Asia/Kolkata')::date;
+$$;
+
+grant execute on function private.ist_today() to authenticated, anon, service_role;
+
 create or replace function private.current_email()
 returns text
 language sql
@@ -142,3 +154,9 @@ create view public.v_public_business as
 
 revoke all on public.v_public_business from public;
 grant select on public.v_public_business to anon, authenticated;
+
+-- Rows the app cannot run without. Idempotent so local seed.sql and this agree.
+insert into public.settings (id) values (true) on conflict (id) do nothing;
+insert into public.team_members (email, name, role)
+values ('aravinthanrc@gmail.com', 'Aravinthan', 'ADMIN')
+on conflict (email) do nothing;

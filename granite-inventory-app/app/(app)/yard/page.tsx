@@ -5,7 +5,7 @@ import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 import { BatchCard } from "@/components/yard/batch-card";
 import { Clamp } from "@/components/yard/clamp";
 import { YardFilters } from "@/components/yard/yard-filters";
-import { SLOTS, SLOT_LABEL } from "@/lib/domain";
+import { SLOTS, SLOT_LABEL, isSlot } from "@/lib/domain";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -21,10 +21,13 @@ import {
 
 export default async function YardPage(props: PageProps<"/yard">) {
   const raw = await props.searchParams;
-  const query = parseYardQuery(raw);
+  const parsed = parseYardQuery(raw);
   const supabase = await createClient();
   const [{ data }, session] = await Promise.all([supabase.from("v_yard_batches").select("*"), getSession()]);
   const all: YardBatch[] = data ?? [];
+  /* A deep link to a Stock Line (palette, stale panel) lands on that line's own slot. */
+  const lineSlot = parsed.line && !raw.slot ? all.find((b) => b.line_key === parsed.line)?.slot : undefined;
+  const query = isSlot(lineSlot) ? { ...parsed, slot: lineSlot } : parsed;
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: EditLists | null = isAdmin
     ? {
@@ -104,7 +107,7 @@ export default async function YardPage(props: PageProps<"/yard">) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-bold">{SLOT_LABEL[query.slot]}</h2>
           <span className="text-sm text-muted-foreground tabular">
-            {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} · {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} present
+            {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} · {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} available
           </span>
         </div>
 
@@ -135,7 +138,8 @@ export default async function YardPage(props: PageProps<"/yard">) {
             visible.map((batch, i) => {
               const prev = visible[i - 1];
               const sameLine = prev && prev.line_key === batch.line_key;
-              const gap = sameLine ? Math.abs(daysBetween(prev.purchase_date, batch.purchase_date)) : null;
+              const later = query.sort === "oldest" ? batch : prev;
+              const gap = sameLine ? (later?.days_since_previous ?? null) : null;
               return (
                 <div key={batch.id ?? batch.batch_code} className="flex flex-col gap-3">
                   {gap !== null ? <Clamp days={gap} /> : null}
@@ -159,7 +163,7 @@ export default async function YardPage(props: PageProps<"/yard">) {
               <span className="flex items-baseline gap-3">
                 <span className="text-sm font-bold">{SLOT_LABEL[s.slot]}</span>
                 <span className="text-sm text-muted-foreground tabular">
-                  {s.batches} {s.batches === 1 ? "batch" : "batches"} · {s.available} present
+                  {s.batches} {s.batches === 1 ? "batch" : "batches"} · {s.available} available
                 </span>
               </span>
               <ChevronDown className="size-4 text-muted-foreground" />
@@ -174,9 +178,4 @@ function uniq(pairs: readonly (readonly [string, string])[]): { value: string; l
   const m = new Map<string, string>();
   for (const [v, l] of pairs) if (v && !m.has(v)) m.set(v, l);
   return [...m.entries()].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function daysBetween(a: string | null, b: string | null): number {
-  if (!a || !b) return 0;
-  return Math.round((new Date(`${b}T00:00:00Z`).getTime() - new Date(`${a}T00:00:00Z`).getTime()) / 86_400_000);
 }

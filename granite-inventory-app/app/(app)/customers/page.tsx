@@ -8,7 +8,7 @@ export default async function CustomersPage() {
   const { data } = await supabase.from("v_customers").select("*").order("name");
   const customers = data ?? [];
   const contractors = customers.filter((c) => c.customer_type === "CONTRACTOR").length;
-  const regulars = customers.filter((c) => c.customer_type === "REGULAR" || c.customer_type === "TRUST").length;
+  const trusts = customers.filter((c) => c.customer_type === "TRUST").length;
 
   return (
     <>
@@ -18,7 +18,7 @@ export default async function CustomersPage() {
         kpis={[
           { label: "Total Customers", value: customers.length },
           { label: "Contractors", value: contractors },
-          { label: "Regular / Trusts", value: regulars },
+          { label: "Trusts", value: trusts },
         ]}
       />
     </>

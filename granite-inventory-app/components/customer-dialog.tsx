@@ -57,6 +57,9 @@ function CustomerForm({
         toast.error(result.error);
         return;
       }
+      if (!existingId && "existed" in result.data && result.data.existed) {
+        toast.info(`${result.data.name} already has that phone number, selected instead`);
+      }
       onSaved(result.data);
     });
   }

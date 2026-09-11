@@ -3,7 +3,7 @@ import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
 /* Not a test of behaviour: captures pages for a side-by-side check against the Pencil designs.
-   Run with: pnpm exec playwright test screenshot --project=desktop */
+   Run with: CAPTURE=<dir> pnpm exec playwright test capture --project=desktop */
 const PAGES = ["/", "/inward", "/sell", "/yard", "/customers", "/public-link", "/settings", "/login", "/catalog"];
 
 test.beforeAll(async () => {

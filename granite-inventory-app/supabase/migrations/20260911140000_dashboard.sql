@@ -1,16 +1,5 @@
 -- Ticket 06: dashboard figures, every one derived from batches and sales.
--- "This month" is the calendar month in India, whatever the server clock's zone.
-
-create or replace function private.ist_today()
-returns date
-language sql
-stable
-set search_path = ''
-as $$
-  select (now() at time zone 'Asia/Kolkata')::date;
-$$;
-
-grant execute on function private.ist_today() to authenticated, service_role;
+-- "This month" is the calendar month in India (private.ist_today()).
 
 create view public.v_dashboard_kpis with (security_invoker = true) as
   with bounds as (

@@ -1,7 +1,6 @@
 import { cache } from "react";
+import { isRole, type Role } from "@/lib/domain";
 import { createClient } from "@/lib/supabase/server";
-
-export type Role = "ADMIN" | "YARD_OPERATOR";
 
 export type Member = {
   readonly email: string;
@@ -13,10 +12,6 @@ export type Session =
   | { readonly status: "anonymous" }
   | { readonly status: "not-member"; readonly email: string }
   | { readonly status: "member"; readonly member: Member };
-
-function isRole(value: unknown): value is Role {
-  return value === "ADMIN" || value === "YARD_OPERATOR";
-}
 
 /* Resolves the signed-in Google account to a Team Member. Cached per request so layout and
    pages share one round trip. */
