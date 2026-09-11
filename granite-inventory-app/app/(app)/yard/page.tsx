@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
+import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 import { BatchCard } from "@/components/yard/batch-card";
 import { Clamp } from "@/components/yard/clamp";
 import { YardFilters } from "@/components/yard/yard-filters";
 import { SLOTS, SLOT_LABEL } from "@/lib/domain";
+import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import {
@@ -21,8 +23,15 @@ export default async function YardPage(props: PageProps<"/yard">) {
   const raw = await props.searchParams;
   const query = parseYardQuery(raw);
   const supabase = await createClient();
-  const { data } = await supabase.from("v_yard_batches").select("*");
+  const [{ data }, session] = await Promise.all([supabase.from("v_yard_batches").select("*"), getSession()]);
   const all: YardBatch[] = data ?? [];
+  const isAdmin = session.status === "member" && session.member.role === "ADMIN";
+  const editLists: EditLists | null = isAdmin
+    ? {
+        products: (await supabase.from("products").select("id, name, category").order("name")).data ?? [],
+        suppliers: (await supabase.from("suppliers").select("id, name").order("name")).data ?? [],
+      }
+    : null;
 
   const filtered = all.filter((b) => matchesFilters(b, query));
   const summaries = summariseSlots(filtered);
@@ -130,7 +139,7 @@ export default async function YardPage(props: PageProps<"/yard">) {
               return (
                 <div key={batch.id ?? batch.batch_code} className="flex flex-col gap-3">
                   {gap !== null ? <Clamp days={gap} /> : null}
-                  <BatchCard batch={batch} />
+                  <BatchCard batch={batch} actions={editLists ? <BatchActions batch={batch} lists={editLists} /> : undefined} />
                 </div>
               );
             })

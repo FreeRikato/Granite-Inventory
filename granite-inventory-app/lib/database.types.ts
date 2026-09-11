@@ -695,6 +695,91 @@ export type Database = {
     }
     Functions: {
       ageing_band: { Args: { p_age_days: number }; Returns: string }
+      correct_batch: {
+        Args: {
+          p_batch_id: string
+          p_breadth_ft?: number
+          p_freight_cost?: number
+          p_initial_units?: number
+          p_length_ft?: number
+          p_notes?: string
+          p_product_id: string
+          p_purchase_date: string
+          p_slot?: string
+          p_supplier_id: string
+          p_thickness_mm?: number
+          p_unit_purchase_price?: number
+          p_variant_name: string
+        }
+        Returns: {
+          batch_code: string
+          breadth_ft: number | null
+          created_at: string
+          created_by: string | null
+          freight_cost: number
+          id: string
+          initial_units: number
+          landed_cost: number | null
+          length_ft: number | null
+          notes: string | null
+          purchase_date: string
+          slot: string
+          supplier_id: string
+          thickness_mm: number | null
+          unit_purchase_price: number
+          units_sold: number
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "batches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      correct_sale: {
+        Args: {
+          p_batch_id: string
+          p_customer_id: string
+          p_has_stickering?: boolean
+          p_misc_expense?: number
+          p_notes?: string
+          p_payment_mode: string
+          p_quantity: number
+          p_sale_date: string
+          p_sale_id: string
+          p_sale_price: number
+          p_stickering_cost?: number
+          p_stickering_price?: number
+        }
+        Returns: {
+          batch_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          has_stickering: boolean
+          id: string
+          landed_cost: number
+          misc_expense: number
+          notes: string | null
+          payment_mode: string
+          quantity: number
+          sale_date: string
+          sale_price: number
+          stickering_cost: number
+          stickering_price: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_batch: {
         Args: {
           p_breadth_ft?: number
@@ -738,6 +823,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_batch: { Args: { p_batch_id: string }; Returns: undefined }
+      delete_sale: { Args: { p_sale_id: string }; Returns: undefined }
       fast_moving: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {

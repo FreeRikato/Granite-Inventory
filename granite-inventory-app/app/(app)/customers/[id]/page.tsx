@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { formatDate, formatRupees, formatSize, relativeDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { CustomerActions } from "./customer-actions";
+import { SaleActions, type SaleEditLists } from "./sale-actions";
 
 export default async function CustomerPage(props: PageProps<"/customers/[id]">) {
   const { id } = await props.params;
@@ -15,6 +16,12 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
   ]);
   if (!customer) notFound();
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
+  const editLists: SaleEditLists | null = isAdmin
+    ? {
+        batches: (await supabase.from("v_yard_batches").select("id, batch_code, line_key, available, purchase_date, product_name, variant_name, length_ft, breadth_ft, thickness_mm").order("purchase_date")).data ?? [],
+        customers: (await supabase.from("customers").select("id, name, phone").order("name")).data ?? [],
+      }
+    : null;
 
   return (
     <>
@@ -56,6 +63,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                   <th className="py-2 pr-4 text-right font-medium">Qty</th>
                   <th className="py-2 pr-4 text-right font-medium">Total</th>
                   <th className="py-2 text-right font-medium">Margin</th>
+                  {editLists ? <th className="py-2 pl-4" /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -76,6 +84,11 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                       {formatRupees(s.margin ?? 0)}
                       {s.margin_pct !== null ? <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span> : null}
                     </td>
+                    {editLists ? (
+                      <td className="py-2.5 pl-4">
+                        <SaleActions sale={s} lists={editLists} />
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

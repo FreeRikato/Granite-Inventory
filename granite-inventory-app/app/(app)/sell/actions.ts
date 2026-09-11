@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
 import { saleSchema } from "@/lib/schemas/sale";
 import { createClient } from "@/lib/supabase/server";
@@ -25,9 +26,47 @@ export async function recordSaleAction(input: unknown): Promise<ActionResult<Tab
     p_notes: s.notes,
   });
   if (error) return fail(messageOf(error));
+  revalidateSales();
+  return ok(data);
+}
+
+const saleCorrectionSchema = z.object({ saleId: z.string().uuid() }).and(saleSchema);
+
+export async function correctSaleAction(input: unknown): Promise<ActionResult<Tables<"sales">>> {
+  const parsed = saleCorrectionSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form");
+  const s = parsed.data;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("correct_sale", {
+    p_sale_id: s.saleId,
+    p_batch_id: s.batchId,
+    p_customer_id: s.customerId,
+    p_sale_date: s.saleDate,
+    p_quantity: s.quantity,
+    p_sale_price: s.salePrice,
+    p_payment_mode: s.paymentMode,
+    p_has_stickering: s.hasStickering,
+    p_stickering_cost: s.hasStickering ? s.stickeringCost : 0,
+    p_stickering_price: s.hasStickering ? s.stickeringPrice : 0,
+    p_misc_expense: s.miscExpense,
+    p_notes: s.notes,
+  });
+  if (error) return fail(messageOf(error));
+  revalidateSales();
+  return ok(data);
+}
+
+export async function deleteSaleAction(saleId: string): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_sale", { p_sale_id: saleId });
+  if (error) return fail(messageOf(error));
+  revalidateSales();
+  return ok(null);
+}
+
+function revalidateSales() {
   revalidatePath("/sell");
   revalidatePath("/yard");
-  revalidatePath("/customers");
+  revalidatePath("/customers", "layout");
   revalidatePath("/");
-  return ok(data);
 }
