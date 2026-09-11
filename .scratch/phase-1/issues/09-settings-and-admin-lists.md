@@ -4,11 +4,11 @@
 
 **Blocked by:** 03 — Yard view with ageing; 07 — Public Catalog and Public Link
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Profile block with role badge and sign out
-- [ ] Team Members: list, add (email + Role), remove; only Admin can change; removal takes effect on the next request
-- [ ] Threshold editor with validation that Ageing is below Stale, and band explanation using the live values
-- [ ] Products, Variants and Suppliers lists with rename; delete guarded by foreign key restriction with a friendly message
-- [ ] Yard Operator sees only the profile block and sign out
-- [ ] Seam tests: operator cannot write settings or team members; threshold ordering enforced; delete refused when referenced
+- [x] Profile block with role badge and sign out
+- [x] Team Members: list, add (email + Role), remove; only Admin can change; removal takes effect on the next request
+- [x] Threshold editor with validation that Ageing is below Stale, and band explanation using the live values
+- [x] Products, Variants and Suppliers lists with rename; delete guarded by foreign key restriction with a friendly message
+- [x] Yard Operator sees only the profile block and sign out
+- [x] Seam tests: operator cannot write settings or team members; threshold ordering enforced; delete refused when referenced
