@@ -579,6 +579,19 @@ export type Database = {
         }
         Relationships: []
       }
+      v_public_catalog: {
+        Row: {
+          available: number | null
+          breadth_ft: number | null
+          category: string | null
+          length_ft: number | null
+          line_key: string | null
+          product_name: string | null
+          thickness_mm: number | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
       v_sales: {
         Row: {
           batch_code: string | null

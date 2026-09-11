@@ -4,12 +4,12 @@
 
 **Blocked by:** 04 — Sell stone
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `v_public_catalog` exposes only public columns, only lines with Available above zero, and no rows when `catalog_public` is false; it is the only object granted to anon
-- [ ] Catalog route is unauthenticated, server-rendered, fast on a low-end phone, and returns 404 when the catalog is off
-- [ ] Category chips (All, Granite, Doom Stone, Tiles) and text search; cards per the design on desktop and mobile
-- [ ] WhatsApp button builds the wa.me link from the settings number with a prefilled message naming the Stock Line
-- [ ] Public View Link page: URL, copy, live toggle, WhatsApp number editing, preview of the first few lines
-- [ ] Seam tests: anon reads the catalog view and nothing else; view empty when off; sold-out lines absent; no private column present
-- [ ] Playwright: open the catalog as a logged-out visitor, see a seeded line with the right count and no price
+- [x] `v_public_catalog` exposes only public columns, only lines with Available above zero, and no rows when `catalog_public` is false; it is the only object granted to anon
+- [x] Catalog route is unauthenticated, server-rendered, fast on a low-end phone, and returns 404 when the catalog is off
+- [x] Category chips (All, Granite, Doom Stone, Tiles) and text search; cards per the design on desktop and mobile
+- [x] WhatsApp button builds the wa.me link from the settings number with a prefilled message naming the Stock Line
+- [x] Public View Link page: URL, copy, live toggle, WhatsApp number editing, preview of the first few lines
+- [x] Seam tests: anon reads the catalog view and nothing else; view empty when off; sold-out lines absent; no private column present
+- [x] Playwright: open the catalog as a logged-out visitor, see a seeded line with the right count and no price
