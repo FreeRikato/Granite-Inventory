@@ -60,6 +60,15 @@ The UI shows only "Continue with Google", but local Auth also has the email prov
 - Seam tests (Vitest): create users with the secret key via the Auth admin API, one per role (`admin@test.local` on the Team Member list as ADMIN, `operator@test.local` as YARD_OPERATOR, `stranger@test.local` not on the list), sign in with password using supabase-js, and call views and functions as that user. Anonymous tests use the publishable key with no session. Truncate domain tables between tests; `supabase db reset` before the suite.
 - Playwright: sign in programmatically with the same email users through a small test-only route or by calling supabase-js in the test and setting the auth cookies, then visit pages. Never drive the real Google consent screen.
 
+## Gotchas met while building
+
+- `supabase migration new <name>` reads the migration body from stdin when stdin is not a TTY and hangs in an agent shell. Redirect stdin: `supabase migration new name < /dev/null`, then edit the file. The same applies to `supabase db reset < /dev/null`.
+- A first `supabase db reset` occasionally fails with `LegacyDbSetupError: error running container: exit 1`; running it again succeeds.
+- PostgREST matches RPC calls by the set of argument names sent, so every optional function argument needs a SQL default and the client passes `undefined` (not `null`) to omit it.
+- `NEXT_PUBLIC_*` variables must be referenced literally (`process.env.NEXT_PUBLIC_X`), never through a computed key, or the browser bundle sees `undefined`.
+- Trigger functions in the `private` schema run as the calling role, so `authenticated` has `usage` on that schema; the schema is still not exposed through the API.
+- Playwright signs in through `POST /auth/test-login` (JSON `{email, password}`), which exists only when `E2E_TEST_LOGIN=1` and never in production builds.
+
 ## Non-interactive commands
 
 - shadcn: `pnpm dlx shadcn@latest init --defaults --yes` and `pnpm dlx shadcn@latest add <items> --yes --overwrite`

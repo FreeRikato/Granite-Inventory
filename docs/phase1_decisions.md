@@ -62,7 +62,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Lists Stock Lines with Available > 0 with exact counts, filterable by Category. No prices, costs, suppliers, batches, dates or photos.
 - `settings.catalog_public` toggle; when false the route returns 404.
 - "Call to Inquire" opens `wa.me/{settings.whatsapp_number}` with a prefilled message naming the Stock Line. Nothing is recorded.
-- Served from a `v_public_catalog` view granted to the anon role.
+- Served from a `v_public_catalog` view granted to the anon role. It and `v_public_business` are owner-run views by design (ADR 0003); the Supabase advisor warning on them is expected.
 
 ## Dashboard definitions
 
