@@ -1,4 +1,5 @@
-import { test, ensureTestUsers } from "./fixtures";
+import { test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { seedYard } from "./seed";
 
 /* Not a test of behaviour: captures pages for a side-by-side check against the Pencil designs.
    Run with: pnpm exec playwright test screenshot --project=desktop */
@@ -10,6 +11,8 @@ test.beforeAll(async () => {
 
 test("capture every page", async ({ page, signIn }, testInfo) => {
   test.skip(!process.env.CAPTURE, "set CAPTURE=1 to capture");
+  await resetDomainData();
+  await seedYard();
   await signIn("admin");
   for (const path of PAGES) {
     await page.goto(path);

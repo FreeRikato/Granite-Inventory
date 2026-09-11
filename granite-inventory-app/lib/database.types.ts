@@ -114,10 +114,24 @@ export type Database = {
             referencedColumns: ["supplier_id"]
           },
           {
+            foreignKeyName: "batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "v_yard_batches"
+            referencedColumns: ["supplier_id"]
+          },
+          {
             foreignKeyName: "batches_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "v_batches"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "batches_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_yard_batches"
             referencedColumns: ["variant_id"]
           },
           {
@@ -274,6 +288,13 @@ export type Database = {
             referencedRelation: "v_batches"
             referencedColumns: ["product_id"]
           },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_yard_batches"
+            referencedColumns: ["product_id"]
+          },
         ]
       }
     }
@@ -330,8 +351,45 @@ export type Database = {
         }
         Relationships: []
       }
+      v_yard_batches: {
+        Row: {
+          age_days: number | null
+          ageing_band: string | null
+          available: number | null
+          batch_code: string | null
+          breadth_ft: number | null
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          days_since_previous: number | null
+          freight_cost: number | null
+          id: string | null
+          initial_units: number | null
+          landed_cost: number | null
+          length_ft: number | null
+          notes: string | null
+          previous_purchase_date: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          purchase_date: string | null
+          slot: string | null
+          sold_out: boolean | null
+          supplier_id: string | null
+          supplier_name: string | null
+          thickness_mm: number | null
+          unit_purchase_price: number | null
+          units_sold: number | null
+          updated_at: string | null
+          updated_by: string | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      ageing_band: { Args: { p_age_days: number }; Returns: string }
       create_batch: {
         Args: {
           p_breadth_ft?: number
