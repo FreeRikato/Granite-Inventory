@@ -4,12 +4,12 @@
 
 **Blocked by:** 04 — Sell stone
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `v_customers` with derived last purchase date and Sale count
-- [ ] List page with KPI counts, search, type badges (Retail labelled "Walk-in"), relative last purchase
-- [ ] Add Customer dialog and edit (rename, phone, type); phone uniqueness error surfaced clearly
-- [ ] Detail page: details plus Sales list (date, Product, Variant, Size, Batch Code, quantity, total, Margin)
-- [ ] Delete refused when Sales reference the Customer; Walk-in Customer cannot be deleted
-- [ ] Mobile layout for list and detail
-- [ ] Seam tests: last purchase derivation; delete refusal; type check constraint
+- [x] `v_customers` with derived last purchase date and Sale count
+- [x] List page with KPI counts, search, type badges (Retail labelled "Walk-in"), relative last purchase
+- [x] Add Customer dialog and edit (rename, phone, type); phone uniqueness error surfaced clearly
+- [x] Detail page: details plus Sales list (date, Product, Variant, Size, Batch Code, quantity, total, Margin)
+- [x] Delete refused when Sales reference the Customer; Walk-in Customer cannot be deleted
+- [x] Mobile layout for list and detail
+- [x] Seam tests: last purchase derivation; delete refusal; type check constraint

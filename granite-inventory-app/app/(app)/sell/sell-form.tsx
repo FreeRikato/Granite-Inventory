@@ -8,7 +8,6 @@ import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
 import { SearchSelect } from "@/components/search-select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -17,14 +16,14 @@ import {
   PAYMENT_MODES,
   PAYMENT_MODE_LABEL,
   isCustomerType,
-  type CustomerType,
   type PaymentMode,
 } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { computeMargin, marginHealth } from "@/lib/margin";
 import { cn } from "@/lib/utils";
-import { createCustomerAction, recordSaleAction } from "./actions";
+import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
+import { recordSaleAction } from "./actions";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
 type Line = Tables<"v_stock_lines">;
@@ -59,7 +58,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [stickering, setStickering] = useState(false);
   const [stickeringCost, setStickeringCost] = useState("");
   const [stickeringPrice, setStickeringPrice] = useState("");
-  const [newCustomer, setNewCustomer] = useState<{ name: string; phone: string; customerType: CustomerType } | null>(null);
+  const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
@@ -108,20 +107,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       setStickeringCost("");
       setStickeringPrice("");
       router.refresh();
-    });
-  }
-
-  function saveCustomer() {
-    if (!newCustomer) return;
-    startTransition(async () => {
-      const result = await createCustomerAction(newCustomer);
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      setCustomers((prev) => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)));
-      setCustomerId(result.data.id);
-      setNewCustomer(null);
     });
   }
 
@@ -302,34 +287,15 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         </Button>
       </aside>
 
-      <Dialog open={newCustomer !== null} onOpenChange={(open) => { if (!open) setNewCustomer(null); }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>New customer</DialogTitle></DialogHeader>
-          {newCustomer ? (
-            <div className="flex flex-col gap-4">
-              <Field label="Name" htmlFor="nc-name">
-                <Input id="nc-name" value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} autoFocus={!newCustomer.name} />
-              </Field>
-              <Field label="Phone" htmlFor="nc-phone" hint="Optional. An existing number selects that customer instead.">
-                <Input id="nc-phone" inputMode="tel" value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} />
-              </Field>
-              <Field label="Type">
-                <div className="flex flex-wrap gap-2">
-                  {CUSTOMER_TYPES.map((t) => (
-                    <Chip key={t} active={newCustomer.customerType === t} onClick={() => setNewCustomer({ ...newCustomer, customerType: t })}>
-                      {CUSTOMER_TYPE_LABEL[t]}
-                    </Chip>
-                  ))}
-                </div>
-              </Field>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setNewCustomer(null)}>Cancel</Button>
-                <Button type="button" onClick={saveCustomer} disabled={pending || !newCustomer.name.trim()}>Add customer</Button>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <CustomerDialog
+        draft={newCustomer}
+        onClose={() => setNewCustomer(null)}
+        onSaved={(c) => {
+          setCustomers((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));
+          setCustomerId(c.id);
+          setNewCustomer(null);
+        }}
+      />
     </form>
   );
 }

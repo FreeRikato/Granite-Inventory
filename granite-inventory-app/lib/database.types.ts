@@ -315,6 +315,13 @@ export type Database = {
             foreignKeyName: "sales_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "v_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "v_sales"
             referencedColumns: ["customer_id"]
           },
@@ -492,6 +499,48 @@ export type Database = {
           updated_by: string | null
           variant_id: string | null
           variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_customers: {
+        Row: {
+          created_at: string | null
+          customer_type: string | null
+          id: string | null
+          is_walk_in: boolean | null
+          last_purchase_date: string | null
+          lifetime_revenue: number | null
+          name: string | null
+          phone: string | null
+          sale_count: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_type?: string | null
+          id?: string | null
+          is_walk_in?: boolean | null
+          last_purchase_date?: never
+          lifetime_revenue?: never
+          name?: string | null
+          phone?: string | null
+          sale_count?: never
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_type?: string | null
+          id?: string | null
+          is_walk_in?: boolean | null
+          last_purchase_date?: never
+          lifetime_revenue?: never
+          name?: string | null
+          phone?: string | null
+          sale_count?: never
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
