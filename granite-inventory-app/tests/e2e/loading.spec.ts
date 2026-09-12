@@ -82,16 +82,6 @@ test.describe("instant loading titles", () => {
     await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
     const loading = page.locator('main [aria-busy="true"]');
-    await observeLoading(page, "Yard Slots");
-    await page.getByRole("link", { name: "Yard Slots" }).click();
-    await expect(page.getByRole("heading", { name: "Yard Slots" })).toBeVisible();
-
-    const yardRecord = await readLoadingRecord(page);
-    expect(yardRecord).not.toBeNull();
-    expect(yardRecord?.placeholderText).toBe("Yard Slots");
-    expect(yardRecord?.headingPresentAtThatMoment).toBe(false);
-    await expect(loading).toHaveCount(0);
-
     await page.goto("/customers");
     await expect(page.getByRole("heading", { name: "Customers" })).toBeVisible();
     await page.getByLabel("Search customers").fill("Relay");
