@@ -58,8 +58,8 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
           <p className="mt-3 text-sm text-muted-foreground">No sales recorded for this customer.</p>
         ) : (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+            <table className="block w-full text-sm sm:table">
+              <thead className="hidden text-left text-xs text-muted-foreground sm:table-header-group">
                 <tr>
                   <th className="py-2 pr-4 font-medium">Date</th>
                   <th className="py-2 pr-4 font-medium">Stone</th>
@@ -70,26 +70,41 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                   {editLists ? <th className="py-2 pl-4"><span className="sr-only">Sale actions</span></th> : null}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block sm:table-row-group">
                 {sales.map((s) => (
-                  <tr key={s.id} className="border-t border-border" data-testid="sale-row">
-                    <td className="py-2.5 pr-4 whitespace-nowrap">{s.sale_date ? formatDate(s.sale_date) : ""}</td>
-                    <td className="py-2.5 pr-4 font-medium">
+                  <tr key={s.id} className="block border-t border-border py-2.5 sm:table-row sm:py-0" data-testid="sale-row">
+                    <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
+                      <span className="mr-2 text-xs font-medium text-muted-foreground sm:hidden">Date</span>
+                      {s.sale_date ? formatDate(s.sale_date) : ""}
+                    </td>
+                    <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
+                      <span className="mr-2 text-xs font-medium text-muted-foreground sm:hidden">Stone</span>
                       {s.product_name} · {s.variant_name}
                       <span className="block text-xs font-normal text-muted-foreground">
                         {formatSize({ length_ft: s.length_ft, breadth_ft: s.breadth_ft, thickness_mm: s.thickness_mm })}
                         {s.has_stickering ? " · with stickering" : ""}
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4 font-mono text-xs">{s.batch_code}</td>
-                    <td className="py-2.5 pr-4 text-right tabular">{s.quantity}</td>
-                    <td className="py-2.5 pr-4 text-right tabular">{formatRupees(s.revenue ?? 0)}</td>
-                    <td className="py-2.5 text-right tabular">
+                    <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-2.5 sm:pr-4">
+                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Batch</span>
+                      {s.batch_code}
+                    </td>
+                    <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
+                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Qty</span>
+                      {s.quantity}
+                    </td>
+                    <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
+                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Total</span>
+                      {formatRupees(s.revenue ?? 0)}
+                    </td>
+                    <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:text-right">
+                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Margin</span>
                       {formatRupees(s.margin ?? 0)}
                       {s.margin_pct !== null ? <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span> : null}
                     </td>
                     {editLists ? (
-                      <td className="py-2.5 pl-4">
+                      <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4">
+                        <span className="text-xs font-medium text-muted-foreground sm:hidden">Actions</span>
                         <SaleActions sale={s} lists={editLists} />
                       </td>
                     ) : null}
