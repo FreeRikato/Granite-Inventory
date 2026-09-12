@@ -59,7 +59,8 @@ export function CustomerList({ customers, kpis }: Props) {
                   <span className="hidden text-sm text-muted-foreground sm:block">
                     {c.last_purchase_date ? relativeDays(c.last_purchase_date) : "No purchases"}
                   </span>
-                  <CustomerTypeBadge type={c.customer_type} className="basis-full ml-12 w-28 justify-center sm:basis-auto sm:ml-0" />
+                  <span className="basis-full sm:hidden" />
+                  <CustomerTypeBadge type={c.customer_type} className="ml-12 w-28 justify-center sm:ml-0" />
                 </Link>
               </li>
             ))}
