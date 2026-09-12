@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchOptionHasMatch, searchOptionMatches, type SearchOption } from "@/components/search-select";
+import { searchOptionIsExact, searchOptionMatches, type SearchOption } from "@/components/search-select";
 
 const murugan: SearchOption = {
   value: "murugan",
@@ -16,6 +16,7 @@ const priya: SearchOption = {
 const blackPearl: SearchOption = {
   value: "black-pearl",
   label: "Black Pearl",
+  keywords: ["BP", "10x5"],
 };
 
 describe("SearchSelect matching", () => {
@@ -39,13 +40,19 @@ describe("SearchSelect matching", () => {
     expect(searchOptionMatches(murugan, "CONSTRUCTIONS")).toBe(true);
   });
 
+  it("matches a keyword such as the product abbreviation or size", () => {
+    expect(searchOptionMatches(blackPearl, "bp")).toBe(true);
+    expect(searchOptionMatches(blackPearl, "10x5")).toBe(true);
+    expect(searchOptionMatches(blackPearl, "10x6")).toBe(false);
+  });
+
   it("keeps Add available for a label substring but hides it for an exact label", () => {
-    expect(searchOptionHasMatch(blackPearl, "Black")).toBe(false);
-    expect(searchOptionHasMatch(blackPearl, "Black Pearl")).toBe(true);
+    expect(searchOptionIsExact(blackPearl, "Black")).toBe(false);
+    expect(searchOptionIsExact(blackPearl, "Black Pearl")).toBe(true);
   });
 
   it("hides Add only for an exact phone-digits match", () => {
-    expect(searchOptionHasMatch(murugan, "98765")).toBe(false);
-    expect(searchOptionHasMatch(murugan, "919876543210")).toBe(true);
+    expect(searchOptionIsExact(murugan, "98765")).toBe(false);
+    expect(searchOptionIsExact(murugan, "919876543210")).toBe(true);
   });
 });
