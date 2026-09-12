@@ -41,6 +41,18 @@ function num(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+const PHONE_QUERY_PATTERN = /^\+?[\d\s().-]+$/;
+
+export function customerDraftFromQuery(query: string): CustomerDraft {
+  const trimmed = query.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  const isPhone = PHONE_QUERY_PATTERN.test(trimmed) && digits.length >= 6 && digits.length <= 20;
+
+  return isPhone
+    ? { name: "", phone: `${trimmed.startsWith("+") ? "+" : ""}${digits}`, customerType: "REGULAR" }
+    : { name: trimmed, phone: "", customerType: "REGULAR" };
+}
+
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -137,15 +149,14 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   value: c.id,
                   label: c.name,
                   hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
+                  phone: c.phone,
                   keywords: c.phone ? [c.phone, c.phone.replace(/\D/g, "")] : [],
                 }))}
                 value={customerId}
                 onChange={setCustomerId}
                 placeholder="Search or add customer"
                 searchPlaceholder="Name or phone..."
-                onCreate={(q) =>
-                  setNewCustomer(/^\+?[0-9 ]+$/.test(q) ? { name: "", phone: q, customerType: "REGULAR" } : { name: q, phone: "", customerType: "REGULAR" })
-                }
+                onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
                 createLabel={(q) => `Add customer "${q}"`}
               />
             </Field>

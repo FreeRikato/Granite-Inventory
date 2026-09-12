@@ -18,8 +18,48 @@ export type SearchOption = {
   readonly value: string;
   readonly label: string;
   readonly hint?: string;
+  readonly phone?: string | null;
   readonly keywords?: readonly string[];
 };
+
+const PHONE_KEYWORD_PREFIX = "__phone_digits__:";
+const PHONE_QUERY_PATTERN = /^\+?[\d\s().-]+$/;
+
+function phoneDigitsFromQuery(query: string): string {
+  const trimmed = query.trim();
+  if (!PHONE_QUERY_PATTERN.test(trimmed)) return "";
+  return trimmed.replace(/\D/g, "");
+}
+
+export function searchOptionMatches(option: SearchOption, query: string): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+  if (option.label.toLowerCase().includes(trimmed.toLowerCase())) return true;
+
+  const phoneQuery = phoneDigitsFromQuery(trimmed);
+  const phoneDigits = (option.phone ?? "").replace(/\D/g, "");
+  return phoneQuery.length > 0 && phoneDigits.includes(phoneQuery);
+}
+
+function searchOptionHasMatch(option: SearchOption, query: string): boolean {
+  if (searchOptionMatches(option, query)) return true;
+  const normalizedQuery = query.trim().toLowerCase();
+  return (option.keywords ?? []).some((keyword) => keyword.toLowerCase().includes(normalizedQuery));
+}
+
+function commandFilter(value: string, search: string, keywords?: readonly string[]): number {
+  const query = search.trim().toLowerCase();
+  if (!query) return 1;
+  if (value.toLowerCase().includes(query)) return 1;
+
+  const phoneQuery = phoneDigitsFromQuery(search);
+  const phoneMatches = phoneQuery.length > 0 && (keywords ?? []).some(
+    (keyword) => keyword.startsWith(PHONE_KEYWORD_PREFIX) && keyword.slice(PHONE_KEYWORD_PREFIX.length).includes(phoneQuery),
+  );
+  if (phoneMatches) return 1;
+
+  return (keywords ?? []).some((keyword) => !keyword.startsWith(PHONE_KEYWORD_PREFIX) && keyword.toLowerCase().includes(query)) ? 1 : 0;
+}
 
 type Props = {
   readonly options: readonly SearchOption[];
@@ -54,7 +94,7 @@ export function SearchSelect({
   const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
   const trimmed = query.trim();
-  const exact = options.some((o) => o.label.toLowerCase() === trimmed.toLowerCase());
+  const hasMatch = options.some((option) => searchOptionHasMatch(option, trimmed));
 
   return (
     <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
@@ -77,31 +117,38 @@ export function SearchSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
+        <Command filter={commandFilter}>
           <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  keywords={option.keywords ? [...option.keywords] : undefined}
-                  onSelect={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate">{option.label}</span>
-                    {option.hint ? (
-                      <span className="truncate text-xs text-muted-foreground">{option.hint}</span>
-                    ) : null}
-                  </span>
-                  <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
-                </CommandItem>
-              ))}
-              {onCreate && trimmed && !exact ? (
+              {options.map((option) => {
+                const phoneDigits = (option.phone ?? "").replace(/\D/g, "");
+                const keywords = [
+                  ...(option.keywords ?? []),
+                  ...(phoneDigits ? [`${PHONE_KEYWORD_PREFIX}${phoneDigits}`] : []),
+                ];
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    keywords={keywords.length > 0 ? keywords : undefined}
+                    onSelect={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate">{option.label}</span>
+                      {option.hint ? (
+                        <span className="truncate text-xs text-muted-foreground">{option.hint}</span>
+                      ) : null}
+                    </span>
+                    <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                  </CommandItem>
+                );
+              })}
+              {onCreate && trimmed && !hasMatch ? (
                 <CommandItem
                   value={`__create__${trimmed}`}
                   onSelect={() => {
