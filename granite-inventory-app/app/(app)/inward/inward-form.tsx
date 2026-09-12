@@ -298,7 +298,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
       ) : null}
 
       <div className="mt-6 flex justify-end">
-        <Button type="submit" disabled={pending} className="h-11 px-6 font-semibold">
+        <Button type="submit" disabled={pending || !form.productId || !form.supplierId} className="h-11 px-6 font-semibold">
           {pending ? "Saving..." : "Save Batch"}
         </Button>
       </div>

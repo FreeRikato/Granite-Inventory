@@ -35,6 +35,12 @@ describe("admin-list reference helpers", () => {
       "Cannot delete Madurai Quarry: batch JB-12SEP26-01 still uses it.",
     );
   });
+
+  it("names a Product when one Batch blocks deletion", () => {
+    expect(deleteBlockedMessage("products", [batchReference], [], "Jet Black Granite")).toBe(
+      "Cannot delete Jet Black Granite: batch JB-12SEP26-01 still uses it.",
+    );
+  });
 });
 
 describe("admin lists: rename and guarded delete", () => {

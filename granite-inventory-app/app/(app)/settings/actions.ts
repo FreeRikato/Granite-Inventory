@@ -11,6 +11,7 @@ import {
   batchReferenceColumn,
   deleteBlockedMessage,
   hasDeleteReferences,
+  tableLabel,
   type AdminListTable,
   type DeleteReferences,
 } from "@/lib/admin-list-references";
@@ -110,7 +111,14 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
   const references = await findDeleteReferences(supabase, table, id);
   if (!references.ok) return references;
   if (hasDeleteReferences(table, references.data)) {
-    return fail(deleteBlockedMessage(table, references.data.batches, references.data.variants));
+    return fail(
+      deleteBlockedMessage(
+        table,
+        references.data.batches,
+        references.data.variants,
+        references.data.batches.length > 0 ? references.data.rowName : undefined,
+      ),
+    );
   }
 
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
@@ -118,7 +126,14 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
     if (error.code === "23503") {
       const latest = await findDeleteReferences(supabase, table, id);
       if (latest.ok && hasDeleteReferences(table, latest.data)) {
-        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.variants));
+        return fail(
+          deleteBlockedMessage(
+            table,
+            latest.data.batches,
+            latest.data.variants,
+            latest.data.batches.length > 0 ? latest.data.rowName : undefined,
+          ),
+        );
       }
     }
     return fail(messageOf(error));
@@ -138,11 +153,14 @@ async function findDeleteReferences(
     .select("batch_code, product_id, variant_id, supplier_id")
     .eq(batchReferenceColumn[table], id);
   if (error) return fail(messageOf(error));
+  const row = await supabase.from(table).select("name").eq("id", id).maybeSingle();
+  if (row.error) return fail(messageOf(row.error));
+  const rowName = row.data?.name ?? tableLabel[table];
   if (table !== "products") {
-    return ok({ batches: data ?? [], variants: [] });
+    return ok({ rowName, batches: data ?? [], variants: [] });
   }
 
   const variants = await supabase.from("variants").select("id, name, product_id").eq("product_id", id);
   if (variants.error) return fail(messageOf(variants.error));
-  return ok({ batches: data ?? [], variants: variants.data ?? [] });
+  return ok({ rowName, batches: data ?? [], variants: variants.data ?? [] });
 }

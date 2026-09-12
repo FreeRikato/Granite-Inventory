@@ -31,9 +31,9 @@ const unsizedBatch = z.object({
 
 export const batchSchema = z
   .object({
-    productId: z.string().uuid("Pick a product"),
+    productId: z.string({ error: "Pick a product" }).uuid("Pick a product"),
     variantName: z.string().trim().min(1, "Variant is required").max(80),
-    supplierId: z.string().uuid("Pick a supplier"),
+    supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
     slot: z.enum(SLOTS),
     initialUnits: z.coerce.number().int().positive("At least 1 piece"),

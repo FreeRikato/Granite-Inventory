@@ -115,6 +115,10 @@ function FilterSelect({
   options: readonly Option[];
   onChange: (value: string | null) => void;
 }) {
+  useEffect(() => {
+    if (value !== null && !options.some((option) => option.value === value)) onChange(null);
+  }, [onChange, options, value]);
+
   const valueLabel = value === null ? "All" : options.find((option) => option.value === value)?.label ?? value;
 
   return (
