@@ -67,7 +67,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                   <th className="py-2 pr-4 text-right font-medium">Qty</th>
                   <th className="py-2 pr-4 text-right font-medium">Total</th>
                   <th className="py-2 text-right font-medium">Margin</th>
-                  {editLists ? <th className="py-2 pl-4" /> : null}
+                  {editLists ? <th className="py-2 pl-4"><span className="sr-only">Sale actions</span></th> : null}
                 </tr>
               </thead>
               <tbody>

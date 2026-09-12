@@ -254,7 +254,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         </Card>
       </div>
 
-      <aside className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6" data-testid="order-summary">
+      <aside aria-label="Order summary" className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6" data-testid="order-summary">
         <h2 className="text-base font-bold">Order Summary</h2>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <Row label="Stone Sale Price" value={formatRupees(figures.stoneTotal)} />
@@ -328,7 +328,7 @@ function Row({ label, sub, value, muted }: { label: string; sub?: string; value:
     <div className="flex items-start justify-between gap-4">
       <dt className="text-muted-foreground">
         {label}
-        {sub ? <span className="block text-xs text-muted-foreground/80">{sub}</span> : null}
+        {sub ? <span className="block text-xs text-muted-foreground">{sub}</span> : null}
       </dt>
       <dd className={cn("font-semibold tabular", muted && "text-muted-foreground")}>{value}</dd>
     </div>

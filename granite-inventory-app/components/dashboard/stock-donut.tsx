@@ -56,12 +56,10 @@ export function StockDonut({ active, sold }: { readonly active: number; readonly
 
 function Legend({ color, label, value }: { color: string; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-1.5 size-2.5 rounded-full" style={{ background: color }} aria-hidden />
-      <div>
-        <dt className="text-xs text-muted-foreground">{label}</dt>
-        <dd className="text-[15px] font-bold tabular">{value}</dd>
-      </div>
+    <div className="grid grid-cols-[10px_1fr] gap-x-2.5">
+      <span className="row-span-2 mt-1.5 size-2.5 rounded-full" style={{ background: color }} aria-hidden />
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-[15px] font-bold tabular">{value}</dd>
     </div>
   );
 }

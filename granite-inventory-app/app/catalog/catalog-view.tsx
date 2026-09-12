@@ -57,7 +57,7 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
           <div className="flex items-center gap-3">
             <ThemeToggle className="hidden md:inline-flex" />
             {generalLink ? (
-              <a href={generalLink} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-white">
+              <a href={generalLink} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-black">
                 <MessageCircle className="size-4" /> Call to Inquire
               </a>
             ) : null}
@@ -98,7 +98,7 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
       </div>
 
       {generalLink ? (
-        <a href={generalLink} target="_blank" rel="noreferrer" className="fixed bottom-4 right-4 inline-flex h-12 items-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-white shadow-lg md:hidden">
+        <a href={generalLink} target="_blank" rel="noreferrer" className="fixed bottom-4 right-4 inline-flex h-12 items-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-black shadow-lg md:hidden">
           <MessageCircle className="size-4" /> Call to Inquire
         </a>
       ) : null}
@@ -122,4 +122,3 @@ function CategoryChip({ active, onClick, children }: { active: boolean; onClick:
     </button>
   );
 }
-

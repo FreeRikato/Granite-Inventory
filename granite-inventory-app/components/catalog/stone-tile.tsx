@@ -30,7 +30,7 @@ export function StoneTile({ line, compact }: { readonly line: Line; readonly com
         style={{ background: swatch(line.product_name ?? "") }}
         aria-hidden
       />
-      <h3 className="mt-3 text-[15px] font-semibold">{name}</h3>
+      <h2 className="mt-3 text-[15px] font-semibold">{name}</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         {line.length_ft === null ? "Standard size" : formatSize({ length_ft: line.length_ft, breadth_ft: line.breadth_ft, thickness_mm: line.thickness_mm })}
       </p>
