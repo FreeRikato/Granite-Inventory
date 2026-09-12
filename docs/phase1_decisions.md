@@ -26,7 +26,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.
 - Products, Variants, Suppliers and Customers are created inline from the inward and sell forms. A minimal admin list allows rename; delete only when nothing references the row (FK restrict). No merge tool.
-- Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone.
+- Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone. The Walk-in Customer flag is immutable for every role.
 
 ## Selling
 

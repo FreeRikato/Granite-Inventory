@@ -89,6 +89,7 @@ A one-off cost on a Sale such as transport to site or loading. Recorded for book
 
 **Customer**:
 The person or organisation a Sale is made to. Every Sale has a Customer; anonymous cash buyers go to a shared Walk-in Customer.
+The Walk-in Customer flag is immutable for every role.
 _Avoid_: Client, buyer, party
 
 **Customer Type**:
