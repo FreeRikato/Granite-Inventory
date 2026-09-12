@@ -184,7 +184,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               value={lineKey}
               onChange={(v) => {
                 setLineKey(v);
-                setBatchId(null);
+                setBatchId(batches.find((b) => b.line_key === v)?.id ?? null);
               }}
               placeholder="Search product, e.g. Black Pearl 4×2 ft"
               searchPlaceholder="Product, variant or size..."

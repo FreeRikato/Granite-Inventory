@@ -1,4 +1,4 @@
-import { expect, test, confirmDelete, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -41,8 +41,34 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await expect(page.getByTestId("products-row").filter({ hasText: "Jet Black Granite" })).toBeVisible();
 
-  await confirmDelete(page, page.getByTestId("suppliers-row").filter({ hasText: "Madurai Quarry" }).getByRole("button", { name: "Delete" }));
-  await expect(page.getByText("Still used by batches or sales in the yard")).toBeVisible();
+  const productDelete = page.getByTestId("products-row").filter({ hasText: "Jet Black Granite" }).getByRole("button", { name: "Delete" });
+  await productDelete.click();
+  const deleteDialog = page.getByRole("alertdialog");
+  await expect(deleteDialog).toContainText("JB-FIVE-01");
+  await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByText(/JB-FIVE-01/)).toBeVisible();
+});
+
+test("names a variant that blocks product deletion", async ({ page, signIn }) => {
+  await sql(`
+    with product as (
+      insert into public.products (name, abbreviation, category)
+      values ('Orphan Product', 'OP', 'GRANITE')
+      returning id
+    )
+    insert into public.variants (product_id, name)
+    select id, 'Oval' from product
+  `);
+
+  await signIn("admin");
+  await page.goto("/settings");
+
+  const productRow = page.getByTestId("products-row").filter({ hasText: "Orphan Product" });
+  await productRow.getByRole("button", { name: "Delete" }).click();
+  const deleteDialog = page.getByRole("alertdialog");
+  await expect(deleteDialog).toContainText("variant Oval");
+  await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByText("Cannot delete Product: variant Oval still belongs to it.")).toBeVisible();
 });
 
 test("an operator only sees their profile and the read-only rules", async ({ page, signIn }) => {

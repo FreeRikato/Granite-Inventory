@@ -1,5 +1,6 @@
 import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
+import { sql } from "../seam/harness";
 
 test.beforeAll(async () => {
   await ensureTestUsers();
@@ -32,4 +33,14 @@ test("yard shows batches per slot with ageing, a clamp, and filters", async ({ p
 
   await page.goto("/yard?slot=4FT&sort=newest");
   await expect(page.getByTestId("yard-batch").first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
+});
+
+test("showing sold-out batches exposes a Sold out marker", async ({ page, signIn }) => {
+  await sql(`update public.batches set units_sold = initial_units where batch_code = 'JB-FIVE-01'`);
+  await signIn("operator");
+  await page.goto("/yard?slot=5FT");
+
+  await page.getByRole("switch", { name: "Show sold out" }).click();
+  const card = page.getByTestId("yard-batch").filter({ hasText: "JB-FIVE-01" });
+  await expect(card.getByText("Sold out", { exact: true })).toBeVisible();
 });
