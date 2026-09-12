@@ -55,7 +55,6 @@ test("yard filter toolbar stays within the CLS budget on a cold navigation", asy
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
-  await page.waitForTimeout(1_000);
 
   const cumulativeLayoutShift = await page.evaluate(() => window.__yardCumulativeLayoutShift);
   expect(cumulativeLayoutShift).toBeLessThan(0.1);
