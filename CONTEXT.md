@@ -66,7 +66,7 @@ _Avoid_: Reversal, adjustment
 ### Selling
 
 **Sale**:
-A quantity of pieces taken from exactly one Batch by one Customer on one date. A customer buying from two Batches produces two Sales.
+A quantity of pieces taken from exactly one Batch by one Customer on one date. The Sale date cannot be before that Batch's purchase date. A customer buying from two Batches produces two Sales.
 _Avoid_: Order, invoice, outward entry, transaction
 
 **FIFO Listing**:
