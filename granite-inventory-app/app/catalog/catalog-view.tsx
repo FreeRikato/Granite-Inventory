@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { MessageCircle, Search } from "lucide-react";
 import { StoneTile } from "@/components/catalog/stone-tile";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { CATEGORIES, CATEGORY_LABEL, type Category } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
@@ -39,22 +40,28 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
     <main className="min-h-svh bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-[1344px] flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
-          <div>
-            <h1 className="flex items-center gap-2 text-lg font-bold">
-              {businessName}
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-fresh"><span className="size-1.5 rounded-full bg-fresh" />Live</span>
-            </h1>
-            {tagline ? <p className="text-sm text-muted-foreground">{tagline}</p> : null}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="flex items-center gap-2 text-lg font-bold">
+                {businessName}
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-fresh"><span className="size-1.5 rounded-full bg-fresh" />Live</span>
+              </h1>
+              {tagline ? <p className="text-sm text-muted-foreground">{tagline}</p> : null}
+            </div>
+            <ThemeToggle className="md:hidden" />
           </div>
           <div className="relative w-full md:w-[360px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search stone, size, thickness..." className="h-10 rounded-full pl-9" aria-label="Search stock" />
           </div>
-          {generalLink ? (
-            <a href={generalLink} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-white">
-              <MessageCircle className="size-4" /> Call to Inquire
-            </a>
-          ) : null}
+          <div className="flex items-center gap-3">
+            <ThemeToggle className="hidden md:inline-flex" />
+            {generalLink ? (
+              <a href={generalLink} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-white">
+                <MessageCircle className="size-4" /> Call to Inquire
+              </a>
+            ) : null}
+          </div>
         </div>
       </header>
 

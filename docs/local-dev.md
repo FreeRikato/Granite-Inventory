@@ -37,7 +37,7 @@ The local keys are Supabase's fixed demo keys, identical on every machine, safe 
 - Google Cloud project `granite-inventory-508308`, OAuth web client already created with both callbacks: `http://127.0.0.1:54321/auth/v1/callback` (local) and the hosted project callback.
 - `supabase/config.toml` has `[auth.external.google]` enabled with the client ID; the secret is read from `supabase/.env` as `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`. The CLI loads that file automatically.
 - `skip_nonce_check = true` is required for Google on local Supabase.
-- Hosted project `ustcpfgubxlugfndwmib` needs the same client ID and secret pasted into its Auth provider settings before the first deploy. That is a handover step, not part of any Phase 1 ticket.
+- Hosted project `heugsayvurecfacmkcms` needs the same client ID and secret pasted into its Auth provider settings before the first deploy. That is a handover step, not part of any Phase 1 ticket.
 
 ## Next.js env
 

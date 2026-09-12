@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS, SETTINGS_ITEM, isActivePath, roleLabel } from "@/lib/nav";
 import type { Member } from "@/lib/auth";
@@ -48,11 +49,11 @@ export function AppSidebar({ businessName, member }: Props) {
         })}
       </nav>
 
-      <div className="mt-5 border-t border-sidebar-border pt-4">
+      <div className="mt-5 flex items-center justify-between gap-2 border-t border-sidebar-border pt-4">
         <Link
           href={SETTINGS_ITEM.href}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-secondary",
+            "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-2 hover:bg-secondary",
             isActivePath(pathname, SETTINGS_ITEM.href) && "bg-sidebar-accent",
           )}
         >
@@ -64,6 +65,7 @@ export function AppSidebar({ businessName, member }: Props) {
             <span className="text-xs text-muted-foreground">{roleLabel(member.role)}</span>
           </span>
         </Link>
+        <ThemeToggle />
       </div>
     </aside>
   );

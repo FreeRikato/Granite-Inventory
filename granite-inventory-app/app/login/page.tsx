@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
 export default async function LoginPage(props: PageProps<"/login">) {
@@ -17,7 +18,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
   const name = business?.business_name ?? "Granite Inventory";
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-background px-4">
+    <main className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4">
+      <ThemeToggle className="absolute right-4 top-4 md:right-6 md:top-6" />
       <div className="flex flex-col items-center gap-3">
         <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-sm">
           {name.charAt(0)}
