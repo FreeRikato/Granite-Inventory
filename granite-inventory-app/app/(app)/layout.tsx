@@ -1,33 +1,31 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { MobileTabBar } from "@/components/shell/mobile-tab-bar";
-import { authTimingNow, getAuthTiming, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
+
+const AUTH_TIMING_ENABLED = process.env.AUTH_TIMING === "1";
+
+async function getSettings(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const settingsStartedAt = AUTH_TIMING_ENABLED ? performance.now() : 0;
+  const { data } = await supabase
+    .from("settings")
+    .select("business_name")
+    .maybeSingle();
+  const settingsMs = AUTH_TIMING_ENABLED ? performance.now() - settingsStartedAt : 0;
+  return { data, settingsMs };
+}
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const timing = getAuthTiming();
   const session = await getSession();
   if (session.status !== "member") redirect("/login");
 
   const supabase = await createClient();
-  const settingsStartedAt = authTimingNow();
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("business_name")
-    .maybeSingle();
-  timing.settingsMs = authTimingNow() - settingsStartedAt;
+  const { data: settings, settingsMs } = await getSettings(supabase);
 
-  if (process.env.AUTH_TIMING === "1") {
-    const path = (await headers()).get("x-invoke-path") ?? "";
-    console.log(
-      `auth-timing ${JSON.stringify({
-        path,
-        claimsMs: timing.claimsMs,
-        memberMs: timing.memberMs,
-        settingsMs: timing.settingsMs,
-      })}`,
-    );
+  if (AUTH_TIMING_ENABLED) {
+    // Shared layouts are skipped on soft navigations, so this line covers document loads only.
+    console.log(`auth-timing ${JSON.stringify({ settingsMs })}`);
   }
 
   return (

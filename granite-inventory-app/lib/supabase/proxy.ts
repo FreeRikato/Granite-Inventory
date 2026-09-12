@@ -25,9 +25,9 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
+  const proxyStartedAt = performance.now();
   // getClaims() validates the JWT and refreshes it when needed; nothing may run between
   // creating the client and this call.
-  const proxyStartedAt = performance.now();
   const { data } = await supabase.auth.getClaims();
   supabaseResponse.headers.set("Server-Timing", `proxy;dur=${(performance.now() - proxyStartedAt).toFixed(1)}`);
   const { pathname } = request.nextUrl;

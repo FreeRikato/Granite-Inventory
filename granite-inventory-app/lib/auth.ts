@@ -13,20 +13,20 @@ export type Session =
   | { readonly status: "not-member"; readonly email: string }
   | { readonly status: "member"; readonly member: Member };
 
-export type AuthTiming = {
+type AuthTiming = {
   claimsMs: number;
   memberMs: number;
-  settingsMs: number;
 };
 
-const getRequestAuthTiming = cache((): AuthTiming => ({ claimsMs: 0, memberMs: 0, settingsMs: 0 }));
+const AUTH_TIMING_ENABLED = process.env.AUTH_TIMING === "1";
 
-export function getAuthTiming(): AuthTiming {
-  return getRequestAuthTiming();
+function getAuthTiming(): AuthTiming | null {
+  return AUTH_TIMING_ENABLED ? { claimsMs: 0, memberMs: 0 } : null;
 }
 
-export function authTimingNow(): number {
-  return performance.now();
+function logAuthTiming(timing: AuthTiming | null): void {
+  if (!timing) return;
+  console.log(`auth-timing ${JSON.stringify(timing)}`);
 }
 
 /* Resolves the signed-in Google account to a Team Member. Cached per request so layout and
@@ -34,22 +34,29 @@ export function authTimingNow(): number {
 export const getSession = cache(async (): Promise<Session> => {
   const supabase = await createClient();
   const timing = getAuthTiming();
-  const claimsStartedAt = authTimingNow();
+  const claimsStartedAt = timing ? performance.now() : 0;
   const { data } = await supabase.auth.getClaims();
-  timing.claimsMs = authTimingNow() - claimsStartedAt;
+  if (timing) timing.claimsMs = performance.now() - claimsStartedAt;
   const claims = data?.claims;
   const email = typeof claims?.email === "string" ? claims.email.toLowerCase() : null;
-  if (!email) return { status: "anonymous" };
+  if (!email) {
+    logAuthTiming(timing);
+    return { status: "anonymous" };
+  }
 
-  const memberStartedAt = authTimingNow();
+  const memberStartedAt = timing ? performance.now() : 0;
   const { data: row } = await supabase
     .from("team_members")
     .select("email, name, role")
     .eq("email", email)
     .maybeSingle();
-  timing.memberMs = authTimingNow() - memberStartedAt;
+  if (timing) timing.memberMs = performance.now() - memberStartedAt;
 
-  if (!row || !isRole(row.role)) return { status: "not-member", email };
+  if (!row || !isRole(row.role)) {
+    logAuthTiming(timing);
+    return { status: "not-member", email };
+  }
+  logAuthTiming(timing);
   return {
     status: "member",
     member: { email: row.email, name: row.name ?? row.email, role: row.role },
