@@ -15,13 +15,13 @@ test.describe("instant loading titles", () => {
     await sql(`insert into public.customers (name, customer_type) values ('Relay Detail Customer', 'REGULAR')`);
   });
 
-  async function delayRscResponses(page: Page, requestDelayMs = 0): Promise<void> {
+  async function delayRscResponses(page: Page): Promise<void> {
     await page.route(
       (url) => url.searchParams.has("_rsc"),
       async (route) => {
-        if (requestDelayMs > 0) await setTimeout(requestDelayMs);
-        await route.continue();
+        const response = await route.fetch();
         await setTimeout(1_500);
+        await route.fulfill({ response });
       },
     );
   }
@@ -54,13 +54,8 @@ test.describe("instant loading titles", () => {
     const loading = page.locator('main [aria-busy="true"]');
     const customer = page.getByTestId("customer-row").filter({ hasText: "Relay Detail Customer" });
     const navigation = customer.click();
-    await expect
-      .poll(async () => {
-        const text = await loading.textContent();
-        const detailVisible = await page.getByRole("heading", { name: "Relay Detail Customer" }).isVisible();
-        return detailVisible || text === null || !text.includes("Customers");
-      }, { timeout: 15_000 })
-      .toBe(true);
+    await expect(loading).toBeVisible({ timeout: 500 });
+    await expect(loading).toHaveText("");
 
     await expect(page.getByRole("heading", { name: "Relay Detail Customer" })).toBeVisible({ timeout: 15_000 });
     await expect(loading).toHaveCount(0);
