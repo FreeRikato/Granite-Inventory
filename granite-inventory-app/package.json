@@ -12,8 +12,8 @@
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
-    "db:push:staging": "supabase link --project-ref exddnsdnxookluwcxsvn && supabase db push",
-    "db:push:prod": "supabase link --project-ref heugsayvurecfacmkcms && supabase db push",
+    "db:push:staging": "supabase link --project-ref tyiepanibaqwpubajsya && supabase db push",
+    "db:push:prod": "supabase link --project-ref nugnqzqglldacalkmgyn && supabase db push",
     "db:link:local": "supabase unlink"
   },
   "dependencies": {
