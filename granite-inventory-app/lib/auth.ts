@@ -13,20 +13,41 @@ export type Session =
   | { readonly status: "not-member"; readonly email: string }
   | { readonly status: "member"; readonly member: Member };
 
+export type AuthTiming = {
+  claimsMs: number;
+  memberMs: number;
+  settingsMs: number;
+};
+
+const getRequestAuthTiming = cache((): AuthTiming => ({ claimsMs: 0, memberMs: 0, settingsMs: 0 }));
+
+export function getAuthTiming(): AuthTiming {
+  return getRequestAuthTiming();
+}
+
+export function authTimingNow(): number {
+  return performance.now();
+}
+
 /* Resolves the signed-in Google account to a Team Member. Cached per request so layout and
    pages share one round trip. */
 export const getSession = cache(async (): Promise<Session> => {
   const supabase = await createClient();
+  const timing = getAuthTiming();
+  const claimsStartedAt = authTimingNow();
   const { data } = await supabase.auth.getClaims();
+  timing.claimsMs = authTimingNow() - claimsStartedAt;
   const claims = data?.claims;
   const email = typeof claims?.email === "string" ? claims.email.toLowerCase() : null;
   if (!email) return { status: "anonymous" };
 
+  const memberStartedAt = authTimingNow();
   const { data: row } = await supabase
     .from("team_members")
     .select("email, name, role")
     .eq("email", email)
     .maybeSingle();
+  timing.memberMs = authTimingNow() - memberStartedAt;
 
   if (!row || !isRole(row.role)) return { status: "not-member", email };
   return {
