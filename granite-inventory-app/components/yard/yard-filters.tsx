@@ -88,7 +88,7 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
         <Select value={query.sort} onValueChange={(v) => update({ sort: v === "newest" ? "newest" : null })}>
           <SelectTrigger className="h-10 rounded-full bg-card" aria-label="Sort">
             <ArrowUpDown className="size-3.5" />
-            <SelectValue />
+            <SelectValue>{query.sort === "newest" ? "Sort: Newest first" : "Sort: Oldest first"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="oldest">Sort: Oldest first</SelectItem>
@@ -115,11 +115,13 @@ function FilterSelect({
   options: readonly Option[];
   onChange: (value: string | null) => void;
 }) {
+  const valueLabel = value === null ? "All" : options.find((option) => option.value === value)?.label ?? value;
+
   return (
     <Select value={value ?? ALL} onValueChange={(v) => onChange(v === ALL ? null : v)}>
       <SelectTrigger className="h-10 rounded-full bg-card" aria-label={label}>
         <span className="text-muted-foreground">{label}:</span>
-        <SelectValue />
+        <SelectValue>{valueLabel}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL}>All</SelectItem>

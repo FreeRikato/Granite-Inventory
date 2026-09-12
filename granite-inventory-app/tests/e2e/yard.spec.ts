@@ -33,3 +33,40 @@ test("yard shows batches per slot with ageing, a clamp, and filters", async ({ p
   await page.goto("/yard?slot=4FT&sort=newest");
   await expect(page.getByTestId("yard-batch").first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
 });
+
+test("yard filter controls keep product, variant, thickness, supplier, age band, and sort wired", async ({ page, signIn }) => {
+  await signIn("operator");
+  const cards = page.getByTestId("yard-batch");
+
+  await page.goto("/yard?slot=5FT");
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: "Jet Black", exact: true }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toHaveAttribute("data-batch-code", "JB-FIVE-01");
+
+  await page.goto("/yard?slot=5FT");
+  await page.getByRole("combobox", { name: "Variant" }).click();
+  await page.getByRole("option", { name: "Premium", exact: true }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toHaveAttribute("data-batch-code", "JB-FIVE-01");
+
+  await page.goto("/yard?slot=5FT");
+  await page.getByRole("combobox", { name: "Thickness" }).click();
+  await page.getByRole("option", { name: "20mm", exact: true }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toHaveAttribute("data-batch-code", "JB-FIVE-01");
+
+  await page.goto("/yard?slot=4FT");
+  await page.getByRole("combobox", { name: "Supplier" }).click();
+  await page.getByRole("option", { name: "Madurai Quarry", exact: true }).click();
+  await expect(cards).toHaveCount(2);
+
+  await page.goto("/yard?slot=4FT");
+  await page.getByRole("combobox", { name: "Age" }).click();
+  await page.getByRole("option", { name: "Stale band", exact: true }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toHaveAttribute("data-batch-code", "BP-OLD-01");
+
+  await page.goto("/yard?slot=4FT&sort=newest");
+  await expect(cards.first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
+});
