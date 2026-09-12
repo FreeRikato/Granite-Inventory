@@ -48,18 +48,18 @@ export function CustomerList({ customers, kpis }: Props) {
           <ul className="divide-y divide-border">
             {visible.map((c) => (
               <li key={c.id}>
-                <Link href={`/customers/${c.id}`} className="flex items-center gap-4 py-4 hover:bg-secondary/40" data-testid="customer-row">
+                <Link href={`/customers/${c.id}`} className="flex flex-wrap items-start gap-4 py-4 hover:bg-secondary/40" data-testid="customer-row">
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                     {initialsOf(c.name ?? "")}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[15px] font-semibold">{c.name}</span>
+                    <span className="break-words text-[15px] font-semibold">{c.name}</span>
                     <span className="text-xs text-muted-foreground">{c.phone ?? "No phone on file"}</span>
                   </span>
                   <span className="hidden text-sm text-muted-foreground sm:block">
                     {c.last_purchase_date ? relativeDays(c.last_purchase_date) : "No purchases"}
                   </span>
-                  <CustomerTypeBadge type={c.customer_type} className="w-28 justify-center" />
+                  <CustomerTypeBadge type={c.customer_type} className="basis-full ml-12 w-28 justify-center sm:basis-auto sm:ml-0" />
                 </Link>
               </li>
             ))}

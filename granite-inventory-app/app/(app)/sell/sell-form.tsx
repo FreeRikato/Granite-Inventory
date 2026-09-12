@@ -300,7 +300,12 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         draft={newCustomer}
         onClose={() => setNewCustomer(null)}
         onSaved={(c) => {
-          setCustomers((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));
+          setCustomers((prev) => {
+            const next = prev.some((customer) => customer.id === c.id)
+              ? prev.map((customer) => (customer.id === c.id ? c : customer))
+              : [...prev, c];
+            return next.sort((a, b) => a.name.localeCompare(b.name));
+          });
           setCustomerId(c.id);
           setNewCustomer(null);
         }}
