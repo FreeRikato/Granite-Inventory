@@ -12,14 +12,42 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 export type SearchOption = {
   readonly value: string;
   readonly label: string;
   readonly hint?: string;
+  readonly phone?: string | null;
   readonly keywords?: readonly string[];
 };
+
+const CREATE_VALUE_PREFIX = "__create__";
+
+/* The one matching rule for the list: case-insensitive substring of the label or a keyword,
+   or a digit-substring of the phone. Both the list filter and the seam tests go through it. */
+export function searchOptionMatches(option: SearchOption, query: string): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+  const normalizedQuery = trimmed.toLowerCase();
+  if (option.label.toLowerCase().includes(normalizedQuery)) return true;
+  if ((option.keywords ?? []).some((keyword) => keyword.toLowerCase().includes(normalizedQuery))) return true;
+
+  const phoneQuery = phoneDigits(trimmed);
+  return phoneQuery.length > 0 && phoneDigits(option.phone ?? "").includes(phoneQuery);
+}
+
+/* Exact label or exact phone digits. Decides whether the "Add ..." row is offered: a query that
+   only partially matches an option must still be creatable. */
+export function searchOptionIsExact(option: SearchOption, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  if (option.label.toLowerCase() === normalizedQuery) return true;
+
+  const queryPhoneDigits = phoneDigits(query);
+  return queryPhoneDigits.length > 0 && phoneDigits(option.phone ?? "") === queryPhoneDigits;
+}
 
 type Props = {
   readonly options: readonly SearchOption[];
@@ -54,7 +82,15 @@ export function SearchSelect({
   const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
   const trimmed = query.trim();
-  const exact = options.some((o) => o.label.toLowerCase() === trimmed.toLowerCase());
+  const hasExactMatch = options.some((option) => searchOptionIsExact(option, trimmed));
+  const optionsByValue = new Map(options.map((option) => [option.value, option]));
+  /* cmdk hands the filter an item's value, so items carry the option id and the rule looks
+     the option up. The create row is never filtered out. */
+  const commandFilter = (value: string, search: string): number => {
+    if (value.startsWith(CREATE_VALUE_PREFIX)) return 1;
+    const option = optionsByValue.get(value);
+    return option !== undefined && searchOptionMatches(option, search) ? 1 : 0;
+  };
 
   return (
     <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
@@ -77,7 +113,7 @@ export function SearchSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
+        <Command filter={commandFilter}>
           <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
@@ -85,8 +121,7 @@ export function SearchSelect({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label}
-                  keywords={option.keywords ? [...option.keywords] : undefined}
+                  value={option.value}
                   onSelect={() => {
                     onChange(option.value);
                     setOpen(false);
@@ -101,9 +136,9 @@ export function SearchSelect({
                   <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
               ))}
-              {onCreate && trimmed && !exact ? (
+              {onCreate && trimmed && !hasExactMatch ? (
                 <CommandItem
-                  value={`__create__${trimmed}`}
+                  value={`${CREATE_VALUE_PREFIX}${trimmed}`}
                   onSelect={() => {
                     onCreate(trimmed);
                     setOpen(false);

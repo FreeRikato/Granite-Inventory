@@ -21,6 +21,7 @@ import {
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { computeMargin, marginHealth } from "@/lib/margin";
+import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordSaleAction } from "./actions";
@@ -39,6 +40,16 @@ type Props = {
 function num(value: string): number {
   const n = Number.parseFloat(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+export function customerDraftFromQuery(query: string): CustomerDraft {
+  const trimmed = query.trim();
+  const digits = phoneDigits(trimmed);
+  const isPhone = digits.length >= 6 && digits.length <= 20;
+
+  return isPhone
+    ? { name: "", phone: `${trimmed.startsWith("+") ? "+" : ""}${digits}`, customerType: "REGULAR" }
+    : { name: trimmed, phone: "", customerType: "REGULAR" };
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
@@ -137,15 +148,13 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   value: c.id,
                   label: c.name,
                   hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
-                  keywords: c.phone ? [c.phone, c.phone.replace(/\D/g, "")] : [],
+                  phone: c.phone,
                 }))}
                 value={customerId}
                 onChange={setCustomerId}
                 placeholder="Search or add customer"
                 searchPlaceholder="Name or phone..."
-                onCreate={(q) =>
-                  setNewCustomer(/^\+?[0-9 ]+$/.test(q) ? { name: "", phone: q, customerType: "REGULAR" } : { name: q, phone: "", customerType: "REGULAR" })
-                }
+                onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
                 createLabel={(q) => `Add customer "${q}"`}
               />
             </Field>
