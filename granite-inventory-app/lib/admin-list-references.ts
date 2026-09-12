@@ -31,20 +31,20 @@ export function hasDeleteReferences(table: AdminListTable, references: DeleteRef
 export function deleteBlockedMessage(
   table: AdminListTable,
   batches: readonly BatchReference[],
-  variants: readonly VariantReference[] = [],
+  variants: readonly VariantReference[],
+  rowName = tableLabel[table],
 ): string {
-  const label = tableLabel[table];
   if (batches.length === 1 && batches[0]?.batch_code) {
-    return `Cannot delete ${label}: batch ${batches[0].batch_code} still uses it.`;
+    return `Cannot delete ${rowName}: batch ${batches[0].batch_code} still uses it.`;
   }
   if (batches.length > 0) {
-    return `Cannot delete ${label}: ${batches.length} batches still use it.`;
+    return `Cannot delete ${rowName}: ${batches.length} batches still use it.`;
   }
   if (table === "products" && variants.length === 1) {
-    return `Cannot delete Product: variant ${variants[0]?.name} still belongs to it.`;
+    return `Cannot delete ${rowName}: variant ${variants[0]?.name} still belongs to it.`;
   }
   if (table === "products" && variants.length > 0) {
-    return `Cannot delete Product: ${variants.length} variants still belong to it.`;
+    return `Cannot delete ${rowName}: ${variants.length} variants still belong to it.`;
   }
-  return "Only possible when no batch uses it.";
+  return table === "products" ? "Only possible when no batch or variant uses it." : "Only possible when no batch uses it.";
 }

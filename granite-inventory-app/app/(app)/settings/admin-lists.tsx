@@ -164,7 +164,7 @@ function EditableRow({
       <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}><Pencil className="size-4" /></Button>
       <ConfirmDelete
         title={`Delete ${name}?`}
-        description={deleteBlockedMessage(table, blockingBatches, blockingVariants)}
+        description={deleteBlockedMessage(table, blockingBatches, blockingVariants, name)}
         onConfirm={remove}
         disabled={pending}
       />
