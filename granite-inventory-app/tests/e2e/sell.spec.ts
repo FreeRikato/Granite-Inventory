@@ -90,9 +90,9 @@ test("phone search returns only the customer whose number contains the typed dig
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByPlaceholder("Name or phone...").fill("98765");
 
-  const options = page.getByRole("option");
-  await expect(options).toHaveCount(1);
-  await expect(options.first()).toContainText("Murugan Constructions");
+  await expect(page.getByRole("option", { name: /Murugan Constructions/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /Priya Engineering/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: 'Add customer "98765"' })).toBeVisible();
 });
 
 test("the Add customer row appears for a genuinely new query", async ({ page, signIn }) => {
@@ -108,7 +108,7 @@ test("the Add customer row is hidden when the typed digits belong to a customer"
   await signIn("operator");
   await page.goto("/sell");
   await page.getByRole("combobox", { name: "Customer" }).click();
-  await page.getByPlaceholder("Name or phone...").fill("98765");
+  await page.getByPlaceholder("Name or phone...").fill("919876543210");
 
   await expect(page.getByRole("option", { name: /Add customer/ })).toHaveCount(0);
 });

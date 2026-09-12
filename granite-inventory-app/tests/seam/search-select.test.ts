@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchOptionMatches, type SearchOption } from "@/components/search-select";
+import { searchOptionHasMatch, searchOptionMatches, type SearchOption } from "@/components/search-select";
 
 const murugan: SearchOption = {
   value: "murugan",
@@ -11,6 +11,11 @@ const priya: SearchOption = {
   value: "priya",
   label: "Priya Engineering",
   phone: "+91 91234 56789",
+};
+
+const blackPearl: SearchOption = {
+  value: "black-pearl",
+  label: "Black Pearl",
 };
 
 describe("SearchSelect matching", () => {
@@ -32,5 +37,15 @@ describe("SearchSelect matching", () => {
   it("matches a customer name case-insensitively", () => {
     expect(searchOptionMatches(priya, "priya")).toBe(true);
     expect(searchOptionMatches(murugan, "CONSTRUCTIONS")).toBe(true);
+  });
+
+  it("keeps Add available for a label substring but hides it for an exact label", () => {
+    expect(searchOptionHasMatch(blackPearl, "Black")).toBe(false);
+    expect(searchOptionHasMatch(blackPearl, "Black Pearl")).toBe(true);
+  });
+
+  it("hides Add only for an exact phone-digits match", () => {
+    expect(searchOptionHasMatch(murugan, "98765")).toBe(false);
+    expect(searchOptionHasMatch(murugan, "919876543210")).toBe(true);
   });
 });

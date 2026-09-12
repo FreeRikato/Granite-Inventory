@@ -21,6 +21,7 @@ import {
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { computeMargin, marginHealth } from "@/lib/margin";
+import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordSaleAction } from "./actions";
@@ -41,12 +42,10 @@ function num(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-const PHONE_QUERY_PATTERN = /^\+?[\d\s().-]+$/;
-
 export function customerDraftFromQuery(query: string): CustomerDraft {
   const trimmed = query.trim();
-  const digits = trimmed.replace(/\D/g, "");
-  const isPhone = PHONE_QUERY_PATTERN.test(trimmed) && digits.length >= 6 && digits.length <= 20;
+  const digits = phoneDigits(trimmed);
+  const isPhone = digits.length >= 6 && digits.length <= 20;
 
   return isPhone
     ? { name: "", phone: `${trimmed.startsWith("+") ? "+" : ""}${digits}`, customerType: "REGULAR" }
@@ -150,7 +149,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   label: c.name,
                   hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
                   phone: c.phone,
-                  keywords: c.phone ? [c.phone, c.phone.replace(/\D/g, "")] : [],
                 }))}
                 value={customerId}
                 onChange={setCustomerId}

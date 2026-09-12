@@ -12,6 +12,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 export type SearchOption = {
@@ -23,28 +24,24 @@ export type SearchOption = {
 };
 
 const PHONE_KEYWORD_PREFIX = "__phone_digits__:";
-const PHONE_QUERY_PATTERN = /^\+?[\d\s().-]+$/;
-
-function phoneDigitsFromQuery(query: string): string {
-  const trimmed = query.trim();
-  if (!PHONE_QUERY_PATTERN.test(trimmed)) return "";
-  return trimmed.replace(/\D/g, "");
-}
 
 export function searchOptionMatches(option: SearchOption, query: string): boolean {
   const trimmed = query.trim();
   if (!trimmed) return true;
   if (option.label.toLowerCase().includes(trimmed.toLowerCase())) return true;
 
-  const phoneQuery = phoneDigitsFromQuery(trimmed);
-  const phoneDigits = (option.phone ?? "").replace(/\D/g, "");
-  return phoneQuery.length > 0 && phoneDigits.includes(phoneQuery);
+  const phoneQuery = phoneDigits(trimmed);
+  const optionPhoneDigits = phoneDigits(option.phone ?? "");
+  return phoneQuery.length > 0 && optionPhoneDigits.includes(phoneQuery);
 }
 
-function searchOptionHasMatch(option: SearchOption, query: string): boolean {
-  if (searchOptionMatches(option, query)) return true;
+export function searchOptionHasMatch(option: SearchOption, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase();
-  return (option.keywords ?? []).some((keyword) => keyword.toLowerCase().includes(normalizedQuery));
+  if (!normalizedQuery) return true;
+  if (option.label.toLowerCase() === normalizedQuery) return true;
+
+  const queryPhoneDigits = phoneDigits(query);
+  return queryPhoneDigits.length > 0 && phoneDigits(option.phone ?? "") === queryPhoneDigits;
 }
 
 function commandFilter(value: string, search: string, keywords?: readonly string[]): number {
@@ -52,7 +49,7 @@ function commandFilter(value: string, search: string, keywords?: readonly string
   if (!query) return 1;
   if (value.toLowerCase().includes(query)) return 1;
 
-  const phoneQuery = phoneDigitsFromQuery(search);
+  const phoneQuery = phoneDigits(search);
   const phoneMatches = phoneQuery.length > 0 && (keywords ?? []).some(
     (keyword) => keyword.startsWith(PHONE_KEYWORD_PREFIX) && keyword.slice(PHONE_KEYWORD_PREFIX.length).includes(phoneQuery),
   );
@@ -123,10 +120,10 @@ export function SearchSelect({
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
-                const phoneDigits = (option.phone ?? "").replace(/\D/g, "");
+                const optionPhoneDigits = phoneDigits(option.phone ?? "");
                 const keywords = [
                   ...(option.keywords ?? []),
-                  ...(phoneDigits ? [`${PHONE_KEYWORD_PREFIX}${phoneDigits}`] : []),
+                  ...(optionPhoneDigits ? [`${PHONE_KEYWORD_PREFIX}${optionPhoneDigits}`] : []),
                 ];
                 return (
                   <CommandItem
