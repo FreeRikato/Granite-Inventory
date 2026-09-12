@@ -97,7 +97,7 @@ export default async function YardPage(props: PageProps<"/yard">) {
               )}
             >
               {SLOT_LABEL[slot]}
-              <span className={cn("text-xs tabular", active ? "text-accent-foreground/80" : "text-muted-foreground")}>
+              <span className={cn("text-xs tabular", active ? "text-accent-foreground" : "text-muted-foreground")}>
                 {summary?.available ?? 0}
               </span>
             </Link>
