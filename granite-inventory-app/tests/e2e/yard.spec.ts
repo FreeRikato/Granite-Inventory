@@ -42,5 +42,5 @@ test("showing sold-out batches exposes a Sold out marker", async ({ page, signIn
 
   await page.getByRole("switch", { name: "Show sold out" }).click();
   const card = page.getByTestId("yard-batch").filter({ hasText: "JB-FIVE-01" });
-  await expect(card.getByRole("status", { name: "Sold out" })).toBeVisible();
+  await expect(card.getByText("Sold out", { exact: true })).toBeVisible();
 });

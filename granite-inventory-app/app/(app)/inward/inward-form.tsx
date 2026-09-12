@@ -81,22 +81,15 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
   const suggested = category ? suggestSlot(category, Number.isFinite(lengthNumber) ? lengthNumber : null) : null;
   const slot = form.slot ?? suggested;
 
-  const variantExists = useMemo(() => {
-    if (!form.productId || !form.variantName.trim()) return false;
-    const wanted = form.variantName.trim().toLowerCase();
-    return variants.some((v) => v.product_id === form.productId && v.name.toLowerCase() === wanted);
-  }, [form.productId, form.variantName, variants]);
-  const variantOptions = useMemo(
-    () => {
-      const existing = variants
-        .filter((v) => v.product_id === form.productId)
-        .map((v) => ({ value: v.name, label: v.name }));
-      const typed = form.variantName.trim();
-      const alreadyListed = existing.some((option) => option.value.toLowerCase() === typed.toLowerCase());
-      return typed && !alreadyListed ? [...existing, { value: typed, label: typed }] : existing;
-    },
-    [form.productId, form.variantName, variants],
-  );
+  const existingVariantOptions = useMemo(() => {
+    return variants.filter((v) => v.product_id === form.productId).map((v) => ({ value: v.name, label: v.name }));
+  }, [form.productId, variants]);
+  const typedVariantName = form.variantName.trim();
+  const variantExists = Boolean(typedVariantName) && existingVariantOptions.some((option) => option.value.toLowerCase() === typedVariantName.toLowerCase());
+  const variantOptions = useMemo(() => {
+    if (!typedVariantName || variantExists) return existingVariantOptions;
+    return [...existingVariantOptions, { value: typedVariantName, label: typedVariantName }];
+  }, [existingVariantOptions, typedVariantName, variantExists]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));

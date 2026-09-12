@@ -8,13 +8,13 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { deleteBlockedMessage, referencesForTable, type AdminListTable, type BatchReference, type VariantReference } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
 import { deleteRowAction, renameRowAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
-type Variant = { id: string; name: string; product_id: string };
+type Variant = VariantReference;
 type Supplier = { id: string; name: string };
-type BatchReference = { readonly batch_code: string | null; readonly product_id: string | null; readonly variant_id: string | null; readonly supplier_id: string | null };
 
 type Props = {
   readonly products: readonly Product[];
@@ -41,6 +41,7 @@ export function AdminLists({ products, variants, suppliers, batchReferences }: P
               meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}`}
               extra={{ abbreviation: p.abbreviation, category: p.category }}
               batchReferences={batchReferences}
+              variantReferences={variants.filter((v) => v.product_id === p.id)}
             />
           ))}
         </ListBlock>
@@ -86,25 +87,22 @@ function EditableRow({
   meta,
   extra,
   batchReferences,
+  variantReferences,
 }: {
-  table: "products" | "variants" | "suppliers";
+  table: AdminListTable;
   id: string;
   name: string;
   meta?: string;
   extra?: { abbreviation: string; category: string };
   batchReferences: readonly BatchReference[];
+  variantReferences?: readonly VariantReference[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ name, abbreviation: extra?.abbreviation ?? "", category: extra?.category ?? "" });
-  const blockingBatches = batchReferences.filter((reference) =>
-    table === "products"
-      ? reference.product_id === id
-      : table === "variants"
-        ? reference.variant_id === id
-        : reference.supplier_id === id,
-  );
+  const blockingBatches = referencesForTable(table, id, batchReferences);
+  const blockingVariants = table === "products" ? variantReferences ?? [] : [];
 
   function save() {
     startTransition(async () => {
@@ -166,16 +164,10 @@ function EditableRow({
       <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}><Pencil className="size-4" /></Button>
       <ConfirmDelete
         title={`Delete ${name}?`}
-        description={deleteDescription(name, blockingBatches)}
+        description={deleteBlockedMessage(table, blockingBatches, blockingVariants)}
         onConfirm={remove}
         disabled={pending}
       />
     </li>
   );
-}
-
-function deleteDescription(name: string, batches: readonly BatchReference[]): string {
-  if (batches.length === 0) return "Only possible when no batch uses it.";
-  if (batches.length === 1 && batches[0].batch_code) return `Cannot delete ${name}: batch ${batches[0].batch_code} still uses it.`;
-  return `Cannot delete ${name}: ${batches.length} batches still use it.`;
 }

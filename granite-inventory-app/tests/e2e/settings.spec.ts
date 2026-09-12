@@ -49,6 +49,28 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByText(/JB-FIVE-01/)).toBeVisible();
 });
 
+test("names a variant that blocks product deletion", async ({ page, signIn }) => {
+  await sql(`
+    with product as (
+      insert into public.products (name, abbreviation, category)
+      values ('Orphan Product', 'OP', 'GRANITE')
+      returning id
+    )
+    insert into public.variants (product_id, name)
+    select id, 'Oval' from product
+  `);
+
+  await signIn("admin");
+  await page.goto("/settings");
+
+  const productRow = page.getByTestId("products-row").filter({ hasText: "Orphan Product" });
+  await productRow.getByRole("button", { name: "Delete" }).click();
+  const deleteDialog = page.getByRole("alertdialog");
+  await expect(deleteDialog).toContainText("variant Oval");
+  await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByText("Cannot delete Product: variant Oval still belongs to it.")).toBeVisible();
+});
+
 test("an operator only sees their profile and the read-only rules", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/settings");

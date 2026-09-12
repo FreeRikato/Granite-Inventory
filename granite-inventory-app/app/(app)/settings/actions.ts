@@ -7,6 +7,13 @@ import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
 import { settingsSchema } from "@/lib/schemas/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
+import {
+  batchReferenceColumn,
+  deleteBlockedMessage,
+  hasDeleteReferences,
+  type AdminListTable,
+  type DeleteReferences,
+} from "@/lib/admin-list-references";
 
 export async function updateSettingsAction(input: unknown): Promise<ActionResult<Tables<"settings">>> {
   const parsed = settingsSchema.safeParse(input);
@@ -80,21 +87,6 @@ const renameSchema = z.object({
   category: z.enum(CATEGORIES).optional(),
 });
 
-type AdminListTable = "products" | "variants" | "suppliers";
-type BatchReference = Pick<Tables<"v_batches">, "batch_code">;
-
-const batchReferenceColumn: Record<AdminListTable, "product_id" | "variant_id" | "supplier_id"> = {
-  products: "product_id",
-  variants: "variant_id",
-  suppliers: "supplier_id",
-};
-
-const tableLabel: Record<AdminListTable, string> = {
-  products: "Product",
-  variants: "Variant",
-  suppliers: "Supplier",
-};
-
 export async function renameRowAction(input: unknown): Promise<ActionResult<null>> {
   const parsed = renameSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid name");
@@ -115,15 +107,19 @@ export async function renameRowAction(input: unknown): Promise<ActionResult<null
 
 export async function deleteRowAction(table: AdminListTable, id: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
-  const references = await findBatchReferences(supabase, table, id);
+  const references = await findDeleteReferences(supabase, table, id);
   if (!references.ok) return references;
-  if (references.data.length > 0) return fail(deleteBlockedMessage(table, references.data));
+  if (hasDeleteReferences(table, references.data)) {
+    return fail(deleteBlockedMessage(table, references.data.batches, references.data.variants));
+  }
 
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
   if (error) {
-    if (/foreign key constraint/.test(error.message)) {
-      const latest = await findBatchReferences(supabase, table, id);
-      if (latest.ok && latest.data.length > 0) return fail(deleteBlockedMessage(table, latest.data));
+    if (error.code === "23503") {
+      const latest = await findDeleteReferences(supabase, table, id);
+      if (latest.ok && hasDeleteReferences(table, latest.data)) {
+        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.variants));
+      }
     }
     return fail(messageOf(error));
   }
@@ -132,22 +128,21 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
   return ok(null);
 }
 
-async function findBatchReferences(
+async function findDeleteReferences(
   supabase: Awaited<ReturnType<typeof createClient>>,
   table: AdminListTable,
   id: string,
-): Promise<ActionResult<readonly BatchReference[]>> {
+): Promise<ActionResult<DeleteReferences>> {
   const { data, error } = await supabase
     .from("v_batches")
-    .select("batch_code")
+    .select("batch_code, product_id, variant_id, supplier_id")
     .eq(batchReferenceColumn[table], id);
   if (error) return fail(messageOf(error));
-  return ok(data ?? []);
-}
-
-function deleteBlockedMessage(table: AdminListTable, references: readonly BatchReference[]): string {
-  if (references.length === 1 && references[0].batch_code) {
-    return `Cannot delete ${tableLabel[table]}: batch ${references[0].batch_code} still uses it.`;
+  if (table !== "products") {
+    return ok({ batches: data ?? [], variants: [] });
   }
-  return `Cannot delete ${tableLabel[table]}: ${references.length} batches still use it.`;
+
+  const variants = await supabase.from("variants").select("id, name, product_id").eq("product_id", id);
+  if (variants.error) return fail(messageOf(variants.error));
+  return ok({ batches: data ?? [], variants: variants.data ?? [] });
 }

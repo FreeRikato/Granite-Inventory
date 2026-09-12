@@ -26,11 +26,7 @@ export function BatchCard({ batch, actions }: Props) {
     >
       <div className={cn("flex flex-wrap gap-2", stale ? "mb-3" : "mb-2")}>
         {batch.sold_out ? (
-          <div
-            role="status"
-            aria-label="Sold out"
-            className="flex items-center gap-2 rounded-lg bg-stale-soft px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stale"
-          >
+          <div className="flex items-center gap-2 rounded-lg bg-stale-soft px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stale">
             <CircleOff className="size-4" aria-hidden="true" />
             Sold out
           </div>
