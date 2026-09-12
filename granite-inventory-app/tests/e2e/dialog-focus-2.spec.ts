@@ -66,17 +66,18 @@ test("saving a new customer from Sell returns focus to the Customer combobox", a
   await expect.poll(() => trigger.evaluate((element) => document.activeElement === element)).toBe(true);
 });
 
-test("yard Edit Batch returns focus to its new Edit button after moving groups", async ({ page, signIn }) => {
+test("yard Edit Batch returns focus to the filter toolbar after moving Slots", async ({ page, signIn }) => {
   await signIn("admin");
   await page.goto("/yard?slot=4FT");
 
   const trigger = page.getByRole("button", { name: "Edit BP-NEW-01", exact: true });
   await openDialog(page, trigger);
-  await page.getByLabel("Length (ft)").fill("3");
+  await page.getByLabel("Yard slot").click();
+  await page.getByRole("option", { name: "5 ft Slot", exact: true }).click();
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(page.getByText("Batch BP-NEW-01 updated", { exact: true })).toBeVisible();
 
-  const newTrigger = page.getByRole("button", { name: "Edit BP-NEW-01", exact: true });
-  await expect(newTrigger).toBeVisible();
-  await expect.poll(() => newTrigger.evaluate((element) => document.activeElement === element)).toBe(true);
+  await expect(page.getByRole("button", { name: "Edit BP-NEW-01", exact: true })).toHaveCount(0);
+  const filterToolbar = page.locator("[data-yard-filter-toolbar]");
+  await expect.poll(() => filterToolbar.evaluate((element) => document.activeElement === element)).toBe(true);
 });

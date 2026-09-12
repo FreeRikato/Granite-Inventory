@@ -73,7 +73,13 @@ export function BatchActions({ batch, lists }: Props) {
             if (!batchCode) return;
             const replacement = Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]"))
               .find((button) => button.getAttribute("aria-label") === `Edit ${batchCode}`);
-            if (replacement?.isConnected) replacement.focus();
+            if (replacement?.isConnected) {
+              replacement.focus();
+              return;
+            }
+
+            const filterToolbar = document.querySelector<HTMLElement>("[data-yard-filter-toolbar]");
+            if (filterToolbar?.isConnected) filterToolbar.focus();
           }}
         >
           <DialogHeader>
