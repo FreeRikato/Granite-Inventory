@@ -23,17 +23,21 @@ export default async function YardPage(props: PageProps<"/yard">) {
   const raw = await props.searchParams;
   const parsed = parseYardQuery(raw);
   const supabase = await createClient();
-  const [{ data }, session] = await Promise.all([supabase.from("v_yard_batches").select("*"), getSession()]);
+  /* The edit lists are small and readable by every member, so they ride the same round trip
+     as the batches instead of waiting on the role check. */
+  const [{ data }, session, { data: productRows }, { data: supplierRows }] = await Promise.all([
+    supabase.from("v_yard_batches").select("*"),
+    getSession(),
+    supabase.from("products").select("id, name, category").order("name"),
+    supabase.from("suppliers").select("id, name").order("name"),
+  ]);
   const all: YardBatch[] = data ?? [];
   /* A deep link to a Stock Line (palette, stale panel) lands on that line's own slot. */
   const lineSlot = parsed.line && !raw.slot ? all.find((b) => b.line_key === parsed.line)?.slot : undefined;
   const query = isSlot(lineSlot) ? { ...parsed, slot: lineSlot } : parsed;
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: EditLists | null = isAdmin
-    ? {
-        products: (await supabase.from("products").select("id, name, category").order("name")).data ?? [],
-        suppliers: (await supabase.from("suppliers").select("id, name").order("name")).data ?? [],
-      }
+    ? { products: productRows ?? [], suppliers: supplierRows ?? [] }
     : null;
 
   const filtered = all.filter((b) => matchesFilters(b, query));
