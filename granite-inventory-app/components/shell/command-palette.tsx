@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/lib/nav";
 import { formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -27,10 +27,16 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[] | null>(null);
   const [customers, setCustomers] = useState<Customer[] | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   /* Loaded on first open; the data is small and RLS applies through the browser client. */
   const openPalette = useCallback(
     (next: boolean) => {
+      if (next) {
+        const activeElement = document.activeElement;
+        returnFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
+      }
       setOpen(next);
       if (!next || lines !== null) return;
       const supabase = createClient();
@@ -65,6 +71,7 @@ export function CommandPalette() {
     <>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => openPalette(true)}
         className="hidden h-10 w-[260px] items-center gap-2 rounded-full border border-border bg-card px-3 text-sm text-muted-foreground shadow-sm hover:bg-secondary md:flex"
         aria-label="Search or jump to"
@@ -73,45 +80,63 @@ export function CommandPalette() {
         <span className="flex-1 text-left">Search or jump to...</span>
         <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
-      <CommandDialog open={open} onOpenChange={openPalette} title="Search or jump to" description="Pages, stock lines and customers">
-        <Command>
-        <CommandInput placeholder="Type a page, stone or customer..." />
-        <CommandList>
-          <CommandEmpty>Nothing found.</CommandEmpty>
-          <CommandGroup heading="Pages">
-            {[...NAV_ITEMS, SETTINGS_ITEM].map((item) => (
-              <CommandItem key={item.href} value={`page ${item.label}`} onSelect={() => go(item.href)}>
-                <item.icon className="size-4" /> {item.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandGroup heading="Stock lines">
-            {(lines ?? []).map((l) => {
-              const size = formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
-              const href = `/yard?line=${encodeURIComponent(l.line_key ?? "")}`;
-              return (
-                <CommandItem key={l.line_key} value={`stone ${l.product_name} ${l.variant_name} ${size}`} onSelect={() => go(href)}>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate">{l.product_name} · {l.variant_name}</span>
-                    <span className="text-xs text-muted-foreground">{size} · {l.available} available</span>
-                  </span>
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-          <CommandGroup heading="Customers">
-            {(customers ?? []).map((c) => (
-              <CommandItem key={c.id} value={`customer ${c.name} ${c.phone ?? ""}`} onSelect={() => go(`/customers/${c.id}`)}>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate">{c.name}</span>
-                  {c.phone ? <span className="text-xs text-muted-foreground">{c.phone}</span> : null}
-                </span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-        </Command>
-      </CommandDialog>
+      <Dialog open={open} onOpenChange={openPalette}>
+        <DialogContent
+          className="top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0"
+          showCloseButton={false}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const returnFocus = returnFocusRef.current;
+            if (returnFocus?.isConnected) {
+              returnFocus.focus();
+              return;
+            }
+            triggerRef.current?.focus();
+          }}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Search or jump to</DialogTitle>
+            <DialogDescription>Pages, stock lines and customers</DialogDescription>
+          </DialogHeader>
+          <Command>
+            <CommandInput placeholder="Type a page, stone or customer..." />
+            <CommandList>
+              <CommandEmpty>Nothing found.</CommandEmpty>
+              <CommandGroup heading="Pages">
+                {[...NAV_ITEMS, SETTINGS_ITEM].map((item) => (
+                  <CommandItem key={item.href} value={`page ${item.label}`} onSelect={() => go(item.href)}>
+                    <item.icon className="size-4" /> {item.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandGroup heading="Stock lines">
+                {(lines ?? []).map((l) => {
+                  const size = formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
+                  const href = `/yard?line=${encodeURIComponent(l.line_key ?? "")}`;
+                  return (
+                    <CommandItem key={l.line_key} value={`stone ${l.product_name} ${l.variant_name} ${size}`} onSelect={() => go(href)}>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate">{l.product_name} · {l.variant_name}</span>
+                        <span className="text-xs text-muted-foreground">{size} · {l.available} available</span>
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+              <CommandGroup heading="Customers">
+                {(customers ?? []).map((c) => (
+                  <CommandItem key={c.id} value={`customer ${c.name} ${c.phone ?? ""}`} onSelect={() => go(`/customers/${c.id}`)}>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate">{c.name}</span>
+                      {c.phone ? <span className="text-xs text-muted-foreground">{c.phone}</span> : null}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

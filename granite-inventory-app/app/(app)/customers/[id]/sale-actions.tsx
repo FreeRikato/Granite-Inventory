@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   function remove() {
     startTransition(async () => {
@@ -46,7 +47,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
 
   return (
     <div className="flex justify-end gap-2">
-      <Button variant="outline" size="sm" className="h-8 bg-card" onClick={() => setOpen(true)} aria-label={`Edit sale of ${sale.batch_code}`}>
+      <Button ref={triggerRef} variant="outline" size="sm" className="h-8 bg-card" onClick={() => setOpen(true)} aria-label={`Edit sale of ${sale.batch_code}`}>
         <Pencil className="size-3.5" /> Edit
       </Button>
       <ConfirmDelete
@@ -56,7 +57,13 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         disabled={pending}
       />
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
+        <DialogContent
+          className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            triggerRef.current?.focus();
+          }}
+        >
           <DialogHeader><DialogTitle>Edit sale</DialogTitle></DialogHeader>
           {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); router.refresh(); }} /> : null}
         </DialogContent>
