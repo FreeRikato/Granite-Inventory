@@ -1,4 +1,5 @@
 -- Ticket T09: keep correction RPCs on the same readable validation path as new writes.
+-- record_sale and correct_sale check customer and batch existence before validating the other inputs, so an unknown customer is reported ahead of a quantity or price error.
 
 create or replace function private.validate_batch_input(
   p_purchase_date date,

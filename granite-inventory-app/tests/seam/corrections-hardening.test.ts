@@ -233,7 +233,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
     expect(moved.error).toBeNull();
   });
 
-  it("keeps Unknown customer ahead of record_sale input errors", async () => {
+  it("reports an unknown customer before input errors", async () => {
     const error = expectError(
       await operator.rpc("record_sale", {
         p_batch_id: batchId,

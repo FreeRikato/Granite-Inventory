@@ -42,6 +42,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - Admin only. Edit and delete on Batch and Sale via SQL functions that re-balance Available and re-snapshot Landed Cost where a Sale's Batch changes.
 - Refused if the result would make any Batch's Available negative.
+- A Batch purchase date cannot be moved later than its earliest Sale; the refusal names that date.
 - `updated_at` and `updated_by` on Batch and Sale. No audit log in Phase 1.
 - Available on mobile as well as desktop.
 
