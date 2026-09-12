@@ -121,7 +121,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
 }
 
 function MobileLabel({ children, className }: { children: string; className?: string }) {
-  return <span className={cn("mr-2 text-xs font-medium text-muted-foreground sm:hidden", className)}>{children}</span>;
+  return <span className={cn("text-xs font-medium text-muted-foreground sm:hidden", className)}>{children}</span>;
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
