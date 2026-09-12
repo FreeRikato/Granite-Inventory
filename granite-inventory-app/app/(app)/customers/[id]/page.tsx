@@ -75,11 +75,11 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                 {sales.map((s) => (
                   <tr key={s.id} className="block border-t border-border py-2.5 sm:table-row sm:py-0" data-testid="sale-row">
                     <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
-                      <MobileLabel>Date</MobileLabel>
+                      <MobileLabel className="mr-2">Date</MobileLabel>
                       {s.sale_date ? formatDate(s.sale_date) : ""}
                     </td>
                     <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
-                      <MobileLabel>Stone</MobileLabel>
+                      <MobileLabel className="mr-2">Stone</MobileLabel>
                       {s.product_name} · {s.variant_name}
                       <span className="block text-xs font-normal text-muted-foreground">
                         {formatSize({ length_ft: s.length_ft, breadth_ft: s.breadth_ft, thickness_mm: s.thickness_mm })}
@@ -87,19 +87,19 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                       </span>
                     </td>
                     <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-2.5 sm:pr-4">
-                      <MobileLabel className="font-sans">Batch</MobileLabel>
+                      <MobileLabel className="mr-2 font-sans">Batch</MobileLabel>
                       {s.batch_code}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
-                      <MobileLabel className="font-sans">Qty</MobileLabel>
+                      <MobileLabel className="mr-2 font-sans">Qty</MobileLabel>
                       {s.quantity}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
-                      <MobileLabel className="font-sans">Total</MobileLabel>
+                      <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
                       {formatRupees(s.revenue ?? 0)}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:text-right">
-                      <MobileLabel className="font-sans">Margin</MobileLabel>
+                      <MobileLabel className="mr-2 font-sans">Margin</MobileLabel>
                       {formatRupees(s.margin ?? 0)}
                       {s.margin_pct !== null ? <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span> : null}
                     </td>
