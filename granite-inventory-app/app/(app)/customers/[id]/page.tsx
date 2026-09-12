@@ -3,6 +3,7 @@ import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge"
 import { getSession } from "@/lib/auth";
 import { formatDate, formatRupees, formatSize, relativeDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { CustomerActions } from "./customer-actions";
 import { SaleActions, type SaleEditLists } from "./sale-actions";
@@ -74,11 +75,11 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                 {sales.map((s) => (
                   <tr key={s.id} className="block border-t border-border py-2.5 sm:table-row sm:py-0" data-testid="sale-row">
                     <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
-                      <span className="mr-2 text-xs font-medium text-muted-foreground sm:hidden">Date</span>
+                      <MobileLabel>Date</MobileLabel>
                       {s.sale_date ? formatDate(s.sale_date) : ""}
                     </td>
                     <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
-                      <span className="mr-2 text-xs font-medium text-muted-foreground sm:hidden">Stone</span>
+                      <MobileLabel>Stone</MobileLabel>
                       {s.product_name} · {s.variant_name}
                       <span className="block text-xs font-normal text-muted-foreground">
                         {formatSize({ length_ft: s.length_ft, breadth_ft: s.breadth_ft, thickness_mm: s.thickness_mm })}
@@ -86,25 +87,25 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                       </span>
                     </td>
                     <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-2.5 sm:pr-4">
-                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Batch</span>
+                      <MobileLabel className="font-sans">Batch</MobileLabel>
                       {s.batch_code}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
-                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Qty</span>
+                      <MobileLabel className="font-sans">Qty</MobileLabel>
                       {s.quantity}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
-                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Total</span>
+                      <MobileLabel className="font-sans">Total</MobileLabel>
                       {formatRupees(s.revenue ?? 0)}
                     </td>
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:text-right">
-                      <span className="mr-2 font-sans text-xs font-medium text-muted-foreground sm:hidden">Margin</span>
+                      <MobileLabel className="font-sans">Margin</MobileLabel>
                       {formatRupees(s.margin ?? 0)}
                       {s.margin_pct !== null ? <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span> : null}
                     </td>
                     {editLists ? (
                       <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4">
-                        <span className="text-xs font-medium text-muted-foreground sm:hidden">Actions</span>
+                        <MobileLabel>Actions</MobileLabel>
                         <SaleActions sale={s} lists={editLists} />
                       </td>
                     ) : null}
@@ -117,6 +118,10 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
       </section>
     </>
   );
+}
+
+function MobileLabel({ children, className }: { children: string; className?: string }) {
+  return <span className={cn("mr-2 text-xs font-medium text-muted-foreground sm:hidden", className)}>{children}</span>;
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
