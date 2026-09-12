@@ -63,7 +63,17 @@ export function BatchActions({ batch, lists }: Props) {
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            triggerRef.current?.focus();
+            const trigger = triggerRef.current;
+            if (trigger?.isConnected) {
+              trigger.focus();
+              return;
+            }
+
+            const batchCode = batch.batch_code;
+            if (!batchCode) return;
+            const replacement = Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]"))
+              .find((button) => button.getAttribute("aria-label") === `Edit ${batchCode}`);
+            if (replacement?.isConnected) replacement.focus();
           }}
         >
           <DialogHeader>
