@@ -80,6 +80,21 @@ const renameSchema = z.object({
   category: z.enum(CATEGORIES).optional(),
 });
 
+type AdminListTable = "products" | "variants" | "suppliers";
+type BatchReference = Pick<Tables<"v_batches">, "batch_code">;
+
+const batchReferenceColumn: Record<AdminListTable, "product_id" | "variant_id" | "supplier_id"> = {
+  products: "product_id",
+  variants: "variant_id",
+  suppliers: "supplier_id",
+};
+
+const tableLabel: Record<AdminListTable, string> = {
+  products: "Product",
+  variants: "Variant",
+  suppliers: "Supplier",
+};
+
 export async function renameRowAction(input: unknown): Promise<ActionResult<null>> {
   const parsed = renameSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid name");
@@ -98,11 +113,41 @@ export async function renameRowAction(input: unknown): Promise<ActionResult<null
   return ok(null);
 }
 
-export async function deleteRowAction(table: "products" | "variants" | "suppliers", id: string): Promise<ActionResult<null>> {
+export async function deleteRowAction(table: AdminListTable, id: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
+  const references = await findBatchReferences(supabase, table, id);
+  if (!references.ok) return references;
+  if (references.data.length > 0) return fail(deleteBlockedMessage(table, references.data));
+
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
-  if (error) return fail(messageOf(error));
+  if (error) {
+    if (/foreign key constraint/.test(error.message)) {
+      const latest = await findBatchReferences(supabase, table, id);
+      if (latest.ok && latest.data.length > 0) return fail(deleteBlockedMessage(table, latest.data));
+    }
+    return fail(messageOf(error));
+  }
   if (!data || data.length === 0) return fail("Only an Admin can delete");
   revalidatePath("/", "layout");
   return ok(null);
+}
+
+async function findBatchReferences(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  table: AdminListTable,
+  id: string,
+): Promise<ActionResult<readonly BatchReference[]>> {
+  const { data, error } = await supabase
+    .from("v_batches")
+    .select("batch_code")
+    .eq(batchReferenceColumn[table], id);
+  if (error) return fail(messageOf(error));
+  return ok(data ?? []);
+}
+
+function deleteBlockedMessage(table: AdminListTable, references: readonly BatchReference[]): string {
+  if (references.length === 1 && references[0].batch_code) {
+    return `Cannot delete ${tableLabel[table]}: batch ${references[0].batch_code} still uses it.`;
+  }
+  return `Cannot delete ${tableLabel[table]}: ${references.length} batches still use it.`;
 }

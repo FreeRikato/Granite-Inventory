@@ -14,15 +14,17 @@ import { deleteRowAction, renameRowAction } from "./actions";
 type Product = { id: string; name: string; abbreviation: string; category: string };
 type Variant = { id: string; name: string; product_id: string };
 type Supplier = { id: string; name: string };
+type BatchReference = { readonly batch_code: string | null; readonly product_id: string | null; readonly variant_id: string | null; readonly supplier_id: string | null };
 
 type Props = {
   readonly products: readonly Product[];
   readonly variants: readonly Variant[];
   readonly suppliers: readonly Supplier[];
+  readonly batchReferences: readonly BatchReference[];
 };
 
 /* Rename and guarded delete for the three lists that grow from the inward form. */
-export function AdminLists({ products, variants, suppliers }: Props) {
+export function AdminLists({ products, variants, suppliers, batchReferences }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
       <h2 className="text-base font-bold">Products, variants and suppliers</h2>
@@ -38,17 +40,25 @@ export function AdminLists({ products, variants, suppliers }: Props) {
               name={p.name}
               meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}`}
               extra={{ abbreviation: p.abbreviation, category: p.category }}
+              batchReferences={batchReferences}
             />
           ))}
         </ListBlock>
         <ListBlock title="Variants">
           {variants.map((v) => (
-            <EditableRow key={v.id} table="variants" id={v.id} name={v.name} meta={products.find((p) => p.id === v.product_id)?.name ?? ""} />
+            <EditableRow
+              key={v.id}
+              table="variants"
+              id={v.id}
+              name={v.name}
+              meta={products.find((p) => p.id === v.product_id)?.name ?? ""}
+              batchReferences={batchReferences}
+            />
           ))}
         </ListBlock>
         <ListBlock title="Suppliers">
           {suppliers.map((s) => (
-            <EditableRow key={s.id} table="suppliers" id={s.id} name={s.name} />
+            <EditableRow key={s.id} table="suppliers" id={s.id} name={s.name} batchReferences={batchReferences} />
           ))}
         </ListBlock>
       </div>
@@ -75,17 +85,26 @@ function EditableRow({
   name,
   meta,
   extra,
+  batchReferences,
 }: {
   table: "products" | "variants" | "suppliers";
   id: string;
   name: string;
   meta?: string;
   extra?: { abbreviation: string; category: string };
+  batchReferences: readonly BatchReference[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ name, abbreviation: extra?.abbreviation ?? "", category: extra?.category ?? "" });
+  const blockingBatches = batchReferences.filter((reference) =>
+    table === "products"
+      ? reference.product_id === id
+      : table === "variants"
+        ? reference.variant_id === id
+        : reference.supplier_id === id,
+  );
 
   function save() {
     startTransition(async () => {
@@ -145,7 +164,18 @@ function EditableRow({
         {meta ? <span className="truncate text-xs text-muted-foreground">{meta}</span> : null}
       </span>
       <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}><Pencil className="size-4" /></Button>
-      <ConfirmDelete title={`Delete ${name}?`} description="Only possible when no batch uses it." onConfirm={remove} disabled={pending} />
+      <ConfirmDelete
+        title={`Delete ${name}?`}
+        description={deleteDescription(name, blockingBatches)}
+        onConfirm={remove}
+        disabled={pending}
+      />
     </li>
   );
+}
+
+function deleteDescription(name: string, batches: readonly BatchReference[]): string {
+  if (batches.length === 0) return "Only possible when no batch uses it.";
+  if (batches.length === 1 && batches[0].batch_code) return `Cannot delete ${name}: batch ${batches[0].batch_code} still uses it.`;
+  return `Cannot delete ${name}: ${batches.length} batches still use it.`;
 }

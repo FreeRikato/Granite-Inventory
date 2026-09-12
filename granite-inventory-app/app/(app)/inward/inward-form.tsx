@@ -86,6 +86,17 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
     const wanted = form.variantName.trim().toLowerCase();
     return variants.some((v) => v.product_id === form.productId && v.name.toLowerCase() === wanted);
   }, [form.productId, form.variantName, variants]);
+  const variantOptions = useMemo(
+    () => {
+      const existing = variants
+        .filter((v) => v.product_id === form.productId)
+        .map((v) => ({ value: v.name, label: v.name }));
+      const typed = form.variantName.trim();
+      const alreadyListed = existing.some((option) => option.value.toLowerCase() === typed.toLowerCase());
+      return typed && !alreadyListed ? [...existing, { value: typed, label: typed }] : existing;
+    },
+    [form.productId, form.variantName, variants],
+  );
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -200,6 +211,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
             onChange={(v) => {
               set("productId", v);
               set("slot", null);
+              set("variantName", "");
             }}
             placeholder="Select or add product"
             searchPlaceholder="Search products..."
@@ -210,13 +222,17 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
           />
         </Field>
         <Field label="Variant Name" htmlFor="variantName">
-          <Input
+          <SearchSelect
             id="variantName"
-            placeholder="e.g. Grade 1, Mirror Polish"
-            value={form.variantName}
-            onChange={(e) => set("variantName", e.target.value)}
-            className="h-11"
-            autoComplete="off"
+            options={variantOptions}
+            value={form.variantName || null}
+            onChange={(v) => set("variantName", v)}
+            placeholder={form.productId ? "Select or add variant" : "Pick a product first"}
+            searchPlaceholder="Search variants..."
+            emptyText="No existing variant matches."
+            onCreate={(name) => set("variantName", name)}
+            createLabel={(name) => `Add variant "${name}"`}
+            disabled={!form.productId}
           />
         </Field>
       </div>

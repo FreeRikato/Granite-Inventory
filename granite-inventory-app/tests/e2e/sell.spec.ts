@@ -54,6 +54,53 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await expect(old).toContainText("Available:6");
 });
 
+test("choosing a stock line selects its oldest batch and enables Record Sale", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByRole("option", { name: /Walk-in Customer/ }).click();
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo.nth(0)).toHaveAttribute("aria-checked", "true");
+  await expect(fifo.nth(0)).toContainText("BP-OLD-01");
+  await expect(page.getByRole("button", { name: "Record Sale" })).toBeEnabled();
+});
+
+test("switching stock lines moves the default to the new line's oldest batch", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+  await expect(page.getByTestId("fifo-batch").nth(0)).toHaveAttribute("aria-checked", "true");
+
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByPlaceholder("Product, variant or size...").fill("Jet Black");
+  await page.getByRole("option", { name: /Jet Black · Premium · 5×3 ft, 20mm/ }).click();
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo).toHaveCount(1);
+  await expect(fifo.first()).toHaveAttribute("aria-checked", "true");
+  await expect(fifo.first()).toContainText("JB-FIVE-01");
+});
+
+test("a deep-linked batch remains selected over the FIFO default", async ({ page, signIn }) => {
+  const rows = await sql<{ id: string }>(`select id from public.batches where batch_code = 'BP-NEW-01'`);
+  const newBatchId = rows[0]?.id;
+  if (!newBatchId) throw new Error("seed batch BP-NEW-01 was not found");
+  await signIn("operator");
+  await page.goto(`/sell?batch=${newBatchId}`);
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo.nth(0)).toContainText("BP-OLD-01");
+  await expect(fifo.nth(1)).toContainText("BP-NEW-01");
+  await expect(fifo.nth(0)).toHaveAttribute("aria-checked", "false");
+  await expect(fifo.nth(1)).toHaveAttribute("aria-checked", "true");
+});
+
 test("selling more than available is refused by the database", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/sell");

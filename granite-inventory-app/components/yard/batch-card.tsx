@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleOff } from "lucide-react";
 import { AgeingBanner } from "@/components/ageing-badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDims } from "@/lib/format";
@@ -23,7 +24,17 @@ export function BatchCard({ batch, actions }: Props) {
         batch.sold_out && "opacity-60",
       )}
     >
-      <div className={stale ? "mb-3" : "mb-2"}>
+      <div className={cn("flex flex-wrap gap-2", stale ? "mb-3" : "mb-2")}>
+        {batch.sold_out ? (
+          <div
+            role="status"
+            aria-label="Sold out"
+            className="flex items-center gap-2 rounded-lg bg-stale-soft px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stale"
+          >
+            <CircleOff className="size-4" aria-hidden="true" />
+            Sold out
+          </div>
+        ) : null}
         <AgeingBanner band={batch.ageing_band} days={batch.age_days} />
       </div>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
