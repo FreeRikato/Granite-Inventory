@@ -7,12 +7,12 @@ const THEMES = ["light", "dark"] as const;
 const RULES = ["color-contrast", "heading-order", "definition-list", "landmark-unique", "empty-table-header"] as const;
 
 const PAGES = [
-  { name: "catalog", path: "/catalog" },
-  { name: "overview", path: "/" },
-  { name: "sell", path: "/sell" },
-  { name: "yard", path: "/yard" },
-  { name: "customer detail", path: "customer-detail" },
-  { name: "settings", path: "/settings" },
+  { name: "catalog", path: "/catalog", heading: /Kirthik Granite/ },
+  { name: "overview", path: "/", heading: "Overview" },
+  { name: "sell", path: "/sell", heading: "Sell Stone" },
+  { name: "yard", path: "/yard", heading: "Yard Slots" },
+  { name: "customer detail", path: "customer-detail", heading: "Walk-in Customer" },
+  { name: "settings", path: "/settings", heading: "Settings" },
 ] as const;
 
 let customerId = "";
@@ -46,7 +46,7 @@ for (const theme of THEMES) {
       const path = target.path === "customer-detail" ? `/customers/${customerId}` : target.path;
       await page.goto(path);
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(300);
+      await expect(page.getByRole("heading", { name: target.heading })).toBeVisible();
 
       const results = await new AxeBuilder({ page }).withRules([...RULES]).analyze();
       expect(results.violations, `${theme} ${target.name}`).toEqual([]);
