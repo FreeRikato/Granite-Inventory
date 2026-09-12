@@ -116,7 +116,7 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
         table,
         references.data.batches,
         references.data.variants,
-        references.data.batches.length > 0 ? references.data.rowName : undefined,
+        references.data.rowName,
       ),
     );
   }
@@ -131,7 +131,7 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
             table,
             latest.data.batches,
             latest.data.variants,
-            latest.data.batches.length > 0 ? latest.data.rowName : undefined,
+            latest.data.rowName,
           ),
         );
       }
