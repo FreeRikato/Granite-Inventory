@@ -52,12 +52,19 @@ export function createBatch(db: Db, input: BatchInput) {
   });
 }
 
+/* Age, "this month" and every date rule in the app come from private.ist_today(), so the
+   fixtures have to speak the same calendar. The runner and Postgres are both UTC, which is a
+   day behind India between 18:30 and midnight UTC; dates built from the UTC clock would make
+   every asserted age one larger for those five and a half hours. India has no DST, so a fixed
+   offset is exact. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return daysAgo(0);
 }
 
 export function daysAgo(days: number): string {
-  const d = new Date();
+  const d = new Date(Date.now() + IST_OFFSET_MS);
   d.setUTCDate(d.getUTCDate() - days);
   return d.toISOString().slice(0, 10);
 }

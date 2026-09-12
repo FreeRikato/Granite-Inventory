@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, openDialog, openPalette, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -16,14 +16,14 @@ test("palette jumps to a stock line in the yard and to a customer; sell deep lin
   test.skip(testInfo.project.name === "mobile", "the palette is desktop only");
   await signIn("operator");
   await page.goto("/");
-  await page.keyboard.press("ControlOrMeta+k");
+  await openPalette(page);
   await page.getByPlaceholder("Type a page, stone or customer...").fill("jet black");
   await page.getByRole("option", { name: /Jet Black · Premium/ }).click();
   await expect(page).toHaveURL(/\/yard\?line=/);
   await expect(page.getByTestId("yard-batch")).toHaveCount(1);
   await expect(page.getByTestId("yard-batch")).toHaveAttribute("data-batch-code", "JB-FIVE-01");
 
-  await page.getByRole("button", { name: "Search or jump to" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Search or jump to" }));
   await page.getByPlaceholder("Type a page, stone or customer...").fill("98765");
   await page.getByRole("option", { name: /Murugan Constructions/ }).click();
   await expect(page.getByRole("heading", { name: "Murugan Constructions" })).toBeVisible();
