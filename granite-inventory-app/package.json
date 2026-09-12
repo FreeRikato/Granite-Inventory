@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > lib/database.types.ts",
+    "db:push:staging": "supabase link --project-ref exddnsdnxookluwcxsvn && supabase db push",
+    "db:push:prod": "supabase link --project-ref heugsayvurecfacmkcms && supabase db push",
+    "db:link:local": "supabase unlink"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
