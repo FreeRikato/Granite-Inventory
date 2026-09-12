@@ -86,6 +86,18 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
     expectNoEmail(error);
   });
 
+  it("refuses moving a Batch purchase date after its earliest Sale", async () => {
+    const purchaseDate = daysAgo(3);
+    const saleDate = daysAgo(2);
+
+    expect((await correctBatch(admin, batchId, { purchaseDate })).error).toBeNull();
+    await recordSale(operator, { batchId, customerId, saleDate });
+
+    const error = expectError(await correctBatch(admin, batchId, { purchaseDate: today() }));
+    expect(error.message).toBe(`Purchase date cannot be after a sale on this batch (${saleDate})`);
+    expectNoEmail(error);
+  });
+
   it("correct_batch gives readable freight and sold-units messages", async () => {
     const freight = expectError(await correctBatch(admin, batchId, { freight: -1 }));
     expect(freight.message).toMatch(/freight cost.*zero or more/i);
@@ -189,7 +201,25 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
   });
 
   it("uses the destination batch purchase date when correcting a moved Sale", async () => {
-    const sale = await recordSale(operator, { batchId, customerId });
+    const purchaseDate = daysAgo(3);
+    const saleDate = daysAgo(2);
+
+    expect((await correctBatch(admin, batchId, { purchaseDate })).error).toBeNull();
+    const sale = await recordSale(operator, { batchId, customerId, saleDate });
+    const movedBeforeDestination = await admin.rpc("correct_sale", {
+      p_sale_id: sale.data?.id ?? "",
+      p_batch_id: secondBatchId,
+      p_customer_id: customerId,
+      p_sale_date: saleDate,
+      p_quantity: 1,
+      p_sale_price: 1650,
+      p_payment_mode: "CASH",
+    });
+
+    const error = expectError(movedBeforeDestination);
+    expect(error.message).toBe(`Sale date cannot be before the batch was bought (${today()})`);
+    expectNoEmail(error);
+
     const moved = await admin.rpc("correct_sale", {
       p_sale_id: sale.data?.id ?? "",
       p_batch_id: secondBatchId,
@@ -201,5 +231,20 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
     });
 
     expect(moved.error).toBeNull();
+  });
+
+  it("keeps Unknown customer ahead of record_sale input errors", async () => {
+    const error = expectError(
+      await operator.rpc("record_sale", {
+        p_batch_id: batchId,
+        p_customer_id: "00000000-0000-0000-0000-000000000000",
+        p_sale_date: today(),
+        p_quantity: 0,
+        p_sale_price: 1650,
+        p_payment_mode: "CASH",
+      }),
+    );
+
+    expect(error.message).toBe("Unknown customer");
   });
 });

@@ -131,7 +131,6 @@ create or replace function public.create_batch(
 )
 returns public.batches
 language plpgsql
-security definer
 set search_path = ''
 as $$
 declare
@@ -208,6 +207,10 @@ begin
     raise exception 'Not a team member' using errcode = 'insufficient_privilege';
   end if;
 
+  if not exists (select 1 from public.customers where id = p_customer_id) then
+    raise exception 'Unknown customer' using errcode = 'foreign_key_violation';
+  end if;
+
   select * into v_batch from public.batches where id = p_batch_id for update;
   if v_batch.id is null then
     raise exception 'Unknown batch' using errcode = 'foreign_key_violation';
@@ -225,9 +228,6 @@ begin
     v_batch.purchase_date
   );
 
-  if not exists (select 1 from public.customers where id = p_customer_id) then
-    raise exception 'Unknown customer' using errcode = 'foreign_key_violation';
-  end if;
   if p_quantity > v_batch.initial_units - v_batch.units_sold then
     raise exception 'Only % available in batch %', v_batch.initial_units - v_batch.units_sold, v_batch.batch_code
       using errcode = 'check_violation';
@@ -274,6 +274,7 @@ declare
   v_batch public.batches;
   v_variant_id uuid;
   v_category text;
+  v_earliest_sale_date date;
 begin
   perform private.require_admin();
 
@@ -294,6 +295,14 @@ begin
     p_slot
   );
 
+  select min(sale_date) into v_earliest_sale_date
+  from public.sales
+  where batch_id = p_batch_id;
+  if v_earliest_sale_date is not null and p_purchase_date > v_earliest_sale_date then
+    raise exception 'Purchase date cannot be after a sale on this batch (%)', v_earliest_sale_date
+      using errcode = 'check_violation';
+  end if;
+
   if p_initial_units < v_batch.units_sold then
     raise exception 'Batch % already has % sold; pieces bought cannot go below that', v_batch.batch_code, v_batch.units_sold
       using errcode = 'check_violation';
@@ -302,6 +311,9 @@ begin
   select category into v_category from public.products where id = p_product_id;
   if v_category is null then
     raise exception 'Unknown product' using errcode = 'foreign_key_violation';
+  end if;
+  if not exists (select 1 from public.suppliers where id = p_supplier_id) then
+    raise exception 'Unknown supplier' using errcode = 'foreign_key_violation';
   end if;
 
   v_variant_id := private.find_or_create_variant(p_product_id, p_variant_name);
