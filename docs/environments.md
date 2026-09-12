@@ -48,7 +48,9 @@ SUPABASE_SECRET_KEY                   sb_secret_...   (server only)
 `E2E_TEST_LOGIN` is never set on either; the test-login route exists only on a local dev
 server.
 
-`AUTH_TIMING` is off by default; setting it to `1` logs only claims, Team Member and settings timings for auth-chain diagnostics, never claims or cookies.
+`AUTH_TIMING` is off by default; setting it to `1` logs the duration of each auth-chain step
+(claims check, Team Member lookup, settings read) as `auth-timing` lines: durations only, never
+claim contents or cookies.
 
 ## Resetting staging
 

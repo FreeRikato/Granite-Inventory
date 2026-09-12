@@ -15,13 +15,13 @@ export type Session =
 
 type AuthTiming = {
   claimsMs: number;
-  memberMs: number;
+  memberMs: number | null;
 };
 
 const AUTH_TIMING_ENABLED = process.env.AUTH_TIMING === "1";
 
 function getAuthTiming(): AuthTiming | null {
-  return AUTH_TIMING_ENABLED ? { claimsMs: 0, memberMs: 0 } : null;
+  return AUTH_TIMING_ENABLED ? { claimsMs: 0, memberMs: null } : null;
 }
 
 function logAuthTiming(timing: AuthTiming | null): void {
