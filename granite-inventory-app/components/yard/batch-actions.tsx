@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export function BatchActions({ batch, lists }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   function remove() {
     startTransition(async () => {
@@ -46,7 +47,7 @@ export function BatchActions({ batch, lists }: Props) {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="h-9 bg-card" onClick={() => setOpen(true)} aria-label={`Edit ${batch.batch_code}`}>
+      <Button ref={triggerRef} variant="outline" size="sm" className="h-9 bg-card" onClick={() => setOpen(true)} aria-label={`Edit ${batch.batch_code}`}>
         <Pencil className="size-4" /> Edit
       </Button>
       {(batch.units_sold ?? 0) === 0 ? (
@@ -58,7 +59,13 @@ export function BatchActions({ batch, lists }: Props) {
         />
       ) : null}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
+        <DialogContent
+          className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            triggerRef.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit batch {batch.batch_code}</DialogTitle>
           </DialogHeader>

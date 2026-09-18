@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { roleLabel } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { AdminLists } from "./admin-lists";
+import { Appearance } from "./appearance";
 import { InventoryRules } from "./inventory-rules";
 import { TeamAccess } from "./team-access";
 
@@ -14,12 +15,13 @@ export default async function SettingsPage() {
   const isAdmin = member?.role === "ADMIN";
   const supabase = await createClient();
   const empty = Promise.resolve({ data: [] });
-  const [{ data: team }, { data: settings }, products, variants, suppliers] = await Promise.all([
+  const [{ data: team }, { data: settings }, products, variants, suppliers, batchReferences] = await Promise.all([
     isAdmin ? supabase.from("team_members").select("*").order("created_at") : empty,
     supabase.from("settings").select("*").maybeSingle(),
     isAdmin ? supabase.from("products").select("id, name, abbreviation, category").order("name") : empty,
     isAdmin ? supabase.from("variants").select("id, name, product_id").order("name") : empty,
     isAdmin ? supabase.from("suppliers").select("id, name").order("name") : empty,
+    isAdmin ? supabase.from("v_batches").select("batch_code, product_id, variant_id, supplier_id") : empty,
   ]);
 
   return (
@@ -51,11 +53,18 @@ export default async function SettingsPage() {
         <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">Signed in with Google</p>
       </section>
 
+      <Appearance />
+
       {isAdmin ? (
         <>
           <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} />
           <InventoryRules ageing={settings?.ageing_after_days ?? 90} stale={settings?.stale_after_days ?? 180} />
-          <AdminLists products={products.data ?? []} variants={variants.data ?? []} suppliers={suppliers.data ?? []} />
+          <AdminLists
+            products={products.data ?? []}
+            variants={variants.data ?? []}
+            suppliers={suppliers.data ?? []}
+            batchReferences={batchReferences.data ?? []}
+          />
         </>
       ) : (
         <p className="text-sm text-muted-foreground">Team access and inventory rules are managed by an Admin.</p>

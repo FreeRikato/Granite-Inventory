@@ -10,6 +10,7 @@ test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
   await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(`insert into public.customers (name, phone, customer_type) values ('Priya Engineering', '+91 91234 56789', 'ENGINEER')`);
 });
 
 test("operator sells from the oldest batch and sees margin live, then available drops in the yard", async ({ page, signIn }) => {
@@ -54,6 +55,53 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await expect(old).toContainText("Available:6");
 });
 
+test("choosing a stock line selects its oldest batch and enables Record Sale", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByRole("option", { name: /Walk-in Customer/ }).click();
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo.nth(0)).toHaveAttribute("aria-checked", "true");
+  await expect(fifo.nth(0)).toContainText("BP-OLD-01");
+  await expect(page.getByRole("button", { name: "Record Sale" })).toBeEnabled();
+});
+
+test("switching stock lines moves the default to the new line's oldest batch", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+  await expect(page.getByTestId("fifo-batch").nth(0)).toHaveAttribute("aria-checked", "true");
+
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByPlaceholder("Product, variant or size...").fill("Jet Black");
+  await page.getByRole("option", { name: /Jet Black · Premium · 5×3 ft, 20mm/ }).click();
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo).toHaveCount(1);
+  await expect(fifo.first()).toHaveAttribute("aria-checked", "true");
+  await expect(fifo.first()).toContainText("JB-FIVE-01");
+});
+
+test("a deep-linked batch remains selected over the FIFO default", async ({ page, signIn }) => {
+  const rows = await sql<{ id: string }>(`select id from public.batches where batch_code = 'BP-NEW-01'`);
+  const newBatchId = rows[0]?.id;
+  if (!newBatchId) throw new Error("seed batch BP-NEW-01 was not found");
+  await signIn("operator");
+  await page.goto(`/sell?batch=${newBatchId}`);
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo.nth(0)).toContainText("BP-OLD-01");
+  await expect(fifo.nth(1)).toContainText("BP-NEW-01");
+  await expect(fifo.nth(0)).toHaveAttribute("aria-checked", "false");
+  await expect(fifo.nth(1)).toHaveAttribute("aria-checked", "true");
+});
+
 test("selling more than available is refused by the database", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/sell");
@@ -66,4 +114,48 @@ test("selling more than available is refused by the database", async ({ page, si
   await page.getByLabel("Stone Sale Price (₹)").fill("2600");
   await page.getByRole("button", { name: "Record Sale" }).click();
   await expect(page.getByText(/Only 6 available in batch JB-FIVE-01/)).toBeVisible();
+});
+
+test("a punctuated phone opens a phone draft and saves the normalised value", async ({ page, signIn }) => {
+  await sql(`delete from public.customers where name = 'Murugan Constructions'`);
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByPlaceholder("Name or phone...").fill("+91-98765-43210");
+  await page.getByRole("option", { name: 'Add customer "+91-98765-43210"' }).click();
+
+  await expect(page.getByLabel("Name")).toHaveValue("");
+  await expect(page.getByLabel("Phone")).toHaveValue("+919876543210");
+  await page.getByLabel("Name").fill("Punctuated Customer");
+  await page.getByRole("button", { name: "Add customer" }).click();
+  await expect(page.getByLabel("Contact Number")).toHaveValue("+919876543210");
+});
+
+test("phone search returns only the customer whose number contains the typed digits", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByPlaceholder("Name or phone...").fill("98765");
+
+  await expect(page.getByRole("option", { name: /Murugan Constructions/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /Priya Engineering/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: 'Add customer "98765"' })).toBeVisible();
+});
+
+test("the Add customer row appears for a genuinely new query", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByPlaceholder("Name or phone...").fill("Brand New Customer");
+
+  await expect(page.getByRole("option", { name: 'Add customer "Brand New Customer"' })).toBeVisible();
+});
+
+test("the Add customer row is hidden when the typed digits belong to a customer", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByPlaceholder("Name or phone...").fill("919876543210");
+
+  await expect(page.getByRole("option", { name: /Add customer/ })).toHaveCount(0);
 });

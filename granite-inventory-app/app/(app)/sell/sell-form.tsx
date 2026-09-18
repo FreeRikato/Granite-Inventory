@@ -21,6 +21,7 @@ import {
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { computeMargin, marginHealth } from "@/lib/margin";
+import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordSaleAction } from "./actions";
@@ -39,6 +40,16 @@ type Props = {
 function num(value: string): number {
   const n = Number.parseFloat(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+export function customerDraftFromQuery(query: string): CustomerDraft {
+  const trimmed = query.trim();
+  const digits = phoneDigits(trimmed);
+  const isPhone = digits.length >= 6 && digits.length <= 20;
+
+  return isPhone
+    ? { name: "", phone: `${trimmed.startsWith("+") ? "+" : ""}${digits}`, customerType: "REGULAR" }
+    : { name: trimmed, phone: "", customerType: "REGULAR" };
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
@@ -143,15 +154,13 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   value: c.id,
                   label: c.name,
                   hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
-                  keywords: c.phone ? [c.phone, c.phone.replace(/\D/g, "")] : [],
+                  phone: c.phone,
                 }))}
                 value={customerId}
                 onChange={setCustomerId}
                 placeholder="Search or add customer"
                 searchPlaceholder="Name or phone..."
-                onCreate={(q) =>
-                  setNewCustomer(/^\+?[0-9 ]+$/.test(q) ? { name: "", phone: q, customerType: "REGULAR" } : { name: q, phone: "", customerType: "REGULAR" })
-                }
+                onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
                 createLabel={(q) => `Add customer "${q}"`}
               />
             </Field>
@@ -181,7 +190,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               value={lineKey}
               onChange={(v) => {
                 setLineKey(v);
-                setBatchId(null);
+                setBatchId(batches.find((b) => b.line_key === v)?.id ?? null);
               }}
               placeholder="Search product, e.g. Black Pearl 4×2 ft"
               searchPlaceholder="Product, variant or size..."
@@ -260,7 +269,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         </Card>
       </div>
 
-      <aside className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6" data-testid="order-summary">
+      <aside aria-label="Order summary" className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6" data-testid="order-summary">
         <h2 className="text-base font-bold">Order Summary</h2>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <Row label="Stone Sale Price" value={formatRupees(figures.stoneTotal)} />
@@ -335,7 +344,7 @@ function Row({ label, sub, value, muted }: { label: string; sub?: string; value:
     <div className="flex items-start justify-between gap-4">
       <dt className="text-muted-foreground">
         {label}
-        {sub ? <span className="block text-xs text-muted-foreground/80">{sub}</span> : null}
+        {sub ? <span className="block text-xs text-muted-foreground">{sub}</span> : null}
       </dt>
       <dd className={cn("font-semibold tabular", muted && "text-muted-foreground")}>{value}</dd>
     </div>

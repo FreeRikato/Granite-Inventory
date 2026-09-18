@@ -8,21 +8,23 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { deleteBlockedMessage, referencesForTable, type AdminListTable, type BatchReference, type VariantReference } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
 import { deleteRowAction, renameRowAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
-type Variant = { id: string; name: string; product_id: string };
+type Variant = VariantReference;
 type Supplier = { id: string; name: string };
 
 type Props = {
   readonly products: readonly Product[];
   readonly variants: readonly Variant[];
   readonly suppliers: readonly Supplier[];
+  readonly batchReferences: readonly BatchReference[];
 };
 
 /* Rename and guarded delete for the three lists that grow from the inward form. */
-export function AdminLists({ products, variants, suppliers }: Props) {
+export function AdminLists({ products, variants, suppliers, batchReferences }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
       <h2 className="text-base font-bold">Products, variants and suppliers</h2>
@@ -38,17 +40,26 @@ export function AdminLists({ products, variants, suppliers }: Props) {
               name={p.name}
               meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}`}
               extra={{ abbreviation: p.abbreviation, category: p.category }}
+              batchReferences={batchReferences}
+              variantReferences={variants.filter((v) => v.product_id === p.id)}
             />
           ))}
         </ListBlock>
         <ListBlock title="Variants">
           {variants.map((v) => (
-            <EditableRow key={v.id} table="variants" id={v.id} name={v.name} meta={products.find((p) => p.id === v.product_id)?.name ?? ""} />
+            <EditableRow
+              key={v.id}
+              table="variants"
+              id={v.id}
+              name={v.name}
+              meta={products.find((p) => p.id === v.product_id)?.name ?? ""}
+              batchReferences={batchReferences}
+            />
           ))}
         </ListBlock>
         <ListBlock title="Suppliers">
           {suppliers.map((s) => (
-            <EditableRow key={s.id} table="suppliers" id={s.id} name={s.name} />
+            <EditableRow key={s.id} table="suppliers" id={s.id} name={s.name} batchReferences={batchReferences} />
           ))}
         </ListBlock>
       </div>
@@ -75,17 +86,23 @@ function EditableRow({
   name,
   meta,
   extra,
+  batchReferences,
+  variantReferences,
 }: {
-  table: "products" | "variants" | "suppliers";
+  table: AdminListTable;
   id: string;
   name: string;
   meta?: string;
   extra?: { abbreviation: string; category: string };
+  batchReferences: readonly BatchReference[];
+  variantReferences?: readonly VariantReference[];
 }) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ name, abbreviation: extra?.abbreviation ?? "", category: extra?.category ?? "" });
+  const blockingBatches = referencesForTable(table, id, batchReferences);
+  const blockingVariants = table === "products" ? variantReferences ?? [] : [];
 
   function save() {
     startTransition(async () => {
@@ -145,7 +162,12 @@ function EditableRow({
         {meta ? <span className="truncate text-xs text-muted-foreground">{meta}</span> : null}
       </span>
       <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}><Pencil className="size-4" /></Button>
-      <ConfirmDelete title={`Delete ${name}?`} description="Only possible when no batch uses it." onConfirm={remove} disabled={pending} />
+      <ConfirmDelete
+        title={`Delete ${name}?`}
+        description={deleteBlockedMessage(table, blockingBatches, blockingVariants, name)}
+        onConfirm={remove}
+        disabled={pending}
+      />
     </li>
   );
 }

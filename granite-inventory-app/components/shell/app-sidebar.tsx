@@ -14,7 +14,7 @@ export function AppSidebar({ businessName, member }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 md:flex">
+    <aside aria-label="Application sidebar" className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 md:flex">
       <div className="flex items-center justify-between px-1">
         <span className="text-base font-bold">{businessName}</span>
         <Link
@@ -53,6 +53,7 @@ export function AppSidebar({ businessName, member }: Props) {
       <div className="mt-5 flex items-center justify-between gap-2 border-t border-sidebar-border pt-4">
         <Link
           href={SETTINGS_ITEM.href}
+          aria-current={isActivePath(pathname, SETTINGS_ITEM.href) ? "page" : undefined}
           className={cn(
             "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-2 hover:bg-secondary",
             isActivePath(pathname, SETTINGS_ITEM.href) && "bg-sidebar-accent",

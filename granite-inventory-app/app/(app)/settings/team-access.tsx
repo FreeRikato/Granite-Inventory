@@ -49,16 +49,16 @@ export function TeamAccess({ members, currentEmail }: Props) {
         {members.map((m) => {
           const me = m.email === currentEmail;
           return (
-            <li key={m.id} className="flex items-center gap-3 py-3" data-testid="member-row">
+            <li key={m.id} className="flex flex-wrap items-center gap-3 py-3" data-testid="member-row">
               <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold", m.role === "ADMIN" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
                 {initialsOf(m.name ?? m.email)}
               </span>
-              <span className="flex min-w-0 flex-1 flex-col">
+              <span className="flex min-w-0 flex-1 basis-[calc(100%-3rem)] flex-col sm:basis-auto">
                 <span className="truncate text-sm font-semibold">{m.name ?? m.email}{me ? " (you)" : ""}</span>
                 <span className="truncate text-xs text-muted-foreground">{m.email}</span>
               </span>
               {!me ? (
-                <>
+                <span className="flex w-full flex-wrap gap-3 pl-12 sm:w-auto sm:flex-nowrap sm:pl-0">
                   <Select value={m.role} onValueChange={(v) => { if (isRole(v)) run(() => setMemberRoleAction(m.id, v), "Role updated"); }}>
                     <SelectTrigger className="h-8 w-[150px] text-xs" aria-label={`Role for ${m.email}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -72,7 +72,7 @@ export function TeamAccess({ members, currentEmail }: Props) {
                     disabled={pending}
                     label="Remove"
                   />
-                </>
+                </span>
               ) : (
                 <span className={cn("rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide", m.role === "ADMIN" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
                   {ROLE_LABEL[isRole(m.role) ? m.role : "YARD_OPERATOR"]}

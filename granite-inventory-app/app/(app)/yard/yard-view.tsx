@@ -99,7 +99,7 @@ export function YardView() {
               )}
             >
               {SLOT_LABEL[slot]}
-              <span className={cn("text-xs tabular", active ? "text-accent-foreground/80" : "text-muted-foreground")}>
+              <span className={cn("text-xs tabular", active ? "text-accent-foreground" : "text-muted-foreground")}>
                 {summary?.available ?? 0}
               </span>
             </Link>

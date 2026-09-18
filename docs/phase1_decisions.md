@@ -9,6 +9,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Store raw facts, derive everything else. Per-piece prices and quantities are stored; totals, margins, Age, Ageing Band, Stock Lines, Sold Out and Clamps are computed in views. Changing a formula is a view edit, not a data migration.
 - No Postgres `enum` types. Categorical columns (Slot, Customer Type, Payment Mode, Role, Category) are `text` with a check constraint, so adding or renaming a value is one small migration.
 - Rules live in a handful of SQL functions and views (see ADR 0001), so a rule change touches one place and is covered by one test, regardless of how many screens use it.
+- Inputs rejected by constraints reachable through the UI or documented API raise a readable business-rule message before the database constraint fires, rather than exposing raw Postgres text.
 - Screens are thin: server components read views, forms call functions. UI can be reshaped without touching data.
 - Nothing is pre-optimised for scale or multi-tenancy. Add it when a second yard exists.
 - When a rule here is changed, update this file and `CONTEXT.md` in the same commit rather than letting the docs drift.
@@ -22,11 +23,11 @@ This is the first iteration after one rough call with the client. Expect heavy c
   - 4 ≤ length < 5 → 4FT
   - 5 ≤ length < 6 → 5FT
   - anything else → CUSTOM
-- Batch Code format `{PRODUCT_ABBR}-{DDMON}{YY}-{seq}` (e.g. `BP-07SEP26-01`). Abbreviation stored on Product, unique, auto-suggested from initials and editable. Sequence resets per product per day. Generated inside the insert function.
+- Batch Code format `{PRODUCT_ABBR}-{DDMON}{YY}-{seq}` (e.g. `BP-07SEP26-01`). Abbreviation stored on Product, unique, auto-suggested from initials and editable. Sequence resets per product per day. Generated inside the insert function. Purchase dates before 2000-01-01 are refused so the two-digit year remains unambiguous for the supported history.
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.
 - Products, Variants, Suppliers and Customers are created inline from the inward and sell forms. A minimal admin list allows rename; delete only when nothing references the row (FK restrict). No merge tool.
-- Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone.
+- Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone. The Walk-in Customer flag is immutable for every role.
 
 ## Selling
 
@@ -35,7 +36,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Margin = qty × (sale_price − landed_cost) + qty × (stickering_price − stickering_cost). Margin % = margin / (qty × (sale_price + stickering_price)).
 - FIFO Listing shows Batches of the chosen Stock Line with Available > 0, oldest first, with Ageing Band. Any Batch may be picked; nothing is blocked or confirmed.
 - Payment Mode enum: CASH, UPI, BANK_TRANSFER. All Sales are considered paid. No credit or dues.
-- Dates are `date` columns in IST: `private.ist_today()` is the reference for future-date checks and Age, whatever zone the server runs in. Past dates allowed without limit; future dates rejected by check constraint.
+- Dates are `date` columns in IST: `private.ist_today()` is the reference for future-date checks and Age, whatever zone the server runs in. Past Sale dates are allowed without limit; future dates are rejected.
 
 ## Corrections
 

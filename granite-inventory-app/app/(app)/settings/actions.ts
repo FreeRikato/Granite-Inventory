@@ -7,6 +7,13 @@ import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
 import { settingsSchema } from "@/lib/schemas/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
+import {
+  batchReferenceColumn,
+  deleteBlockedMessage,
+  hasDeleteReferences,
+  type AdminListTable,
+  type DeleteReferences,
+} from "@/lib/admin-list-references";
 
 export async function updateSettingsAction(input: unknown): Promise<ActionResult<Tables<"settings">>> {
   const parsed = settingsSchema.safeParse(input);
@@ -98,11 +105,44 @@ export async function renameRowAction(input: unknown): Promise<ActionResult<null
   return ok(null);
 }
 
-export async function deleteRowAction(table: "products" | "variants" | "suppliers", id: string): Promise<ActionResult<null>> {
+export async function deleteRowAction(table: AdminListTable, id: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
+  const references = await findDeleteReferences(supabase, table, id);
+  if (!references.ok) return references;
+  if (hasDeleteReferences(table, references.data)) {
+    return fail(deleteBlockedMessage(table, references.data.batches, references.data.variants));
+  }
+
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
-  if (error) return fail(messageOf(error));
+  if (error) {
+    if (error.code === "23503") {
+      const latest = await findDeleteReferences(supabase, table, id);
+      if (latest.ok && hasDeleteReferences(table, latest.data)) {
+        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.variants));
+      }
+    }
+    return fail(messageOf(error));
+  }
   if (!data || data.length === 0) return fail("Only an Admin can delete");
   revalidatePath("/", "layout");
   return ok(null);
+}
+
+async function findDeleteReferences(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  table: AdminListTable,
+  id: string,
+): Promise<ActionResult<DeleteReferences>> {
+  const { data, error } = await supabase
+    .from("v_batches")
+    .select("batch_code, product_id, variant_id, supplier_id")
+    .eq(batchReferenceColumn[table], id);
+  if (error) return fail(messageOf(error));
+  if (table !== "products") {
+    return ok({ batches: data ?? [], variants: [] });
+  }
+
+  const variants = await supabase.from("variants").select("id, name, product_id").eq("product_id", id);
+  if (variants.error) return fail(messageOf(variants.error));
+  return ok({ batches: data ?? [], variants: variants.data ?? [] });
 }
