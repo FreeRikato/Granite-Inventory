@@ -1,7 +1,11 @@
 import { sql } from "../seam/harness";
 
 /* A small yard used by the browser specs: two Black Pearl 4x2 batches (one stale, one fresh),
-   one 5x3 batch and one Doom Stone batch. Dates are relative to today. */
+   one 5x3 batch and one Doom Stone batch.
+
+   Every date is an offset from private.ist_today(), the same calendar the app derives Age from.
+   Postgres runs in UTC, so current_date is a day behind IST between 18:30 and midnight UTC and
+   would make every age one larger than the specs expect. */
 export async function seedYard(): Promise<{ oldBatchId: string; newBatchId: string }> {
   await sql(`insert into public.suppliers (name) values ('Madurai Quarry') on conflict do nothing`);
   await sql(`insert into public.products (name, abbreviation, category) values
@@ -17,13 +21,13 @@ export async function seedYard(): Promise<{ oldBatchId: string; newBatchId: stri
       returning id, product_id, name
     )
     insert into public.batches (batch_code, variant_id, supplier_id, purchase_date, length_ft, breadth_ft, thickness_mm, slot, initial_units, units_sold, unit_purchase_price, freight_cost)
-    select 'BP-OLD-01', v.id, s.id, current_date - 232, 4, 2, 16, '4FT', 15, 8, 1400, 750 from v, s where v.name = 'Grade 1'
+    select 'BP-OLD-01', v.id, s.id, private.ist_today() - 232, 4, 2, 16, '4FT', 15, 8, 1400, 750 from v, s where v.name = 'Grade 1'
     union all
-    select 'BP-NEW-01', v.id, s.id, current_date - 3, 4, 2, 16, '4FT', 10, 3, 1500, 0 from v, s where v.name = 'Grade 1'
+    select 'BP-NEW-01', v.id, s.id, private.ist_today() - 3, 4, 2, 16, '4FT', 10, 3, 1500, 0 from v, s where v.name = 'Grade 1'
     union all
-    select 'JB-FIVE-01', v.id, s.id, current_date - 40, 5, 3, 20, '5FT', 6, 0, 2400, 0 from v, s where v.name = 'Premium'
+    select 'JB-FIVE-01', v.id, s.id, private.ist_today() - 40, 5, 3, 20, '5FT', 6, 0, 2400, 0 from v, s where v.name = 'Premium'
     union all
-    select 'DS-CROSS-01', v.id, s.id, current_date - 100, null, null, null, 'DOOM', 9, 0, 900, 0 from v, s where v.name = 'Std Cross'
+    select 'DS-CROSS-01', v.id, s.id, private.ist_today() - 100, null, null, null, 'DOOM', 9, 0, 900, 0 from v, s where v.name = 'Std Cross'
     returning id, batch_code`);
   const find = (code: string) => rows.find((r) => r.batch_code === code)?.id ?? "";
   return { oldBatchId: find("BP-OLD-01"), newBatchId: find("BP-NEW-01") };

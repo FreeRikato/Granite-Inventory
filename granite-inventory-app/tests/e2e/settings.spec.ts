@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
+import { expect, test, confirmDelete, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -41,8 +41,7 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await expect(page.getByTestId("products-row").filter({ hasText: "Jet Black Granite" })).toBeVisible();
 
-  await page.getByTestId("suppliers-row").filter({ hasText: "Madurai Quarry" }).getByRole("button", { name: "Delete" }).click();
-  await page.getByRole("button", { name: "Delete" }).last().click();
+  await confirmDelete(page, page.getByTestId("suppliers-row").filter({ hasText: "Madurai Quarry" }).getByRole("button", { name: "Delete" }));
   await expect(page.getByText("Still used by batches or sales in the yard")).toBeVisible();
 });
 

@@ -7,12 +7,12 @@ data, production is Kirthik's real yard.
 git branch      Vercel environment   Supabase project                    data
 -----------------------------------------------------------------------------------------
 (none)          local dev server     local Docker stack                  seeded, reset freely
-staging         Preview              granite-staging exddnsdnxookluwcxsvn  junk, reset freely
-main            Production           granite-inventory heugsayvurecfacmkcms  real, never reset
+staging         Preview              granite-staging-bom tyiepanibaqwpubajsya  junk, reset freely
+main            Production           granite-inventory-bom nugnqzqglldacalkmgyn  real, never reset
 ```
 
-Both hosted projects are Free tier in ap-southeast-1 (Singapore) and share one Google OAuth
-client. Vercel functions are pinned to `sin1` in `vercel.json` so every render sits next to
+Both hosted projects are Free tier in ap-south-1 (Mumbai), one hop from the shop instead of an ocean, and share one Google OAuth
+client. Vercel functions are pinned to `bom1` in `vercel.json` so every render sits next to
 the database.
 
 ## Day to day
@@ -53,7 +53,7 @@ server.
 Staging data is disposable. When it gets messy:
 
 ```
-supabase link --project-ref exddnsdnxookluwcxsvn
+supabase link --project-ref tyiepanibaqwpubajsya
 supabase db reset --linked
 ```
 

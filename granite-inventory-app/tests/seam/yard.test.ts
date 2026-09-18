@@ -18,6 +18,19 @@ describe("yard: v_yard_batches", () => {
     supplierId = await createSupplier(operator, "Madurai Quarry");
   });
 
+  /* Both the JS helper and any SQL fixture must anchor to IST. The UTC clock is a day behind
+     India after 18:30 UTC, which silently added a day to every asserted age. */
+  it("date fixtures agree with the calendar the app ages batches in", async () => {
+    await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(232), variantName: "A" });
+    const { data } = await operator.from("v_yard_batches").select("age_days").single();
+    expect(data?.age_days).toBe(232);
+
+    const [row] = await sql<{ same: boolean }>(
+      `select (private.ist_today() - 232) = (select purchase_date from public.batches) as same`,
+    );
+    expect(row.same).toBe(true);
+  });
+
   it("bands change exactly at the thresholds and follow settings", async () => {
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(89), variantName: "A" });
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(90), variantName: "B" });
