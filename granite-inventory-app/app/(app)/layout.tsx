@@ -6,29 +6,15 @@ import { getSession } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query/provider";
 import { createClient } from "@/lib/supabase/server";
 
-const AUTH_TIMING_ENABLED = process.env.AUTH_TIMING === "1";
-
-async function getSettings(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const settingsStartedAt = AUTH_TIMING_ENABLED ? performance.now() : 0;
-  const { data } = await supabase
-    .from("settings")
-    .select("business_name")
-    .maybeSingle();
-  const settingsMs = AUTH_TIMING_ENABLED ? performance.now() - settingsStartedAt : 0;
-  return { data, settingsMs };
-}
-
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await getSession();
   if (session.status !== "member") redirect("/login");
 
   const supabase = await createClient();
-  const { data: settings, settingsMs } = await getSettings(supabase);
-
-  if (AUTH_TIMING_ENABLED) {
-    // Shared layouts are skipped on soft navigations, so this line covers document loads only.
-    console.log(`auth-timing ${JSON.stringify({ settingsMs })}`);
-  }
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("business_name")
+    .maybeSingle();
 
   return (
     <MemberProvider member={session.member}>
