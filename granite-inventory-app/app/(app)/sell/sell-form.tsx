@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { Field } from "@/components/field";
@@ -53,9 +53,18 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
-  const [customers, setCustomers] = useState(initialCustomers);
+  /* A customer created from this form is selectable at once; the browser cache catches up on
+     its own refetch and then carries them too, so the merge de-duplicates by id. Saving against
+     an existing phone returns that customer, so the locally added copy wins over the cached one
+     rather than appearing twice. */
+  const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
+  const customers = useMemo(() => {
+    const byId = new Map(initialCustomers.map((c) => [c.id, c]));
+    for (const c of addedCustomers) byId.set(c.id, c);
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [initialCustomers, addedCustomers]);
   const preselected = batches.find((b) => b.id === preselectBatchId) ?? null;
 
   const [saleDate, setSaleDate] = useState(todayIso());
@@ -117,7 +126,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       setStickering(false);
       setStickeringCost("");
       setStickeringPrice("");
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -300,14 +309,10 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         draft={newCustomer}
         onClose={() => setNewCustomer(null)}
         onSaved={(c) => {
-          setCustomers((prev) => {
-            const next = prev.some((customer) => customer.id === c.id)
-              ? prev.map((customer) => (customer.id === c.id ? c : customer))
-              : [...prev, c];
-            return next.sort((a, b) => a.name.localeCompare(b.name));
-          });
+          setAddedCustomers((prev) => [...prev, c]);
           setCustomerId(c.id);
           setNewCustomer(null);
+          afterWrite();
         }}
       />
     </form>

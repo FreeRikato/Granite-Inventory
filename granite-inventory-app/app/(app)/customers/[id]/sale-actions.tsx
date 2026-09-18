@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -28,7 +28,8 @@ export type SaleEditLists = {
 };
 
 export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lists: SaleEditLists }) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
+  const afterSettled = useAfterSettled();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +42,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         return;
       }
       toast.success("Sale deleted, pieces returned to the batch");
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -59,13 +60,19 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
+          /* Editing a sale can move it off this customer, which unmounts the row this dialog was
+             opened from, so the opener is only worth focusing once the refetched rows have
+             painted and it is still there. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            triggerRef.current?.focus();
+            const trigger = triggerRef.current;
+            afterSettled(() => {
+              if (trigger?.isConnected) trigger.focus();
+            });
           }}
         >
           <DialogHeader><DialogTitle>Edit sale</DialogTitle></DialogHeader>
-          {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); router.refresh(); }} /> : null}
+          {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); afterWrite(); }} /> : null}
         </DialogContent>
       </Dialog>
     </div>

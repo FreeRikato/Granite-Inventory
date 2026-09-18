@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -28,7 +28,8 @@ type Props = { readonly batch: YardBatch; readonly lists: EditLists };
 /* Admin-only edit and delete on a yard card. Delete is refused by the database while
    sales exist, so the button is simply hidden in that case. */
 export function BatchActions({ batch, lists }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
+  const afterSettled = useAfterSettled();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +42,7 @@ export function BatchActions({ batch, lists }: Props) {
         return;
       }
       toast.success(`Batch ${batch.batch_code} deleted`);
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -61,31 +62,37 @@ export function BatchActions({ batch, lists }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
+          /* Saving can move the batch into another slot group, which unmounts this card and its
+             Edit button. Which target is right is therefore only knowable once the refetched rows
+             have painted, so the choice waits for that rather than reading the DOM at close time. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const trigger = triggerRef.current;
-            if (trigger?.isConnected) {
-              trigger.focus();
-              return;
-            }
-
             const batchCode = batch.batch_code;
-            if (!batchCode) return;
-            const replacement = Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]"))
-              .find((button) => button.getAttribute("aria-label") === `Edit ${batchCode}`);
-            if (replacement?.isConnected) {
-              replacement.focus();
-              return;
-            }
+            afterSettled(() => {
+              if (trigger?.isConnected) {
+                trigger.focus();
+                return;
+              }
 
-            const filterToolbar = document.querySelector<HTMLElement>("[data-yard-filter-toolbar]");
-            if (filterToolbar?.isConnected) filterToolbar.focus();
+              if (batchCode) {
+                const replacement = Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]"))
+                  .find((button) => button.getAttribute("aria-label") === `Edit ${batchCode}`);
+                if (replacement?.isConnected) {
+                  replacement.focus();
+                  return;
+                }
+              }
+
+              const filterToolbar = document.querySelector<HTMLElement>("[data-yard-filter-toolbar]");
+              if (filterToolbar?.isConnected) filterToolbar.focus();
+            });
           }}
         >
           <DialogHeader>
             <DialogTitle>Edit batch {batch.batch_code}</DialogTitle>
           </DialogHeader>
-          {open ? <BatchEditForm batch={batch} lists={lists} onDone={() => { setOpen(false); router.refresh(); }} /> : null}
+          {open ? <BatchEditForm batch={batch} lists={lists} onDone={() => { setOpen(false); afterWrite(); }} /> : null}
         </DialogContent>
       </Dialog>
     </>

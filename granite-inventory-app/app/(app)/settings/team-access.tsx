@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -22,7 +22,7 @@ type Props = {
 };
 
 export function TeamAccess({ members, currentEmail }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<{ email: string; name: string; role: Role }>({ email: "", name: "", role: "YARD_OPERATOR" });
@@ -37,7 +37,7 @@ export function TeamAccess({ members, currentEmail }: Props) {
       toast.success(success);
       setOpen(false);
       setDraft({ email: "", name: "", role: "YARD_OPERATOR" });
-      router.refresh();
+      afterWrite();
     });
   }
 

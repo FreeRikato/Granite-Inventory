@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -97,7 +97,7 @@ function EditableRow({
   batchReferences: readonly BatchReference[];
   variantReferences?: readonly VariantReference[];
 }) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ name, abbreviation: extra?.abbreviation ?? "", category: extra?.category ?? "" });
@@ -118,7 +118,7 @@ function EditableRow({
       }
       toast.success("Saved");
       setEditing(false);
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -130,7 +130,7 @@ function EditableRow({
         return;
       }
       toast.success("Deleted");
-      router.refresh();
+      afterWrite();
     });
   }
 

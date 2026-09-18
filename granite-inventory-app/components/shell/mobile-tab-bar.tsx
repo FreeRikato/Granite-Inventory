@@ -45,6 +45,7 @@ export function MobileTabBar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={item.shell ? true : undefined}
                 onClick={() => setOpen(false)}
                 className={cn(
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",

@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { roleLabel } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { AdminLists } from "./admin-lists";
+import { Appearance } from "./appearance";
 import { InventoryRules } from "./inventory-rules";
 import { TeamAccess } from "./team-access";
 
@@ -51,6 +52,8 @@ export default async function SettingsPage() {
         </div>
         <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">Signed in with Google</p>
       </section>
+
+      <Appearance />
 
       {isAdmin ? (
         <>
