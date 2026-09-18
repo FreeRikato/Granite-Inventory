@@ -34,8 +34,14 @@ export function QueryProvider({ children, cacheKey }: Props) {
       key: `granite-query-cache:${cacheKey}`,
     }),
   );
+  /* Rows restored from disk are from a previous page life, however recent: a sale recorded just
+     before a reload may not have reached the persister yet. Mark them all stale on restore so the
+     screen paints from disk and every active query refetches at once. */
+  const refetchRestored = useCallback(() => {
+    void client.invalidateQueries();
+  }, [client]);
   return (
-    <PersistQueryClientProvider client={client} persistOptions={{ persister, maxAge: KEEP_MS }}>
+    <PersistQueryClientProvider client={client} persistOptions={{ persister, maxAge: KEEP_MS }} onSuccess={refetchRestored}>
       {children}
     </PersistQueryClientProvider>
   );

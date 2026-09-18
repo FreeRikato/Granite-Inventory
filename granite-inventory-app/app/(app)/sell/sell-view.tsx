@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
 import { customersQuery, stockLinesQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
+import { ViewError, ViewSkeleton } from "@/components/view-state";
 import { SellForm } from "./sell-form";
 
 export function SellView() {
@@ -17,14 +18,9 @@ export function SellView() {
   if (!hydrated || !customers.isSuccess || !lines.isSuccess || !batches.isSuccess) {
     const failed = [customers, lines, batches].find((q) => q.isError);
     if (failed?.isError) {
-      return <p className="py-8 text-center text-sm text-destructive">Could not load the sell form: {failed.error.message}</p>;
+      return <ViewError what="the sell form" message={failed.error.message} />;
     }
-    return (
-      <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">
-        <div className="h-48 rounded-card bg-card shadow-sm" />
-        <div className="h-64 rounded-card bg-card shadow-sm" />
-      </div>
-    );
+    return <ViewSkeleton />;
   }
 
   /* The Sell form wants sellable batches oldest first; Yard wants every batch, so the shared

@@ -13,6 +13,7 @@ import { YardFilters } from "@/components/yard/yard-filters";
 import { SLOTS, SLOT_LABEL, isSlot } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
+import { ViewError, ViewSkeleton } from "@/components/view-state";
 import { cn } from "@/lib/utils";
 import {
   matchesFilters,
@@ -37,15 +38,10 @@ export function YardView() {
   const suppliers = useQuery(suppliersQuery);
 
   if (!hydrated || batches.isPending) {
-    return (
-      <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">
-        <div className="h-48 rounded-card bg-card shadow-sm" />
-        <div className="h-64 rounded-card bg-card shadow-sm" />
-      </div>
-    );
+    return <ViewSkeleton />;
   }
   if (batches.isError) {
-    return <p className="py-8 text-center text-sm text-destructive">Could not load the yard: {batches.error.message}</p>;
+    return <ViewError what="the yard" message={batches.error.message} />;
   }
 
   const all: YardBatch[] = batches.data;
