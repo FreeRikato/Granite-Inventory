@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useAfterWrite } from "@/lib/query/provider";
+import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -29,6 +29,7 @@ type Props = { readonly batch: YardBatch; readonly lists: EditLists };
    sales exist, so the button is simply hidden in that case. */
 export function BatchActions({ batch, lists }: Props) {
   const afterWrite = useAfterWrite();
+  const afterSettled = useAfterSettled();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -61,9 +62,31 @@ export function BatchActions({ batch, lists }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
+          /* Saving can move the batch into another slot group, which unmounts this card and its
+             Edit button. Which target is right is therefore only knowable once the refetched rows
+             have painted, so the choice waits for that rather than reading the DOM at close time. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            triggerRef.current?.focus();
+            const trigger = triggerRef.current;
+            const batchCode = batch.batch_code;
+            afterSettled(() => {
+              if (trigger?.isConnected) {
+                trigger.focus();
+                return;
+              }
+
+              if (batchCode) {
+                const replacement = Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]"))
+                  .find((button) => button.getAttribute("aria-label") === `Edit ${batchCode}`);
+                if (replacement?.isConnected) {
+                  replacement.focus();
+                  return;
+                }
+              }
+
+              const filterToolbar = document.querySelector<HTMLElement>("[data-yard-filter-toolbar]");
+              if (filterToolbar?.isConnected) filterToolbar.focus();
+            });
           }}
         >
           <DialogHeader>

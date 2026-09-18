@@ -36,12 +36,13 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Margin = qty × (sale_price − landed_cost) + qty × (stickering_price − stickering_cost). Margin % = margin / (qty × (sale_price + stickering_price)).
 - FIFO Listing shows Batches of the chosen Stock Line with Available > 0, oldest first, with Ageing Band. Any Batch may be picked; nothing is blocked or confirmed.
 - Payment Mode enum: CASH, UPI, BANK_TRANSFER. All Sales are considered paid. No credit or dues.
-- Dates are `date` columns in IST: `private.ist_today()` is the reference for future-date checks and Age, whatever zone the server runs in. Past Sale dates are allowed without limit; future dates are rejected.
+- Dates are `date` columns in IST: `private.ist_today()` is the reference for future-date checks and Age, whatever zone the server runs in. A Sale date cannot be before its Batch's purchase date. Past Sale dates are allowed back to the Batch purchase date; future dates are rejected.
 
 ## Corrections
 
 - Admin only. Edit and delete on Batch and Sale via SQL functions that re-balance Available and re-snapshot Landed Cost where a Sale's Batch changes.
 - Refused if the result would make any Batch's Available negative.
+- A Batch purchase date cannot be moved later than its earliest Sale; the refusal names that date.
 - `updated_at` and `updated_by` on Batch and Sale. No audit log in Phase 1.
 - Available on mobile as well as desktop.
 

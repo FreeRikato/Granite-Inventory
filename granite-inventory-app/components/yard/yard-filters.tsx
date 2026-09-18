@@ -48,7 +48,7 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
   }, [text, query.q, update]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div data-yard-filter-toolbar tabIndex={-1} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -115,6 +115,10 @@ function FilterSelect({
   options: readonly Option[];
   onChange: (value: string | null) => void;
 }) {
+  useEffect(() => {
+    if (value !== null && !options.some((option) => option.value === value)) onChange(null);
+  }, [onChange, options, value]);
+
   const valueLabel = value === null ? "All" : options.find((option) => option.value === value)?.label ?? value;
 
   return (
