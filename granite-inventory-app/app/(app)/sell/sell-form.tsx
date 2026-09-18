@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { Field } from "@/components/field";
@@ -53,9 +53,15 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
-  const [customers, setCustomers] = useState(initialCustomers);
+  /* A customer created from this form is selectable at once; the browser cache catches up on
+     its own refetch and then carries them too, so the merge de-duplicates by id. */
+  const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
+  const customers = useMemo(() => {
+    const known = new Set(initialCustomers.map((c) => c.id));
+    return [...initialCustomers, ...addedCustomers.filter((c) => !known.has(c.id))].sort((a, b) => a.name.localeCompare(b.name));
+  }, [initialCustomers, addedCustomers]);
   const preselected = batches.find((b) => b.id === preselectBatchId) ?? null;
 
   const [saleDate, setSaleDate] = useState(todayIso());
@@ -117,7 +123,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       setStickering(false);
       setStickeringCost("");
       setStickeringPrice("");
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -300,9 +306,10 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         draft={newCustomer}
         onClose={() => setNewCustomer(null)}
         onSaved={(c) => {
-          setCustomers((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));
+          setAddedCustomers((prev) => [...prev, c]);
           setCustomerId(c.id);
           setNewCustomer(null);
+          afterWrite();
         }}
       />
     </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ type Props = { readonly ageing: number; readonly stale: number };
 const PRESETS = [90, 180, 365] as const;
 
 export function InventoryRules({ ageing, stale }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState({ ageing: String(ageing), stale: String(stale) });
   const a = Number.parseInt(form.ageing, 10);
@@ -29,7 +29,7 @@ export function InventoryRules({ ageing, stale }: Props) {
         return;
       }
       toast.success("Inventory rules saved");
-      router.refresh();
+      afterWrite();
     });
   }
 

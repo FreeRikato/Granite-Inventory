@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -28,7 +28,7 @@ export type SaleEditLists = {
 };
 
 export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lists: SaleEditLists }) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +41,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         return;
       }
       toast.success("Sale deleted, pieces returned to the batch");
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -65,7 +65,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
           }}
         >
           <DialogHeader><DialogTitle>Edit sale</DialogTitle></DialogHeader>
-          {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); router.refresh(); }} /> : null}
+          {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); afterWrite(); }} /> : null}
         </DialogContent>
       </Dialog>
     </div>

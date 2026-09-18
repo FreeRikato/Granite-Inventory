@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -28,7 +28,7 @@ type Props = { readonly batch: YardBatch; readonly lists: EditLists };
 /* Admin-only edit and delete on a yard card. Delete is refused by the database while
    sales exist, so the button is simply hidden in that case. */
 export function BatchActions({ batch, lists }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +41,7 @@ export function BatchActions({ batch, lists }: Props) {
         return;
       }
       toast.success(`Batch ${batch.batch_code} deleted`);
-      router.refresh();
+      afterWrite();
     });
   }
 
@@ -69,7 +69,7 @@ export function BatchActions({ batch, lists }: Props) {
           <DialogHeader>
             <DialogTitle>Edit batch {batch.batch_code}</DialogTitle>
           </DialogHeader>
-          {open ? <BatchEditForm batch={batch} lists={lists} onDone={() => { setOpen(false); router.refresh(); }} /> : null}
+          {open ? <BatchEditForm batch={batch} lists={lists} onDone={() => { setOpen(false); afterWrite(); }} /> : null}
         </DialogContent>
       </Dialog>
     </>

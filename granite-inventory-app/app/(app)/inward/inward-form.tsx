@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,7 @@ const EMPTY: FormState = {
 };
 
 export function InwardForm({ products: initialProducts, variants: initialVariants, suppliers: initialSuppliers }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [products, setProducts] = useState(initialProducts);
@@ -133,7 +133,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
       }
       toast.success(`Batch ${result.data.batch_code} saved`);
       setForm({ ...EMPTY, purchaseDate: todayIso(), supplierId: form.supplierId });
-      router.refresh();
+      afterWrite();
     });
   }
 

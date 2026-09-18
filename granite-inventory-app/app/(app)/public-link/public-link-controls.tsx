@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { Check, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
@@ -21,7 +21,7 @@ type Props = {
 };
 
 export function PublicLinkControls({ url, catalogPublic, whatsappNumber, businessName, canEdit }: Props) {
-  const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [number, setNumber] = useState(whatsappNumber);
@@ -35,7 +35,7 @@ export function PublicLinkControls({ url, catalogPublic, whatsappNumber, busines
         return;
       }
       toast.success(patch.catalogPublic === undefined ? "WhatsApp number saved" : patch.catalogPublic ? "Catalog is live" : "Catalog switched off");
-      router.refresh();
+      afterWrite();
     });
   }
 
