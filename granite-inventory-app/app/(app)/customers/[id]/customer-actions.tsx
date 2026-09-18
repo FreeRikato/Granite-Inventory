@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAfterWrite } from "@/lib/query/provider";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
@@ -27,6 +28,7 @@ type Props = {
 
 export function CustomerActions({ customer, canDelete }: Props) {
   const router = useRouter();
+  const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [draft, setDraft] = useState<CustomerDraft | null>(null);
 
@@ -85,7 +87,7 @@ export function CustomerActions({ customer, canDelete }: Props) {
         onSaved={() => {
           setDraft(null);
           toast.success("Customer updated");
-          router.refresh();
+          afterWrite();
         }}
       />
     </div>

@@ -34,6 +34,7 @@ export function AppSidebar({ businessName, member }: Props) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={item.shell ? true : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium",
