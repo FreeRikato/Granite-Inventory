@@ -2,16 +2,19 @@
 
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { DataAge } from "@/components/data-age";
 import { customersQuery, stockLinesQuery, yardBatchesQuery } from "@/lib/query/reads";
+import { useHydrated } from "@/lib/query/provider";
 import { SellForm } from "./sell-form";
 
 export function SellView() {
   const preselect = useSearchParams().get("batch");
+  const hydrated = useHydrated();
   const customers = useQuery(customersQuery);
   const lines = useQuery(stockLinesQuery);
   const batches = useQuery(yardBatchesQuery);
 
-  if (!customers.isSuccess || !lines.isSuccess || !batches.isSuccess) {
+  if (!hydrated || !customers.isSuccess || !lines.isSuccess || !batches.isSuccess) {
     const failed = [customers, lines, batches].find((q) => q.isError);
     if (failed?.isError) {
       return <p className="py-8 text-center text-sm text-destructive">Could not load the sell form: {failed.error.message}</p>;
@@ -30,5 +33,14 @@ export function SellView() {
     .filter((b) => (b.available ?? 0) > 0)
     .sort((a, b) => (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "") || (a.created_at ?? "").localeCompare(b.created_at ?? ""));
 
-  return <SellForm customers={customers.data} lines={lines.data} batches={sellable} preselectBatchId={preselect} />;
+  const fetching = customers.isFetching || lines.isFetching || batches.isFetching;
+  const updatedAt = Math.min(customers.dataUpdatedAt, lines.dataUpdatedAt, batches.dataUpdatedAt);
+  return (
+    <>
+      <div className="-mt-4 flex justify-end">
+        <DataAge updatedAt={updatedAt} fetching={fetching} />
+      </div>
+      <SellForm customers={customers.data} lines={lines.data} batches={sellable} preselectBatchId={preselect} />
+    </>
+  );
 }

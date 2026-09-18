@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <MemberProvider member={session.member}>
-      <QueryProvider>
+      <QueryProvider cacheKey={session.member.email}>
         <div className="flex min-h-svh bg-background">
           <AppSidebar businessName={settings?.business_name ?? "Granite"} member={session.member} />
           <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-12 md:pb-12 md:pt-10">

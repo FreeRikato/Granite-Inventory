@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
+import { DataAge } from "@/components/data-age";
 import { useMember } from "@/components/shell/member-provider";
 import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 import { BatchCard } from "@/components/yard/batch-card";
@@ -11,6 +12,7 @@ import { Clamp } from "@/components/yard/clamp";
 import { YardFilters } from "@/components/yard/yard-filters";
 import { SLOTS, SLOT_LABEL, isSlot } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
+import { useHydrated } from "@/lib/query/provider";
 import { cn } from "@/lib/utils";
 import {
   matchesFilters,
@@ -27,13 +29,14 @@ export function YardView() {
   const raw: Record<string, string> = Object.fromEntries(params.entries());
   const parsed = parseYardQuery(raw);
   const isAdmin = useMember().role === "ADMIN";
+  const hydrated = useHydrated();
   const batches = useQuery(yardBatchesQuery);
   /* The edit lists are small and readable by every member; fetching them only for admins would
      put the role check on the critical path for nothing. */
   const products = useQuery(productsQuery);
   const suppliers = useQuery(suppliersQuery);
 
-  if (batches.isPending) {
+  if (!hydrated || batches.isPending) {
     return (
       <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">
         <div className="h-48 rounded-card bg-card shadow-sm" />
@@ -112,8 +115,11 @@ export function YardView() {
       <section className="rounded-card bg-card/60 p-4 shadow-sm ring-1 ring-border md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-bold">{SLOT_LABEL[query.slot]}</h2>
-          <span className="text-sm text-muted-foreground tabular">
-            {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} · {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} available
+          <span className="flex items-baseline gap-3">
+            <DataAge updatedAt={batches.dataUpdatedAt} fetching={batches.isFetching} />
+            <span className="text-sm text-muted-foreground tabular">
+              {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} · {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} available
+            </span>
           </span>
         </div>
 
