@@ -164,3 +164,76 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Tints. Each block restates only the tokens that carry the accent colour; everything else
+   comes from :root / .dark above. Orange is the default and has no block on purpose. */
+[data-tint="amber"] {
+  --primary: #96620f; --primary-foreground: #ffffff; --accent: #fbf1e3; --accent-foreground: #8a5a0c;
+  --ring: #96620f; --chart-1: #b8780f;
+  --sidebar-primary: #96620f; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #fbf1e3; --sidebar-accent-foreground: #8a5a0c; --sidebar-ring: #96620f;
+}
+.dark[data-tint="amber"] {
+  --primary: #ffb020; --primary-foreground: #111111; --accent: #2a2110; --accent-foreground: #ffb020;
+  --ring: #ffb020; --chart-1: #ffb020;
+  --sidebar-primary: #ffb020; --sidebar-primary-foreground: #111111; --sidebar-accent: #2a2110; --sidebar-accent-foreground: #ffb020; --sidebar-ring: #ffb020;
+}
+[data-tint="green"] {
+  --primary: #1b7a43; --primary-foreground: #ffffff; --accent: #e9f5ec; --accent-foreground: #17693a;
+  --ring: #1b7a43; --chart-1: #22954f;
+  --sidebar-primary: #1b7a43; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #e9f5ec; --sidebar-accent-foreground: #17693a; --sidebar-ring: #1b7a43;
+}
+.dark[data-tint="green"] {
+  --primary: #3ecf6e; --primary-foreground: #0b1a10; --accent: #12261a; --accent-foreground: #3ecf6e;
+  --ring: #3ecf6e; --chart-1: #3ecf6e;
+  --sidebar-primary: #3ecf6e; --sidebar-primary-foreground: #0b1a10; --sidebar-accent: #12261a; --sidebar-accent-foreground: #3ecf6e; --sidebar-ring: #3ecf6e;
+}
+[data-tint="teal"] {
+  --primary: #0f766e; --primary-foreground: #ffffff; --accent: #e6f5f3; --accent-foreground: #0d655e;
+  --ring: #0f766e; --chart-1: #14918a;
+  --sidebar-primary: #0f766e; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #e6f5f3; --sidebar-accent-foreground: #0d655e; --sidebar-ring: #0f766e;
+}
+.dark[data-tint="teal"] {
+  --primary: #2dd4bf; --primary-foreground: #0a1a18; --accent: #10262a; --accent-foreground: #2dd4bf;
+  --ring: #2dd4bf; --chart-1: #2dd4bf;
+  --sidebar-primary: #2dd4bf; --sidebar-primary-foreground: #0a1a18; --sidebar-accent: #10262a; --sidebar-accent-foreground: #2dd4bf; --sidebar-ring: #2dd4bf;
+}
+[data-tint="blue"] {
+  --primary: #1d5fd1; --primary-foreground: #ffffff; --accent: #e8f0fd; --accent-foreground: #1a54b8;
+  --ring: #1d5fd1; --chart-1: #2f74e8;
+  --sidebar-primary: #1d5fd1; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #e8f0fd; --sidebar-accent-foreground: #1a54b8; --sidebar-ring: #1d5fd1;
+}
+.dark[data-tint="blue"] {
+  --primary: #4c9eff; --primary-foreground: #0a1220; --accent: #111d33; --accent-foreground: #4c9eff;
+  --ring: #4c9eff; --chart-1: #4c9eff;
+  --sidebar-primary: #4c9eff; --sidebar-primary-foreground: #0a1220; --sidebar-accent: #111d33; --sidebar-accent-foreground: #4c9eff; --sidebar-ring: #4c9eff;
+}
+[data-tint="violet"] {
+  --primary: #6d4fd6; --primary-foreground: #ffffff; --accent: #efeafc; --accent-foreground: #5f42c4;
+  --ring: #6d4fd6; --chart-1: #7f63e6;
+  --sidebar-primary: #6d4fd6; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #efeafc; --sidebar-accent-foreground: #5f42c4; --sidebar-ring: #6d4fd6;
+}
+.dark[data-tint="violet"] {
+  --primary: #a78bfa; --primary-foreground: #120d22; --accent: #1f1735; --accent-foreground: #a78bfa;
+  --ring: #a78bfa; --chart-1: #a78bfa;
+  --sidebar-primary: #a78bfa; --sidebar-primary-foreground: #120d22; --sidebar-accent: #1f1735; --sidebar-accent-foreground: #a78bfa; --sidebar-ring: #a78bfa;
+}
+[data-tint="rose"] {
+  --primary: #c2334f; --primary-foreground: #ffffff; --accent: #fce9ed; --accent-foreground: #ab2c45;
+  --ring: #c2334f; --chart-1: #d64a66;
+  --sidebar-primary: #c2334f; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #fce9ed; --sidebar-accent-foreground: #ab2c45; --sidebar-ring: #c2334f;
+}
+.dark[data-tint="rose"] {
+  --primary: #fb7185; --primary-foreground: #22090f; --accent: #2b1218; --accent-foreground: #fb7185;
+  --ring: #fb7185; --chart-1: #fb7185;
+  --sidebar-primary: #fb7185; --sidebar-primary-foreground: #22090f; --sidebar-accent: #2b1218; --sidebar-accent-foreground: #fb7185; --sidebar-ring: #fb7185;
+}
+[data-tint="neutral"] {
+  --primary: #181818; --primary-foreground: #ffffff; --accent: #ececeb; --accent-foreground: #181818;
+  --ring: #181818; --chart-1: #4a4a4a;
+  --sidebar-primary: #181818; --sidebar-primary-foreground: #ffffff; --sidebar-accent: #ececeb; --sidebar-accent-foreground: #181818; --sidebar-ring: #181818;
+}
+.dark[data-tint="neutral"] {
+  --primary: #ffffff; --primary-foreground: #111111; --accent: #262626; --accent-foreground: #ffffff;
+  --ring: #ffffff; --chart-1: #d4d4d0;
+  --sidebar-primary: #ffffff; --sidebar-primary-foreground: #111111; --sidebar-accent: #262626; --sidebar-accent-foreground: #ffffff; --sidebar-ring: #ffffff;
+}
