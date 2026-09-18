@@ -8,11 +8,11 @@ declare global {
   }
 }
 
-/* The shift this test guards happens when React hydrates the filter row (an empty SSR
-   SelectValue fills in on the client), so the CLS counter must not be read before that.
-   The heading is server rendered and does not tell us, and a click would taint the entries
-   with hadRecentInput. React tags every DOM node it owns with a __reactFiber$ property
-   once hydration reaches it, so poll the trigger for that instead. */
+/* The shift this test guards happens when the filter row renders with its values (once from
+   the browser cache, or, if a select ever regresses to an empty value that fills in later, twice),
+   so the CLS counter must not be read before that. The heading is server rendered and does not
+   tell us, and a click would taint the entries with hadRecentInput. React tags every DOM node it
+   owns with a __reactFiber$ property, so poll the trigger for that instead. */
 async function waitForHydration(trigger: Locator): Promise<void> {
   await expect
     .poll(() => trigger.evaluate((node) => Object.keys(node).some((key) => key.startsWith("__reactFiber$"))), {
@@ -30,19 +30,16 @@ test.beforeEach(async () => {
   await seedYard();
 });
 
-test("yard renders a value for every filter select on the server", async ({ page, signIn }) => {
+test("every yard filter select shows a value as soon as the row renders", async ({ page, signIn }) => {
   await signIn("operator");
+  await page.goto("/yard");
+  /* The filter row arrives with the batches from the browser cache, all at once; a select
+     whose value fills in a beat later is the shift the CLS test below guards against. */
+  await expect(page.getByRole("combobox", { name: "Sort" })).toBeVisible();
 
-  const response = await page.request.get("/yard");
-  expect(response.ok()).toBe(true);
-
-  const html = await response.text();
-  const selectValues = [...html.matchAll(/<span[^>]*data-slot="select-value"[^>]*>([\s\S]*?)<\/span>/g)].map((match) =>
-    match[1].replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]+>/g, "").trim(),
-  );
-
+  const selectValues = await page.locator('[data-slot="select-value"]').allInnerTexts();
   expect(selectValues).toHaveLength(6);
-  expect(selectValues.filter((value) => value === "")).toHaveLength(0);
+  expect(selectValues.map((value) => value.trim()).filter((value) => value === "")).toHaveLength(0);
 });
 
 test("yard filter toolbar stays within the CLS budget on a cold navigation", async ({ page, signIn }) => {
