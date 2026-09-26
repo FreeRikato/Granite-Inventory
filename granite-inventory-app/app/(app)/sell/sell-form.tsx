@@ -56,11 +56,14 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   /* A customer created from this form is selectable at once; the browser cache catches up on
-     its own refetch and then carries them too, so the merge de-duplicates by id. */
+     its own refetch and then carries them too, so the merge de-duplicates by id. Saving against
+     an existing phone returns that customer, so the locally added copy wins over the cached one
+     rather than appearing twice. */
   const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
   const customers = useMemo(() => {
-    const known = new Set(initialCustomers.map((c) => c.id));
-    return [...initialCustomers, ...addedCustomers.filter((c) => !known.has(c.id))].sort((a, b) => a.name.localeCompare(b.name));
+    const byId = new Map(initialCustomers.map((c) => [c.id, c]));
+    for (const c of addedCustomers) byId.set(c.id, c);
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [initialCustomers, addedCustomers]);
   const preselected = batches.find((b) => b.id === preselectBatchId) ?? null;
 

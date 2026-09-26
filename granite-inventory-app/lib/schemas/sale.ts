@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CUSTOMER_TYPES, PAYMENT_MODES } from "@/lib/domain";
-import { isoDate, money } from "./common";
+import { isoDate, money, positiveInteger } from "./common";
 
 export const customerSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
@@ -18,7 +18,7 @@ export const saleSchema = z.object({
   batchId: z.string().uuid("Pick a batch"),
   customerId: z.string().uuid("Pick a customer"),
   saleDate: isoDate,
-  quantity: z.coerce.number().int().positive("At least 1 piece"),
+  quantity: positiveInteger("Sale quantity must be greater than zero"),
   salePrice: money,
   paymentMode: z.enum(PAYMENT_MODES),
   hasStickering: z.boolean(),

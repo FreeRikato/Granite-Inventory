@@ -19,7 +19,7 @@ describe("customers: v_customers and deletion rules", () => {
   it("derives last purchase, sale count and revenue; no purchases reads as null", async () => {
     const productId = await createProduct(operator, { name: "Black Pearl", abbreviation: "BP" });
     const supplierId = await createSupplier(operator, "Madurai Quarry");
-    const { data: batch } = await createBatch(operator, { productId, supplierId, units: 20 });
+    const { data: batch } = await createBatch(operator, { productId, supplierId, units: 20, purchaseDate: daysAgo(10) });
     const murugan = await createCustomer(operator, { name: "Murugan", phone: "9876543210", type: "CONTRACTOR" });
     await createCustomer(operator, { name: "St. Xavier's Trust", type: "TRUST" });
     await recordSale(operator, { batchId: batch?.id ?? "", customerId: murugan, quantity: 2, salePrice: 1000, saleDate: daysAgo(10) });

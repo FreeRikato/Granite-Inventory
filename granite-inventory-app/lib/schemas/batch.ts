@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CATEGORIES, SLOTS } from "@/lib/domain";
-import { isoDate, money, positiveNumber } from "./common";
+import { isoDate, money, positiveInteger, positiveNumber } from "./common";
 
 
 export const productSchema = z.object({
@@ -22,7 +22,7 @@ const sizedBatch = z.object({
   memorial: z.literal(false),
   lengthFt: positiveNumber,
   breadthFt: positiveNumber,
-  thicknessMm: z.coerce.number().int().positive("Must be more than 0"),
+  thicknessMm: positiveInteger("Must be more than 0"),
 });
 
 const unsizedBatch = z.object({
@@ -31,12 +31,12 @@ const unsizedBatch = z.object({
 
 export const batchSchema = z
   .object({
-    productId: z.string().uuid("Pick a product"),
+    productId: z.string({ error: "Pick a product" }).uuid("Pick a product"),
     variantName: z.string().trim().min(1, "Variant is required").max(80),
-    supplierId: z.string().uuid("Pick a supplier"),
+    supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
     slot: z.enum(SLOTS),
-    initialUnits: z.coerce.number().int().positive("At least 1 piece"),
+    initialUnits: positiveInteger("Initial units must be greater than zero"),
     unitPurchasePrice: money,
     freightCost: money.default(0),
     notes: z.string().trim().max(500).optional(),

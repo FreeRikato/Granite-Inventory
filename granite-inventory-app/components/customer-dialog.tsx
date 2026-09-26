@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,39 @@ type Props = {
 
 /* Add or edit a Customer. Shared by the Sell form, the Customers list and the detail page. */
 export function CustomerDialog({ draft, existingId, onClose, onSaved }: Props) {
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const lastPageFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    function rememberPageFocus(event: FocusEvent) {
+      const element = event.target;
+      if (!(element instanceof HTMLElement) || isOverlayElement(element)) return;
+      lastPageFocusRef.current = element;
+    }
+
+    document.addEventListener("focusin", rememberPageFocus);
+    return () => document.removeEventListener("focusin", rememberPageFocus);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (draft === null) return;
+    const activeElement = document.activeElement;
+    restoreFocusRef.current =
+      activeElement instanceof HTMLElement && activeElement !== document.body && !isOverlayElement(activeElement)
+        ? activeElement
+        : lastPageFocusRef.current;
+  }, [draft]);
+
   return (
     <Dialog open={draft !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent>
+      <DialogContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          const element = restoreFocusRef.current;
+          restoreFocusRef.current = null;
+          if (element?.isConnected) element.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{existingId ? "Edit customer" : "New customer"}</DialogTitle>
         </DialogHeader>
@@ -32,6 +62,10 @@ export function CustomerDialog({ draft, existingId, onClose, onSaved }: Props) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function isOverlayElement(element: HTMLElement): boolean {
+  return element.closest('[data-slot="popover-content"], [data-slot="dialog-content"]') !== null;
 }
 
 function CustomerForm({

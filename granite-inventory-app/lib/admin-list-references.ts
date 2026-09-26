@@ -4,6 +4,7 @@ export type AdminListTable = "products" | "variants" | "suppliers";
 export type BatchReference = Pick<Tables<"v_batches">, "batch_code" | "product_id" | "variant_id" | "supplier_id">;
 export type VariantReference = Pick<Tables<"variants">, "id" | "name" | "product_id">;
 export type DeleteReferences = {
+  readonly rowName: string;
   readonly batches: readonly BatchReference[];
   readonly variants: readonly VariantReference[];
 };
@@ -14,7 +15,7 @@ export const batchReferenceColumn: Record<AdminListTable, "product_id" | "varian
   suppliers: "supplier_id",
 };
 
-const tableLabel: Record<AdminListTable, string> = {
+export const tableLabel: Record<AdminListTable, string> = {
   products: "Product",
   variants: "Variant",
   suppliers: "Supplier",
@@ -24,7 +25,10 @@ export function referencesForTable(table: AdminListTable, id: string, references
   return references.filter((reference) => reference[batchReferenceColumn[table]] === id);
 }
 
-export function hasDeleteReferences(table: AdminListTable, references: DeleteReferences): boolean {
+export function hasDeleteReferences(
+  table: AdminListTable,
+  references: Pick<DeleteReferences, "batches" | "variants">,
+): boolean {
   return references.batches.length > 0 || (table === "products" && references.variants.length > 0);
 }
 

@@ -57,7 +57,7 @@ describe("batches: create_batch", () => {
     ]);
     expect(attempts.map((a) => a.error?.message ?? null)).toEqual([null, null, null, null, null]);
     const codes = attempts.map((a) => a.data?.batch_code ?? "").sort();
-    const bpToday = codes.filter((c) => c.startsWith("BP-") && c.includes(today().slice(8)));
+    const bpToday = codes.filter((c) => c.startsWith(`BP-${today().slice(8)}`));
     expect(new Set(codes).size).toBe(5);
     expect(bpToday.map((c) => c.slice(-2)).sort()).toEqual(["01", "02", "03"]);
     expect(codes.some((c) => c.startsWith("JB-") && c.endsWith("-01"))).toBe(true);

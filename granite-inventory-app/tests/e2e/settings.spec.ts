@@ -68,7 +68,7 @@ test("names a variant that blocks product deletion", async ({ page, signIn }) =>
   const deleteDialog = page.getByRole("alertdialog");
   await expect(deleteDialog).toContainText("variant Oval");
   await deleteDialog.getByRole("button", { name: "Delete", exact: true }).click();
-  await expect(page.getByText("Cannot delete Product: variant Oval still belongs to it.")).toBeVisible();
+  await expect(page.getByText("Cannot delete Orphan Product: variant Oval still belongs to it.")).toBeVisible();
 });
 
 test("an operator only sees their profile and the read-only rules", async ({ page, signIn }) => {

@@ -21,11 +21,11 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/", label: "Overview", shortLabel: "Overview", icon: LayoutGrid },
-  { href: "/inward", label: "Inward Stock", shortLabel: "Inward", icon: PlusCircle },
+  { href: "/", label: "Overview", shortLabel: "Overview", icon: LayoutGrid, shell: true },
+  { href: "/inward", label: "Inward Stock", shortLabel: "Inward", icon: PlusCircle, shell: true },
   { href: "/sell", label: "Sell Stone", shortLabel: "Sell", icon: MinusCircle, shell: true },
   { href: "/yard", label: "Yard Slots", shortLabel: "Yard", icon: MapIcon, shell: true },
-  { href: "/customers", label: "Customers", shortLabel: "Customers", icon: Users },
+  { href: "/customers", label: "Customers", shortLabel: "Customers", icon: Users, shell: true },
   { href: "/public-link", label: "Public Catalog", shortLabel: "Catalog", icon: Globe },
 ];
 

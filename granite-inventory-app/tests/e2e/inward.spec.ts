@@ -49,7 +49,7 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("₹1,450");
 });
 
-test("the form refuses a batch without size for granite", async ({ page, signIn }) => {
+test("Save Batch waits for a positive size on granite and the click still refuses a zero", async ({ page, signIn }) => {
   await sql(`insert into public.products (name, abbreviation, category) values ('Jet Black', 'JB', 'GRANITE')`);
   await signIn("operator");
   await page.goto("/inward");
@@ -62,8 +62,19 @@ test("the form refuses a batch without size for granite", async ({ page, signIn 
   await page.getByRole("option", { name: 'Add variant "Premium"' }).click();
   await page.getByLabel("Unit Quantity").fill("5");
   await page.getByLabel("Unit Purchase Price (₹)").fill("1000");
-  await page.getByRole("button", { name: "Save Batch" }).click();
-  await expect(page.getByRole("alert").or(page.getByText(/Must be more than 0/))).toBeVisible();
+
+  const saveBatch = page.getByRole("button", { name: "Save Batch" });
+  await expect(saveBatch).toBeDisabled();
+  await page.getByLabel("Length (ft)").fill("4");
+  await expect(saveBatch).toBeDisabled();
+  await page.getByLabel("Breadth (ft)").fill("2");
+  await expect(saveBatch).toBeEnabled();
+
+  // A zero thickness keeps the button enabled so the click shows which field is wrong.
+  await page.getByLabel("Thickness (mm)").fill("0");
+  await saveBatch.click();
+  await expect(page.getByText(/Must be more than 0/)).toBeVisible();
+  await expect(page.getByTestId("batch-row")).toHaveCount(0);
 });
 
 test("inward suggests an existing variant for the chosen product and accepts a new name", async ({ page, signIn }) => {
