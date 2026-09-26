@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# Ready-to-run git worktrees for this repo, kept in ../granite-wt/<branch>.
+#
+#   scripts/wt new <branch> [base]   branch off origin/<base> (default staging), copy the env files,
+#                                    install deps, run next typegen and give it its own dev port
+#   scripts/wt ls                    every worktree with its branch, port and state
+#   scripts/wt rm <branch> [--force] remove a worktree and its local branch; refuses unless the
+#                                    branch is merged into staging or main and has no local changes
+#
+# The port lives in the worktree's .port file, which `pnpm dev` and Playwright both read. All
+# worktrees share the one local Supabase; the test suites queue on a lock (tests/db-lock.ts).
+set -euo pipefail
+
+PRIMARY="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+WT_ROOT="$(dirname "$PRIMARY")/granite-wt"
+ENV_FILES=(.env.local .env.test supabase/.env)
+
+git_p() { git -C "$PRIMARY" "$@"; }
+dir_for() { echo "$WT_ROOT/${1//\//-}"; }
+
+free_port() {
+  local used
+  used="$(cat "$WT_ROOT"/*/.port 2>/dev/null || true)"
+  for port in $(seq 3001 3099); do
+    grep -qx "$port" <<<"$used" && continue
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && continue
+    echo "$port"
+    return
+  done
+  echo "No free port in 3001-3099" >&2
+  exit 1
+}
+
+is_merged() {
+  local branch="$1"
+  git_p merge-base --is-ancestor "$branch" origin/staging 2>/dev/null ||
+    git_p merge-base --is-ancestor "$branch" origin/main 2>/dev/null
+}
+
+cmd_new() {
+  local branch="${1:?usage: scripts/wt new <branch> [base]}" base="${2:-staging}" dir
+  dir="$(dir_for "$branch")"
+  if [ -e "$dir" ]; then
+    echo "$dir already exists" >&2
+    exit 1
+  fi
+  git_p fetch --quiet origin "$base"
+  if git_p show-ref --verify --quiet "refs/heads/$branch"; then
+    git_p worktree add --quiet "$dir" "$branch"
+  else
+    # --no-track so a bare `git push` never targets the base branch.
+    git_p worktree add --quiet --no-track -b "$branch" "$dir" "origin/$base"
+  fi
+  for file in "${ENV_FILES[@]}"; do
+    if [ -f "$PRIMARY/$file" ]; then cp "$PRIMARY/$file" "$dir/$file"; fi
+  done
+  free_port >"$dir/.port"
+  (cd "$dir" && pnpm install --frozen-lockfile --silent && pnpm exec next typegen >/dev/null)
+  echo "Ready: $dir"
+  echo "  cd $dir && pnpm dev    # http://127.0.0.1:$(cat "$dir/.port")"
+}
+
+cmd_ls() {
+  local path="" branch
+  while read -r key value; do
+    case "$key" in
+      worktree) path="$value" ;;
+      branch)
+        branch="${value#refs/heads/}"
+        local port="3000" state="clean" merged=""
+        if [ -f "$path/.port" ]; then port="$(cat "$path/.port")"; fi
+        if [ -n "$(git -C "$path" status --porcelain)" ]; then state="changes"; fi
+        if [ "$path" != "$PRIMARY" ] && is_merged "$branch"; then merged="merged"; fi
+        printf '%-28s :%-5s %-8s %-7s %s\n' "$branch" "$port" "$state" "$merged" "$path"
+        ;;
+    esac
+  done < <(git_p worktree list --porcelain)
+}
+
+cmd_rm() {
+  local branch="${1:?usage: scripts/wt rm <branch> [--force]}" force="${2:-}" dir
+  dir="$(dir_for "$branch")"
+  if [ ! -d "$dir" ]; then
+    echo "No worktree at $dir" >&2
+    exit 1
+  fi
+  if [ "$force" != "--force" ]; then
+    git_p fetch --quiet origin
+    if [ -n "$(git -C "$dir" status --porcelain)" ]; then
+      echo "$branch has uncommitted changes; commit them or pass --force" >&2
+      exit 1
+    fi
+    if ! is_merged "$branch"; then
+      echo "$branch is not merged into staging or main; pass --force to drop it anyway" >&2
+      exit 1
+    fi
+  fi
+  git_p worktree remove ${force:+--force} "$dir"
+  git_p branch -D "$branch" >/dev/null
+  echo "Removed $dir and branch $branch"
+}
+
+case "${1:-}" in
+  new) shift && cmd_new "$@" ;;
+  ls) cmd_ls ;;
+  rm) shift && cmd_rm "$@" ;;
+  *)
+    sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+    exit 1
+    ;;
+esac
