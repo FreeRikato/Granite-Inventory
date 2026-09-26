@@ -21,10 +21,9 @@ describe("batches: create_batch", () => {
   it("creates a batch with a generated code, default slot and landed cost without freight", async () => {
     const { data, error } = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 1400 });
     expect(error).toBeNull();
-    const d = new Date();
-    const mon = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getUTCMonth()];
-    const dd = String(d.getUTCDate()).padStart(2, "0");
-    const yy = String(d.getUTCFullYear()).slice(-2);
+    const [yyyy, mm, dd] = today().split("-");
+    const mon = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][Number(mm) - 1];
+    const yy = yyyy.slice(-2);
     expect(data?.batch_code).toBe(`BP-${dd}${mon}${yy}-01`);
     expect(data?.slot).toBe("4FT");
     expect(data?.landed_cost).toBe(1400);
@@ -89,7 +88,7 @@ describe("batches: create_batch", () => {
   });
 
   it("rejects future dates, zero units and negative prices", async () => {
-    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const tomorrow = daysAgo(-1);
     expectError(await createBatch(operator, { productId, supplierId, purchaseDate: tomorrow }));
     expectError(await createBatch(operator, { productId, supplierId, units: 0 }));
     expectError(await createBatch(operator, { productId, supplierId, unitPrice: -1 }));

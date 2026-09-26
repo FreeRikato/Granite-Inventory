@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "lib/database.types.ts",
+    // Agent skills and run artifacts share the repo root with the app but are not app code.
+    ".claude/**",
+    ".agents/**",
+    ".scratch/**",
   ]),
 ]);
 

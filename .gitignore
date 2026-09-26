@@ -1,4 +1,36 @@
-node_modules/
-.next/
-.claude/settings.local.json
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# testing
+/coverage
+test-results/
+playwright-report/
+
+# env files (copied into each worktree by scripts/wt)
+.env*
+!.env.example
+
+# the dev server port of this worktree, written by scripts/wt
+.port
+
+# vercel
+.vercel
+
+# agent run artifacts and scratch notes
+/.scratch/
+
+# misc
 .DS_Store
+*.pem
+npm-debug.log*
+.pnpm-debug.log*
+.claude/settings.local.json

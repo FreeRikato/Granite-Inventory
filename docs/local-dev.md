@@ -5,13 +5,31 @@ Everything an agent or a person needs to run and test the app without asking any
 ## Layout
 
 ```
-granite-inventory-management/         project root, not a git repo
+granite-inventory-management/         git root and app root, the primary checkout, stays on staging
   CONTEXT.md                          glossary, read first
+  AGENTS.md                           agent orientation (CLAUDE.md points here)
+  app/ components/ lib/ proxy.ts      the Next.js app
+  supabase/                           config.toml, migrations, seed.sql, .env (secret, gitignored)
+  tests/seam/  tests/e2e/             Vitest against local Supabase, Playwright flows
   docs/                               meeting notes, tech stack, decisions, ADRs, this file
-  .scratch/phase-1/                   spec and tickets (local markdown tracker)
-  granite-inventory-app/              the Next.js app, git repo, run all commands from here
-    supabase/                         config.toml, migrations, seed.sql, .env (secret, gitignored)
+  docs/phase-1/                       spec and tickets (local markdown tracker)
+  scripts/wt                          worktree helper, see below
+  .scratch/                           gitignored, agent run artifacts and QA evidence
+../granite-wt/<branch>/               worktrees made by scripts/wt
 ```
+
+## Worktrees
+
+Do each piece of work in its own worktree, not in the primary checkout:
+
+```
+scripts/wt new fix-inward-copy    # ../granite-wt/fix-inward-copy, off origin/staging, ready to run
+cd ../granite-wt/fix-inward-copy && pnpm dev
+scripts/wt ls                     # branch, port, clean or changes, merged
+scripts/wt rm fix-inward-copy     # refuses unless merged into staging or main and clean
+```
+
+`new` copies `.env.local`, `.env.test` and `supabase/.env` from the primary checkout, runs `pnpm install` and `next typegen`, and writes a free port (3001 and up) to `.port`. `pnpm dev` and Playwright both read `.port`; without one they use 3000. Every worktree shares the one local Supabase, so the seam and e2e suites take a machine-wide lock (`tests/db-lock.ts`) and a second run waits for the first instead of truncating its data.
 
 ## Prerequisites (already installed on macato)
 
@@ -41,7 +59,7 @@ The local keys are Supabase's fixed demo keys, identical on every machine, safe 
 
 ## Next.js env
 
-Create `granite-inventory-app/.env.local` (gitignored) with the values from `supabase status`:
+Create `.env.local` (gitignored) in the primary checkout with the values from `supabase status`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321

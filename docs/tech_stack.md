@@ -39,7 +39,7 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
 
 ## Layer by layer
 
-1. **Next.js 16 + TypeScript** (already scaffolded in `granite-inventory-app`). Server components render the dashboard and public catalog with no client fetching. Server actions handle the three write forms (inward, sell, customer). No separate API server.
+1. **Next.js 16 + TypeScript** (the repo root is the app). Server components render the dashboard and public catalog with no client fetching. Server actions handle the three write forms (inward, sell, customer). No separate API server.
 
 2. **shadcn/ui + Tailwind v4**. The Pencil components are shadcn, so `npx shadcn add sidebar command combobox dialog tabs badge chart data-table` gives the full design vocabulary. Theme tokens from the Pencil file go into `globals.css` as CSS vars.
 
