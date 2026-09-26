@@ -14,7 +14,14 @@ export function AddCustomerButton() {
       <Button className="h-10 font-semibold" onClick={() => setDraft({ name: "", phone: "", customerType: "REGULAR" })}>
         <Plus className="size-4" /> Add Customer
       </Button>
-      <CustomerDialog draft={draft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); afterWrite(); }} />
+      <CustomerDialog
+        draft={draft}
+        onClose={() => setDraft(null)}
+        onSaved={() => {
+          setDraft(null);
+          afterWrite();
+        }}
+      />
     </>
   );
 }

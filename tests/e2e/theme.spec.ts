@@ -14,7 +14,9 @@ async function flipTheme(page: Page, expectDark: boolean): Promise<void> {
   await expect(async () => {
     await toggle.click();
     const matcher = expect(page.locator("html"));
-    await (expectDark ? matcher.toHaveClass(DARK, { timeout: 2_000 }) : matcher.not.toHaveClass(DARK, { timeout: 2_000 }));
+    await (expectDark
+      ? matcher.toHaveClass(DARK, { timeout: 2_000 })
+      : matcher.not.toHaveClass(DARK, { timeout: 2_000 }));
   }).toPass({ timeout: 20_000 });
 }
 

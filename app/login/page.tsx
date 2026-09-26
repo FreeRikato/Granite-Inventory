@@ -10,10 +10,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
   const searchParams = await props.searchParams;
   const supabase = await createClient();
-  const { data: business } = await supabase
-    .from("v_public_business")
-    .select("business_name, tagline")
-    .maybeSingle();
+  const { data: business } = await supabase.from("v_public_business").select("business_name, tagline").maybeSingle();
 
   const name = business?.business_name ?? "Granite Inventory";
 
@@ -25,9 +22,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           {name.charAt(0)}
         </div>
         <h1 className="text-lg font-bold">{name}</h1>
-        {business?.tagline ? (
-          <p className="text-sm text-muted-foreground">{business.tagline}</p>
-        ) : null}
+        {business?.tagline ? <p className="text-sm text-muted-foreground">{business.tagline}</p> : null}
       </div>
 
       <div className="mt-8 w-full max-w-[420px] rounded-card bg-card p-8 shadow-sm">
@@ -38,16 +33,14 @@ export default async function LoginPage(props: PageProps<"/login">) {
         </div>
         {session.status === "not-member" ? (
           <p className="mt-4 rounded-md bg-stale-soft px-3 py-2 text-center text-xs text-stale">
-            {session.email} is not an approved team member. Ask the owner to add you, or sign
-            out and try another account.
+            {session.email} is not an approved team member. Ask the owner to add you, or sign out and try another
+            account.
           </p>
         ) : null}
         {searchParams.error === "auth" ? (
           <p className="mt-4 text-center text-xs text-stale">Sign-in failed. Please try again.</p>
         ) : null}
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Access is limited to approved team members.
-        </p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">Access is limited to approved team members.</p>
         {session.status === "not-member" ? (
           <form action="/auth/signout" method="post" className="mt-3 text-center">
             <button type="submit" className="text-xs text-primary underline">

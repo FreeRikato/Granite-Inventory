@@ -41,7 +41,10 @@ test("admin invites a member, changes thresholds and renames a product", async (
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await expect(page.getByTestId("products-row").filter({ hasText: "Jet Black Granite" })).toBeVisible();
 
-  const productDelete = page.getByTestId("products-row").filter({ hasText: "Jet Black Granite" }).getByRole("button", { name: "Delete" });
+  const productDelete = page
+    .getByTestId("products-row")
+    .filter({ hasText: "Jet Black Granite" })
+    .getByRole("button", { name: "Delete" });
   await productDelete.click();
   const deleteDialog = page.getByRole("alertdialog");
   await expect(deleteDialog).toContainText("JB-FIVE-01");

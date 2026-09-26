@@ -25,8 +25,13 @@ test("a blocked Product delete toast names the Product row", async ({ page, sign
   await expect(toast).not.toContainText("Cannot delete Product:");
 });
 
-test("Inward explains a missing Supplier and disables Save Batch until both selections exist", async ({ page, signIn }) => {
-  await sql(`insert into public.products (name, abbreviation, category) values ('Missing Supplier Product', 'MSP', 'GRANITE')`);
+test("Inward explains a missing Supplier and disables Save Batch until both selections exist", async ({
+  page,
+  signIn,
+}) => {
+  await sql(
+    `insert into public.products (name, abbreviation, category) values ('Missing Supplier Product', 'MSP', 'GRANITE')`,
+  );
   await signIn("operator");
   await page.goto("/inward");
 
@@ -42,10 +47,13 @@ test("Inward explains a missing Supplier and disables Save Batch until both sele
   await page.getByLabel("Breadth (ft)").fill("2");
   await expect(saveBatch).toBeDisabled();
 
-  await page.locator("form").first().evaluate((form) => {
-    if (!(form instanceof HTMLFormElement)) throw new Error("Inward form was not found");
-    form.requestSubmit();
-  });
+  await page
+    .locator("form")
+    .first()
+    .evaluate((form) => {
+      if (!(form instanceof HTMLFormElement)) throw new Error("Inward form was not found");
+      form.requestSubmit();
+    });
   await expect(page.getByText("Pick a supplier", { exact: true })).toBeVisible();
   await expect(page.getByText(/expected string, received null/i)).toHaveCount(0);
 
@@ -61,7 +69,8 @@ test("a Product filter resets to All when its only Batch is deleted", async ({ p
   const productId = productRows[0]?.id;
   if (!productId) throw new Error("Filter Target was not inserted");
   await sql(`insert into public.variants (product_id, name) values ($1, 'Plain')`, [productId]);
-  await sql(`
+  await sql(
+    `
     insert into public.batches (
       batch_code, variant_id, supplier_id, purchase_date, length_ft, breadth_ft, thickness_mm,
       slot, initial_units, units_sold, unit_purchase_price, freight_cost
@@ -70,7 +79,9 @@ test("a Product filter resets to All when its only Batch is deleted", async ({ p
     from public.variants v
     join public.suppliers s on s.name = 'Madurai Quarry'
     where v.product_id = $1 and v.name = 'Plain'
-  `, [productId]);
+  `,
+    [productId],
+  );
 
   await signIn("admin");
   await page.goto("/yard?slot=4FT");

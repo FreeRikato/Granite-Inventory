@@ -15,7 +15,10 @@ test.beforeEach(async () => {
   await sql(`update public.batches set units_sold = units_sold + 3 where batch_code = 'BP-NEW-01'`);
 });
 
-test("overview shows KPIs, donut, fast moving bars and the stale panel linking to the yard", async ({ page, signIn }) => {
+test("overview shows KPIs, donut, fast moving bars and the stale panel linking to the yard", async ({
+  page,
+  signIn,
+}) => {
   await signIn("admin");
   await page.goto("/");
   await expect(page.getByTestId("kpi-active")).toHaveText("26");

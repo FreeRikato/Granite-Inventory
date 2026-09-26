@@ -14,7 +14,8 @@ export default async function PublicLinkPage() {
     headers(),
   ]);
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+  const proto =
+    h.get("x-forwarded-proto") ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
   const url = `${proto}://${host}/catalog`;
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const preview = (lines ?? []).slice(0, 3);
@@ -33,7 +34,8 @@ export default async function PublicLinkPage() {
       <section className="rounded-card bg-card p-6 shadow-sm">
         <h2 className="text-base font-bold">Public preview</h2>
         <p className="mt-1 text-sm italic text-muted-foreground">
-          Prices, margins, supplier names and purchase dates stay hidden here. Only product, dimensions and availability are shown.
+          Prices, margins, supplier names and purchase dates stay hidden here. Only product, dimensions and availability
+          are shown.
         </p>
         {preview.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">Nothing in stock to show yet.</p>
@@ -43,7 +45,11 @@ export default async function PublicLinkPage() {
               <StoneTile key={l.line_key} line={l} compact />
             ))}
             {more > 0 ? (
-              <a href="/catalog" target="_blank" className="flex flex-col items-center justify-center rounded-card border border-dashed border-border p-4 text-center text-sm">
+              <a
+                href="/catalog"
+                target="_blank"
+                className="flex flex-col items-center justify-center rounded-card border border-dashed border-border p-4 text-center text-sm"
+              >
                 <span className="font-semibold">+{more} more in stock</span>
                 <span className="text-xs text-muted-foreground">View full catalog</span>
               </a>

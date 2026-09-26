@@ -2,7 +2,6 @@ import { queryOptions } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/database.types";
 
-
 async function rows<T>(query: PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -16,14 +15,20 @@ export const yardBatchesQuery = queryOptions({
 
 export const stockLinesQuery = queryOptions({
   queryKey: ["stock-lines"],
-  queryFn: () => rows<Tables<"v_stock_lines">>(createClient().from("v_stock_lines").select("*").gt("available", 0).order("product_name")),
+  queryFn: () =>
+    rows<Tables<"v_stock_lines">>(
+      createClient().from("v_stock_lines").select("*").gt("available", 0).order("product_name"),
+    ),
 });
 
 export type CustomerOption = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
 
 export const customersQuery = queryOptions({
   queryKey: ["customers"],
-  queryFn: () => rows<CustomerOption>(createClient().from("customers").select("id, name, phone, customer_type, is_walk_in").order("name")),
+  queryFn: () =>
+    rows<CustomerOption>(
+      createClient().from("customers").select("id, name, phone, customer_type, is_walk_in").order("name"),
+    ),
 });
 
 export const productsQuery = queryOptions({
@@ -36,12 +41,16 @@ export const productsQuery = queryOptions({
 
 export const variantsQuery = queryOptions({
   queryKey: ["variants"],
-  queryFn: () => rows<Pick<Tables<"variants">, "id" | "product_id" | "name">>(createClient().from("variants").select("id, product_id, name").order("name")),
+  queryFn: () =>
+    rows<Pick<Tables<"variants">, "id" | "product_id" | "name">>(
+      createClient().from("variants").select("id, product_id, name").order("name"),
+    ),
 });
 
 export const suppliersQuery = queryOptions({
   queryKey: ["suppliers"],
-  queryFn: () => rows<Pick<Tables<"suppliers">, "id" | "name">>(createClient().from("suppliers").select("id, name").order("name")),
+  queryFn: () =>
+    rows<Pick<Tables<"suppliers">, "id" | "name">>(createClient().from("suppliers").select("id, name").order("name")),
 });
 
 export const customerListQuery = queryOptions({
@@ -51,7 +60,10 @@ export const customerListQuery = queryOptions({
 
 export const recentBatchesQuery = queryOptions({
   queryKey: ["recent-batches"],
-  queryFn: () => rows<Tables<"v_batches">>(createClient().from("v_batches").select("*").order("created_at", { ascending: false }).limit(8)),
+  queryFn: () =>
+    rows<Tables<"v_batches">>(
+      createClient().from("v_batches").select("*").order("created_at", { ascending: false }).limit(8),
+    ),
 });
 
 export const dashboardKpisQuery = queryOptions({

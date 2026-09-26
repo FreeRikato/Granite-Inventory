@@ -30,7 +30,11 @@ export function QueryProvider({ children, cacheKey }: Props) {
     void client.invalidateQueries();
   }, [client]);
   return (
-    <PersistQueryClientProvider client={client} persistOptions={{ persister, maxAge: KEEP_MS }} onSuccess={refetchRestored}>
+    <PersistQueryClientProvider
+      client={client}
+      persistOptions={{ persister, maxAge: KEEP_MS }}
+      onSuccess={refetchRestored}
+    >
       {children}
     </PersistQueryClientProvider>
   );
@@ -67,7 +71,11 @@ export function useAfterSettled(): (run: () => void) => void {
 }
 
 export function useHydrated(): boolean {
-  return useSyncExternalStore(subscribeNever, () => true, () => false);
+  return useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  );
 }
 
 function subscribeNever(): () => void {

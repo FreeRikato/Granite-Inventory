@@ -34,7 +34,7 @@ describe("findComments", () => {
     const text = [
       "#!/usr/bin/env bash",
       "# real",
-      'echo "#no" \'#no\' ${#arr[@]} a#b # trailing',
+      "echo \"#no\" '#no' ${#arr[@]} a#b # trailing",
       "cat <<'EOF'",
       "# usage text, not a comment",
       "EOF",

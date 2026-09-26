@@ -1,4 +1,3 @@
-
 export const CATEGORIES = ["GRANITE", "MEMORIAL", "TILES"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export const CATEGORY_LABEL: Record<Category, string> = {
@@ -75,6 +74,15 @@ export function suggestSlot(category: Category, lengthFt: number | null): Slot {
 
 export function suggestAbbreviation(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 1) return words[0].replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase();
-  return words.map((w) => w[0]).join("").replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase();
+  if (words.length === 1)
+    return words[0]
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 4)
+      .toUpperCase();
+  return words
+    .map((w) => w[0])
+    .join("")
+    .replace(/[^a-z0-9]/gi, "")
+    .slice(0, 4)
+    .toUpperCase();
 }

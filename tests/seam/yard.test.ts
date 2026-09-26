@@ -34,9 +34,15 @@ describe("yard: v_yard_batches", () => {
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(90), variantName: "B" });
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(179), variantName: "C" });
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(180), variantName: "D" });
-    const { data } = await operator.from("v_yard_batches").select("variant_name, age_days, ageing_band").order("variant_name");
+    const { data } = await operator
+      .from("v_yard_batches")
+      .select("variant_name, age_days, ageing_band")
+      .order("variant_name");
     expect(data?.map((r) => [r.variant_name, r.age_days, r.ageing_band])).toEqual([
-      ["A", 89, "FRESH"], ["B", 90, "AGEING"], ["C", 179, "AGEING"], ["D", 180, "STALE"],
+      ["A", 89, "FRESH"],
+      ["B", 90, "AGEING"],
+      ["C", 179, "AGEING"],
+      ["D", 180, "STALE"],
     ]);
 
     await sql(`update public.settings set ageing_after_days = 30, stale_after_days = 100`);
@@ -47,7 +53,14 @@ describe("yard: v_yard_batches", () => {
   it("clamp gap is the days since the previous batch of the same stock line only", async () => {
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(10) });
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(7) });
-    await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(1), length: 5, breadth: 3, thickness: 20 });
+    await createBatch(operator, {
+      productId,
+      supplierId,
+      purchaseDate: daysAgo(1),
+      length: 5,
+      breadth: 3,
+      thickness: 20,
+    });
     const { data } = await operator
       .from("v_yard_batches")
       .select("purchase_date, days_since_previous, length_ft")
@@ -56,7 +69,10 @@ describe("yard: v_yard_batches", () => {
   });
 
   it("age and date rules use the Indian calendar day", async () => {
-    const { data } = await operator.rpc("preview_batch_code", { p_product_id: productId, p_date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) });
+    const { data } = await operator.rpc("preview_batch_code", {
+      p_product_id: productId,
+      p_date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }),
+    });
     expect(data).toMatch(/-01$/);
     const istTomorrow = new Date(Date.now() + 36 * 3_600_000).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
     const future = await createBatch(operator, { productId, supplierId, purchaseDate: istTomorrow });

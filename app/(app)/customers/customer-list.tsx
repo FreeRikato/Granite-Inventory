@@ -26,7 +26,6 @@ export function CustomerList({ customers, kpis }: Props) {
 
   return (
     <>
-
       <dl className="flex divide-x divide-border">
         {kpis.map((k) => (
           <div key={k.label} className="flex flex-col gap-1 pr-6 pl-6 first:pl-0">
@@ -38,7 +37,13 @@ export function CustomerList({ customers, kpis }: Props) {
 
       <div className="relative max-w-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or phone..." className="h-10 rounded-full bg-card pl-9" aria-label="Search customers" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search name or phone..."
+          className="h-10 rounded-full bg-card pl-9"
+          aria-label="Search customers"
+        />
       </div>
 
       <div className="rounded-card bg-card px-6 shadow-sm">
@@ -48,7 +53,11 @@ export function CustomerList({ customers, kpis }: Props) {
           <ul className="divide-y divide-border">
             {visible.map((c) => (
               <li key={c.id}>
-                <Link href={`/customers/${c.id}`} className="flex flex-wrap items-start gap-4 py-4 hover:bg-secondary/40" data-testid="customer-row">
+                <Link
+                  href={`/customers/${c.id}`}
+                  className="flex flex-wrap items-start gap-4 py-4 hover:bg-secondary/40"
+                  data-testid="customer-row"
+                >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                     {initialsOf(c.name ?? "")}
                   </span>
@@ -68,7 +77,6 @@ export function CustomerList({ customers, kpis }: Props) {
           </ul>
         )}
       </div>
-
     </>
   );
 }

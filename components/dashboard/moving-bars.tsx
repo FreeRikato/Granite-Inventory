@@ -13,7 +13,10 @@ export function MovingBars({ rows }: { readonly rows: readonly Row[] }) {
         <li key={r.label} className="grid grid-cols-[88px_1fr_40px] items-center gap-3 text-sm">
           <span className="truncate text-muted-foreground">{r.label}</span>
           <span className="h-2 overflow-hidden rounded-full bg-muted" role="presentation">
-            <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(3, (r.units / max) * 100)}%` }} />
+            <span
+              className="block h-full rounded-full bg-primary"
+              style={{ width: `${Math.max(3, (r.units / max) * 100)}%` }}
+            />
           </span>
           <span className="text-right font-semibold tabular">{formatNumber(r.units)}</span>
         </li>

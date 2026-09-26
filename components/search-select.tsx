@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -85,7 +78,13 @@ export function SearchSelect({
   };
 
   return (
-    <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setQuery("");
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           id={id}
@@ -121,9 +120,7 @@ export function SearchSelect({
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate">{option.label}</span>
-                    {option.hint ? (
-                      <span className="truncate text-xs text-muted-foreground">{option.hint}</span>
-                    ) : null}
+                    {option.hint ? <span className="truncate text-xs text-muted-foreground">{option.hint}</span> : null}
                   </span>
                   <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>

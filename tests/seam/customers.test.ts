@@ -19,21 +19,51 @@ describe("customers: v_customers and deletion rules", () => {
   it("derives last purchase, sale count and revenue; no purchases reads as null", async () => {
     const productId = await createProduct(operator, { name: "Black Pearl", abbreviation: "BP" });
     const supplierId = await createSupplier(operator, "Madurai Quarry");
-    const { data: batch } = await createBatch(operator, { productId, supplierId, units: 20, purchaseDate: daysAgo(10) });
+    const { data: batch } = await createBatch(operator, {
+      productId,
+      supplierId,
+      units: 20,
+      purchaseDate: daysAgo(10),
+    });
     const murugan = await createCustomer(operator, { name: "Murugan", phone: "9876543210", type: "CONTRACTOR" });
     await createCustomer(operator, { name: "St. Xavier's Trust", type: "TRUST" });
-    await recordSale(operator, { batchId: batch?.id ?? "", customerId: murugan, quantity: 2, salePrice: 1000, saleDate: daysAgo(10) });
-    await recordSale(operator, { batchId: batch?.id ?? "", customerId: murugan, quantity: 1, salePrice: 1500, saleDate: daysAgo(3), stickering: { cost: 100, price: 250 } });
+    await recordSale(operator, {
+      batchId: batch?.id ?? "",
+      customerId: murugan,
+      quantity: 2,
+      salePrice: 1000,
+      saleDate: daysAgo(10),
+    });
+    await recordSale(operator, {
+      batchId: batch?.id ?? "",
+      customerId: murugan,
+      quantity: 1,
+      salePrice: 1500,
+      saleDate: daysAgo(3),
+      stickering: { cost: 100, price: 250 },
+    });
 
-    const { data } = await operator.from("v_customers").select("name, last_purchase_date, sale_count, lifetime_revenue").order("name");
+    const { data } = await operator
+      .from("v_customers")
+      .select("name, last_purchase_date, sale_count, lifetime_revenue")
+      .order("name");
     const byName = Object.fromEntries((data ?? []).map((r) => [r.name, r]));
     expect(byName["Murugan"]).toMatchObject({ last_purchase_date: daysAgo(3), sale_count: 2, lifetime_revenue: 3750 });
-    expect(byName["St. Xavier's Trust"]).toMatchObject({ last_purchase_date: null, sale_count: 0, lifetime_revenue: 0 });
+    expect(byName["St. Xavier's Trust"]).toMatchObject({
+      last_purchase_date: null,
+      sale_count: 0,
+      lifetime_revenue: 0,
+    });
   });
 
   it("operators may rename and retype; only admin deletes, and never a customer with sales", async () => {
     const id = await createCustomer(operator, { name: "Walkin Bob", type: "RETAIL" });
-    const rename = await operator.from("customers").update({ name: "Bob", customer_type: "REGULAR" }).eq("id", id).select().single();
+    const rename = await operator
+      .from("customers")
+      .update({ name: "Bob", customer_type: "REGULAR" })
+      .eq("id", id)
+      .select()
+      .single();
     expect(rename.data?.name).toBe("Bob");
     expect(rename.data?.updated_by).toBe("operator@test.local");
 

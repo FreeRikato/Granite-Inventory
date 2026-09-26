@@ -3,7 +3,9 @@ import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 import type { Locator, Page } from "@playwright/test";
 
-async function measure(locator: Locator): Promise<{ readonly width: number; readonly clientWidth: number; readonly scrollWidth: number }> {
+async function measure(
+  locator: Locator,
+): Promise<{ readonly width: number; readonly clientWidth: number; readonly scrollWidth: number }> {
   return locator.evaluate((element) => ({
     width: element.getBoundingClientRect().width,
     clientWidth: element.clientWidth,
@@ -37,7 +39,9 @@ test("mobile Team & access rows keep identity and controls usable", async ({ pag
   test.skip(!isMobile, "responsive behavior is covered by the mobile project");
   await resetDomainData();
   await sql(`delete from public.team_members where email = 'meena@test.local'`);
-  await sql(`insert into public.team_members (email, name, role) values ('meena@test.local', 'Meena Kumar', 'YARD_OPERATOR')`);
+  await sql(
+    `insert into public.team_members (email, name, role) values ('meena@test.local', 'Meena Kumar', 'YARD_OPERATOR')`,
+  );
 
   await signIn("admin");
   await page.goto("/settings");
@@ -72,7 +76,9 @@ test("mobile customer sales reflow keeps margin and admin actions reachable", as
   test.skip(!isMobile, "responsive behavior is covered by the mobile project");
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
   await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
     select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);

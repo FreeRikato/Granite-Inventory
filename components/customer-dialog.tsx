@@ -45,7 +45,12 @@ export function CustomerDialog({ draft, existingId, onClose, onSaved }: Props) {
   }, [draft]);
 
   return (
-    <Dialog open={draft !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={draft !== null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent
         onCloseAutoFocus={(event) => {
           event.preventDefault();
@@ -100,10 +105,20 @@ function CustomerForm({
   return (
     <div className="flex flex-col gap-4">
       <Field label="Name" htmlFor="cd-name">
-        <Input id="cd-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus={!form.name} />
+        <Input
+          id="cd-name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          autoFocus={!form.name}
+        />
       </Field>
       <Field label="Phone" htmlFor="cd-phone" hint="Optional. Phone numbers are unique per customer.">
-        <Input id="cd-phone" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <Input
+          id="cd-phone"
+          inputMode="tel"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
       </Field>
       <Field label="Type">
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Type">
@@ -116,7 +131,9 @@ function CustomerForm({
               onClick={() => setForm({ ...form, customerType: t })}
               className={cn(
                 "inline-flex h-8 items-center rounded-full border px-3 text-sm font-medium",
-                form.customerType === t ? "border-primary/40 bg-accent text-accent-foreground" : "border-border bg-card text-muted-foreground",
+                form.customerType === t
+                  ? "border-primary/40 bg-accent text-accent-foreground"
+                  : "border-border bg-card text-muted-foreground",
               )}
             >
               {CUSTOMER_TYPE_LABEL[t]}
@@ -125,7 +142,9 @@ function CustomerForm({
         </div>
       </Field>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
         <Button type="button" onClick={save} disabled={pending || !form.name.trim()}>
           {existingId ? "Save" : "Add customer"}
         </Button>

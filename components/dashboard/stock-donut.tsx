@@ -41,7 +41,9 @@ export function StockDonut({ active, sold }: { readonly active: number; readonly
           </PieChart>
         </ChartContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular" data-testid="active-pct">{pct}%</span>
+          <span className="text-2xl font-bold tabular" data-testid="active-pct">
+            {pct}%
+          </span>
           <span className="text-xs text-muted-foreground">active</span>
         </div>
       </div>

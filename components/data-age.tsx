@@ -5,7 +5,11 @@ import { useSyncExternalStore } from "react";
 type Props = { readonly updatedAt: number; readonly fetching: boolean };
 
 export function DataAge({ updatedAt, fetching }: Props) {
-  const now = useSyncExternalStore(subscribeMinute, () => Date.now(), () => 0);
+  const now = useSyncExternalStore(
+    subscribeMinute,
+    () => Date.now(),
+    () => 0,
+  );
   if (fetching) return <span className="text-xs text-muted-foreground">Refreshing…</span>;
   if (updatedAt === 0 || now === 0) return null;
   return <span className="text-xs text-muted-foreground">Updated {ago(now - updatedAt)}</span>;

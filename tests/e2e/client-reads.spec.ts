@@ -27,10 +27,15 @@ test.describe("client reads", () => {
   test.beforeEach(async () => {
     await resetDomainData();
     await seedYard();
-    await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+    await sql(
+      `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+    );
   });
 
-  test("Yard and Sell read their rows from Supabase, not from the server render", async ({ page, signIn }, testInfo) => {
+  test("Yard and Sell read their rows from Supabase, not from the server render", async ({
+    page,
+    signIn,
+  }, testInfo) => {
     testInfo.skip(testInfo.project.name !== "desktop", "Navigation caching is covered on desktop only");
     await signIn("admin");
     await page.goto("/");
@@ -49,7 +54,10 @@ test.describe("client reads", () => {
     expect(await net.serverPayloads()).not.toContain("BP-OLD-01");
   });
 
-  test("a sale shows in the yard on the very next click, inside the stale window", async ({ page, signIn }, testInfo) => {
+  test("a sale shows in the yard on the very next click, inside the stale window", async ({
+    page,
+    signIn,
+  }, testInfo) => {
     testInfo.skip(testInfo.project.name !== "desktop", "Navigation caching is covered on desktop only");
     await signIn("operator");
     await page.goto("/yard?slot=4FT");

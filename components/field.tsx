@@ -19,7 +19,9 @@ export function Field({ label, htmlFor, error, hint, className, children }: Prop
       </Label>
       {children}
       {error ? (
-        <p className="text-xs text-stale" role="alert">{error}</p>
+        <p className="text-xs text-stale" role="alert">
+          {error}
+        </p>
       ) : hint ? (
         <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}

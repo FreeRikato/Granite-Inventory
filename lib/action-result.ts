@@ -1,6 +1,4 @@
-export type ActionResult<T> =
-  | { readonly ok: true; readonly data: T }
-  | { readonly ok: false; readonly error: string };
+export type ActionResult<T> = { readonly ok: true; readonly data: T } | { readonly ok: false; readonly error: string };
 
 export function ok<T>(data: T): ActionResult<T> {
   return { ok: true, data };
@@ -24,7 +22,8 @@ export function cleanPgMessage(message: string): string {
   if (/duplicate key.*suppliers_name_key/.test(message)) return "A supplier with that name already exists";
   if (/duplicate key.*customers_phone_key/.test(message)) return "A customer with that phone already exists";
   if (/violates foreign key constraint/.test(message)) return "Still used by batches or sales in the yard";
-  if (/violates check constraint "batches_purchase_date_range"/.test(message)) return "Purchase date cannot be in the future";
+  if (/violates check constraint "batches_purchase_date_range"/.test(message))
+    return "Purchase date cannot be in the future";
   if (/violates check constraint "sales_sale_date_check"/.test(message)) return "Sale date cannot be in the future";
   if (/numeric field overflow|out of range for type (integer|numeric)/.test(message)) return "Number is too large";
   return message;

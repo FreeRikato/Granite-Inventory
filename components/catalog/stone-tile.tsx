@@ -31,7 +31,9 @@ export function StoneTile({ line, compact }: { readonly line: Line; readonly com
       />
       <h2 className="mt-3 text-[15px] font-semibold">{name}</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        {line.length_ft === null ? "Standard size" : formatSize({ length_ft: line.length_ft, breadth_ft: line.breadth_ft, thickness_mm: line.thickness_mm })}
+        {line.length_ft === null
+          ? "Standard size"
+          : formatSize({ length_ft: line.length_ft, breadth_ft: line.breadth_ft, thickness_mm: line.thickness_mm })}
       </p>
       <p className="mt-2 text-sm font-semibold text-primary tabular">
         {pluralUnits(line.available ?? 0, line.category ?? "")} in stock

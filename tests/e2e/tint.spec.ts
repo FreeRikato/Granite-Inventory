@@ -8,7 +8,10 @@ async function primaryColor(page: import("@playwright/test").Page): Promise<stri
   return page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--primary").trim());
 }
 
-test("an operator picks a tint in Settings, the app repaints, and the choice survives a reload", async ({ page, signIn }) => {
+test("an operator picks a tint in Settings, the app repaints, and the choice survives a reload", async ({
+  page,
+  signIn,
+}) => {
   await signIn("operator");
   await page.goto("/settings");
   const before = await primaryColor(page);

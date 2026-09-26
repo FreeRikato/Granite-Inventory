@@ -22,7 +22,10 @@ test("a team member lands on Overview inside the shell", async ({ page, signIn }
   await signIn("admin");
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Inward Stock" }).or(
-    page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Inward" }),
-  )).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Main" })
+      .getByRole("link", { name: "Inward Stock" })
+      .or(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Inward" })),
+  ).toBeVisible();
 });

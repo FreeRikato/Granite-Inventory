@@ -103,4 +103,3 @@ export function sizesIn(list: readonly YardBatch[]): string[] {
   }
   return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
 }
-

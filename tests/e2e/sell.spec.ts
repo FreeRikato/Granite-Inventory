@@ -9,11 +9,18 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Priya Engineering', '+91 91234 56789', 'ENGINEER')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Priya Engineering', '+91 91234 56789', 'ENGINEER')`,
+  );
 });
 
-test("operator sells from the oldest batch and sees margin live, then available drops in the yard", async ({ page, signIn }) => {
+test("operator sells from the oldest batch and sees margin live, then available drops in the yard", async ({
+  page,
+  signIn,
+}) => {
   await signIn("operator");
   await page.goto("/sell");
   await expect(page.getByRole("heading", { name: "Sell Stone" })).toBeVisible();

@@ -55,7 +55,8 @@ export async function addMemberAction(input: unknown): Promise<ActionResult<Tabl
     .insert({ email: parsed.data.email, name: parsed.data.name || null, role: parsed.data.role })
     .select()
     .single();
-  if (error) return fail(/duplicate key/.test(error.message) ? "That account is already on the list" : messageOf(error));
+  if (error)
+    return fail(/duplicate key/.test(error.message) ? "That account is already on the list" : messageOf(error));
   revalidatePath("/settings");
   return ok(data);
 }
@@ -82,7 +83,12 @@ const renameSchema = z.object({
   table: z.enum(["products", "variants", "suppliers"]),
   id: z.string().uuid(),
   name: z.string().trim().min(1, "Name is required").max(80),
-  abbreviation: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{1,4}$/, "1 to 4 letters or digits").optional(),
+  abbreviation: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]{1,4}$/, "1 to 4 letters or digits")
+    .optional(),
   category: z.enum(CATEGORIES).optional(),
 });
 
@@ -110,12 +116,7 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
   if (!references.ok) return references;
   if (hasDeleteReferences(table, references.data)) {
     return fail(
-      deleteBlockedMessage(
-        table,
-        references.data.batches,
-        references.data.variants,
-        references.data.rowName,
-      ),
+      deleteBlockedMessage(table, references.data.batches, references.data.variants, references.data.rowName),
     );
   }
 
@@ -124,14 +125,7 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
     if (error.code === "23503") {
       const latest = await findDeleteReferences(supabase, table, id);
       if (latest.ok && hasDeleteReferences(table, latest.data)) {
-        return fail(
-          deleteBlockedMessage(
-            table,
-            latest.data.batches,
-            latest.data.variants,
-            latest.data.rowName,
-          ),
-        );
+        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.variants, latest.data.rowName));
       }
     }
     return fail(messageOf(error));

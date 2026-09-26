@@ -1,6 +1,5 @@
 import type { Db } from "./harness";
 
-
 export async function createProduct(
   db: Db,
   input: { name: string; abbreviation: string; category?: "GRANITE" | "MEMORIAL" | "TILES" },

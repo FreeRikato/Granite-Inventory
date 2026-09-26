@@ -63,7 +63,11 @@ const EMPTY: FormState = {
   freightCost: "",
 };
 
-export function InwardForm({ products: initialProducts, variants: initialVariants, suppliers: initialSuppliers }: Props) {
+export function InwardForm({
+  products: initialProducts,
+  variants: initialVariants,
+  suppliers: initialSuppliers,
+}: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -86,7 +90,9 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
     return variants.filter((v) => v.product_id === form.productId).map((v) => ({ value: v.name, label: v.name }));
   }, [form.productId, variants]);
   const typedVariantName = form.variantName.trim();
-  const variantExists = Boolean(typedVariantName) && existingVariantOptions.some((option) => option.value.toLowerCase() === typedVariantName.toLowerCase());
+  const variantExists =
+    Boolean(typedVariantName) &&
+    existingVariantOptions.some((option) => option.value.toLowerCase() === typedVariantName.toLowerCase());
   const variantOptions = useMemo(() => {
     if (!typedVariantName || variantExists) return existingVariantOptions;
     return [...existingVariantOptions, { value: typedVariantName, label: typedVariantName }];
@@ -99,11 +105,9 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
     if (!form.productId || !form.purchaseDate) return;
     let cancelled = false;
     const supabase = createClient();
-    supabase
-      .rpc("preview_batch_code", { p_product_id: form.productId, p_date: form.purchaseDate })
-      .then(({ data }) => {
-        if (!cancelled) setCodePreview(typeof data === "string" ? data : null);
-      });
+    supabase.rpc("preview_batch_code", { p_product_id: form.productId, p_date: form.purchaseDate }).then(({ data }) => {
+      if (!cancelled) setCodePreview(typeof data === "string" ? data : null);
+    });
     return () => {
       cancelled = true;
     };
@@ -209,9 +213,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
             }}
             placeholder="Select or add product"
             searchPlaceholder="Search products..."
-            onCreate={(name) =>
-              setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })
-            }
+            onCreate={(name) => setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })}
             createLabel={(q) => `Add product "${q}"`}
           />
         </Field>
@@ -244,44 +246,111 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
       ) : (
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Field label="Length (ft)" htmlFor="lengthFt">
-            <Input id="lengthFt" type="number" inputMode="decimal" step="0.25" min="0" placeholder="0" value={form.lengthFt}
-              onChange={(e) => { set("lengthFt", e.target.value); set("slot", null); }} className="h-11" />
+            <Input
+              id="lengthFt"
+              type="number"
+              inputMode="decimal"
+              step="0.25"
+              min="0"
+              placeholder="0"
+              value={form.lengthFt}
+              onChange={(e) => {
+                set("lengthFt", e.target.value);
+                set("slot", null);
+              }}
+              className="h-11"
+            />
           </Field>
           <Field label="Breadth (ft)" htmlFor="breadthFt">
-            <Input id="breadthFt" type="number" inputMode="decimal" step="0.25" min="0" placeholder="0" value={form.breadthFt}
-              onChange={(e) => set("breadthFt", e.target.value)} className="h-11" />
+            <Input
+              id="breadthFt"
+              type="number"
+              inputMode="decimal"
+              step="0.25"
+              min="0"
+              placeholder="0"
+              value={form.breadthFt}
+              onChange={(e) => set("breadthFt", e.target.value)}
+              className="h-11"
+            />
           </Field>
           <Field label="Thickness (mm)" htmlFor="thicknessMm">
-            <Input id="thicknessMm" type="number" inputMode="numeric" step="1" min="0" placeholder="0" value={form.thicknessMm}
-              onChange={(e) => set("thicknessMm", e.target.value)} className="h-11" />
+            <Input
+              id="thicknessMm"
+              type="number"
+              inputMode="numeric"
+              step="1"
+              min="0"
+              placeholder="0"
+              value={form.thicknessMm}
+              onChange={(e) => set("thicknessMm", e.target.value)}
+              className="h-11"
+            />
           </Field>
         </div>
       )}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Field label="Unit Quantity" htmlFor="initialUnits">
-          <Input id="initialUnits" type="number" inputMode="numeric" step="1" min="1" placeholder="0" value={form.initialUnits}
-            onChange={(e) => set("initialUnits", e.target.value)} className="h-11" />
+          <Input
+            id="initialUnits"
+            type="number"
+            inputMode="numeric"
+            step="1"
+            min="1"
+            placeholder="0"
+            value={form.initialUnits}
+            onChange={(e) => set("initialUnits", e.target.value)}
+            className="h-11"
+          />
         </Field>
         <Field label="Unit Purchase Price (₹)" htmlFor="unitPurchasePrice">
-          <Input id="unitPurchasePrice" type="number" inputMode="decimal" step="1" min="0" placeholder="0" value={form.unitPurchasePrice}
-            onChange={(e) => set("unitPurchasePrice", e.target.value)} className="h-11" />
+          <Input
+            id="unitPurchasePrice"
+            type="number"
+            inputMode="decimal"
+            step="1"
+            min="0"
+            placeholder="0"
+            value={form.unitPurchasePrice}
+            onChange={(e) => set("unitPurchasePrice", e.target.value)}
+            className="h-11"
+          />
         </Field>
-        <Field label="Freight Cost (₹)" htmlFor="freightCost" hint="Lorry and handling, spread across the pieces into landed cost">
-          <Input id="freightCost" type="number" inputMode="decimal" step="1" min="0" placeholder="Optional" value={form.freightCost}
-            onChange={(e) => set("freightCost", e.target.value)} className="h-11" />
+        <Field
+          label="Freight Cost (₹)"
+          htmlFor="freightCost"
+          hint="Lorry and handling, spread across the pieces into landed cost"
+        >
+          <Input
+            id="freightCost"
+            type="number"
+            inputMode="decimal"
+            step="1"
+            min="0"
+            placeholder="Optional"
+            value={form.freightCost}
+            onChange={(e) => set("freightCost", e.target.value)}
+            className="h-11"
+          />
         </Field>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field label="Yard slot" htmlFor="slot" hint={suggested && slot === suggested ? "Suggested from size" : undefined}>
+        <Field
+          label="Yard slot"
+          htmlFor="slot"
+          hint={suggested && slot === suggested ? "Suggested from size" : undefined}
+        >
           <Select value={slot ?? ""} onValueChange={(v) => set("slot", SLOTS.includes(v as Slot) ? (v as Slot) : null)}>
             <SelectTrigger id="slot" className="h-11 w-full">
               <SelectValue placeholder="Pick a product first" />
             </SelectTrigger>
             <SelectContent>
               {SLOTS.map((s) => (
-                <SelectItem key={s} value={s}>{SLOT_LABEL[s]}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {SLOT_LABEL[s]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -295,16 +364,27 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
       </div>
 
       {error ? (
-        <Notice tone="error" icon="alert" className="mt-4">{error}</Notice>
+        <Notice tone="error" icon="alert" className="mt-4">
+          {error}
+        </Notice>
       ) : null}
 
       <div className="mt-6 flex justify-end">
-        <Button type="submit" disabled={pending || !form.productId || !form.supplierId || !hasSize} className="h-11 px-6 font-semibold">
+        <Button
+          type="submit"
+          disabled={pending || !form.productId || !form.supplierId || !hasSize}
+          className="h-11 px-6 font-semibold"
+        >
           {pending ? "Saving..." : "Save Batch"}
         </Button>
       </div>
 
-      <Dialog open={newProduct !== null} onOpenChange={(open) => { if (!open) setNewProduct(null); }}>
+      <Dialog
+        open={newProduct !== null}
+        onOpenChange={(open) => {
+          if (!open) setNewProduct(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New product</DialogTitle>
@@ -312,26 +392,53 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
           {newProduct ? (
             <div className="flex flex-col gap-4">
               <Field label="Name" htmlFor="np-name">
-                <Input id="np-name" value={newProduct.name}
-                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value, abbreviation: suggestAbbreviation(e.target.value) })} />
+                <Input
+                  id="np-name"
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      name: e.target.value,
+                      abbreviation: suggestAbbreviation(e.target.value),
+                    })
+                  }
+                />
               </Field>
               <Field label="Abbreviation" htmlFor="np-abbr" hint="Used in batch codes, e.g. BP-07SEP26-01">
-                <Input id="np-abbr" maxLength={4} value={newProduct.abbreviation}
-                  onChange={(e) => setNewProduct({ ...newProduct, abbreviation: e.target.value.toUpperCase() })} className="font-mono uppercase" />
+                <Input
+                  id="np-abbr"
+                  maxLength={4}
+                  value={newProduct.abbreviation}
+                  onChange={(e) => setNewProduct({ ...newProduct, abbreviation: e.target.value.toUpperCase() })}
+                  className="font-mono uppercase"
+                />
               </Field>
               <Field label="Category" htmlFor="np-category">
-                <Select value={newProduct.category} onValueChange={(v) => { if (isCategory(v)) setNewProduct({ ...newProduct, category: v }); }}>
-                  <SelectTrigger id="np-category" className="w-full"><SelectValue /></SelectTrigger>
+                <Select
+                  value={newProduct.category}
+                  onValueChange={(v) => {
+                    if (isCategory(v)) setNewProduct({ ...newProduct, category: v });
+                  }}
+                >
+                  <SelectTrigger id="np-category" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>{CATEGORY_LABEL[c]}</SelectItem>
+                      <SelectItem key={c} value={c}>
+                        {CATEGORY_LABEL[c]}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setNewProduct(null)}>Cancel</Button>
-                <Button type="button" onClick={saveProduct} disabled={pending}>Add product</Button>
+                <Button type="button" variant="ghost" onClick={() => setNewProduct(null)}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={saveProduct} disabled={pending}>
+                  Add product
+                </Button>
               </div>
             </div>
           ) : null}

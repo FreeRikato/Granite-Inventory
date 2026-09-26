@@ -1,4 +1,3 @@
-
 export function ViewSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">

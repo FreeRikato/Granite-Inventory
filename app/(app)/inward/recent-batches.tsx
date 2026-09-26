@@ -36,7 +36,9 @@ export function RecentBatches({ batches }: { readonly batches: readonly Row[] })
                   </td>
                   <td className="py-2.5 pr-4">{isSlot(b.slot) ? SLOT_LABEL[b.slot] : b.slot}</td>
                   <td className="py-2.5 pr-4">{b.purchase_date ? formatDate(b.purchase_date) : ""}</td>
-                  <td className="py-2.5 pr-4 text-right tabular">{b.available} / {b.initial_units}</td>
+                  <td className="py-2.5 pr-4 text-right tabular">
+                    {b.available} / {b.initial_units}
+                  </td>
                   <td className="py-2.5 text-right tabular">{formatRupees(b.landed_cost ?? 0)}</td>
                 </tr>
               ))}

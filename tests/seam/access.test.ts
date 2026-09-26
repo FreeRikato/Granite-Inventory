@@ -28,9 +28,7 @@ describe("access: team members and settings", () => {
     const stranger = await signedInClient("stranger");
     const members = await stranger.from("team_members").select("email");
     expect(members.data).toEqual([]);
-    const insert = await stranger
-      .from("team_members")
-      .insert({ email: "stranger@test.local", role: "ADMIN" });
+    const insert = await stranger.from("team_members").insert({ email: "stranger@test.local", role: "ADMIN" });
     expectError(insert);
     const rows = await sql(`select 1 from public.team_members where email = 'stranger@test.local'`);
     expect(rows).toHaveLength(0);
@@ -40,15 +38,9 @@ describe("access: team members and settings", () => {
     const operator = await signedInClient("operator");
     const members = await operator.from("team_members").select("email");
     expect(members.data?.map((m) => m.email)).toContain("admin@test.local");
-    const update = await operator
-      .from("settings")
-      .update({ stale_after_days: 200 })
-      .eq("id", true)
-      .select();
+    const update = await operator.from("settings").update({ stale_after_days: 200 }).eq("id", true).select();
     expect(update.data).toEqual([]);
-    const insert = await operator
-      .from("team_members")
-      .insert({ email: "friend@test.local", role: "YARD_OPERATOR" });
+    const insert = await operator.from("team_members").insert({ email: "friend@test.local", role: "YARD_OPERATOR" });
     expectError(insert);
   });
 
@@ -61,19 +53,11 @@ describe("access: team members and settings", () => {
       .single();
     expect(insert.error).toBeNull();
 
-    const update = await admin
-      .from("settings")
-      .update({ ageing_after_days: 120 })
-      .eq("id", true)
-      .select()
-      .single();
+    const update = await admin.from("settings").update({ ageing_after_days: 120 }).eq("id", true).select().single();
     expect(update.data?.ageing_after_days).toBe(120);
     expect(update.data?.updated_by).toBe("admin@test.local");
 
-    const badThreshold = await admin
-      .from("settings")
-      .update({ stale_after_days: 100 })
-      .eq("id", true);
+    const badThreshold = await admin.from("settings").update({ stale_after_days: 100 }).eq("id", true);
     expectError(badThreshold);
 
     await admin.from("team_members").delete().eq("email", "meena@test.local");
@@ -82,7 +66,9 @@ describe("access: team members and settings", () => {
     await sql(`delete from public.team_members where role = 'ADMIN' and email <> 'admin@test.local'`);
     const del = await admin.from("team_members").delete().eq("email", "admin@test.local").select();
     expectError(del);
-    await sql(`insert into public.team_members (email, name, role) values ('aravinthanrc@gmail.com', 'Aravinthan', 'ADMIN') on conflict do nothing`);
+    await sql(
+      `insert into public.team_members (email, name, role) values ('aravinthanrc@gmail.com', 'Aravinthan', 'ADMIN') on conflict do nothing`,
+    );
   });
 
   it("removed member loses access on the next request", async () => {

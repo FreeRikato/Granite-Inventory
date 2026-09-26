@@ -9,7 +9,9 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
   await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
     select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);
@@ -52,7 +54,10 @@ test("command palette opened by its button returns focus to that button", async 
   await expect.poll(() => trigger.evaluate((element) => document.activeElement === element)).toBe(true);
 });
 
-test("command palette opened with Cmd or Ctrl K returns focus to the active control", async ({ page, signIn }, testInfo) => {
+test("command palette opened with Cmd or Ctrl K returns focus to the active control", async ({
+  page,
+  signIn,
+}, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "the command palette is desktop only");
   await signIn("operator");
   await page.goto("/");
@@ -80,7 +85,10 @@ test("yard batch Edit returns focus after completing the edit", async ({ page, s
   await expect.poll(() => trigger.evaluate((element) => document.activeElement === element)).toBe(true);
 });
 
-test("Sell Stone date picker is a labeled native date input that retains focus when dismissed", async ({ page, signIn }) => {
+test("Sell Stone date picker is a labeled native date input that retains focus when dismissed", async ({
+  page,
+  signIn,
+}) => {
   await signIn("operator");
   await page.goto("/sell");
 

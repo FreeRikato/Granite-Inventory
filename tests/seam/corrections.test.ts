@@ -46,7 +46,9 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     expect(expectError(await correctBatch(operator, a, 20)).message).toMatch(/Only an Admin/);
     expect(expectError(await operator.rpc("delete_batch", { p_batch_id: a })).message).toMatch(/Only an Admin/);
     const sale = await recordSale(operator, { batchId: a, customerId, quantity: 2 });
-    expect(expectError(await operator.rpc("delete_sale", { p_sale_id: sale.data?.id ?? "" })).message).toMatch(/Only an Admin/);
+    expect(expectError(await operator.rpc("delete_sale", { p_sale_id: sale.data?.id ?? "" })).message).toMatch(
+      /Only an Admin/,
+    );
   });
 
   it("batch edits keep the code, recompute landed cost, and refuse going below units sold", async () => {

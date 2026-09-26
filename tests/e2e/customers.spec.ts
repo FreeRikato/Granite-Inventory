@@ -9,7 +9,9 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
   await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
     select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);

@@ -1,4 +1,3 @@
-
 export const TINTS = [
   { id: "orange", label: "Orange", swatch: "#ff8400" },
   { id: "amber", label: "Amber", swatch: "#ffb020" },
@@ -30,8 +29,7 @@ export function applyTint(tint: Tint): void {
   try {
     if (tint === DEFAULT_TINT) localStorage.removeItem(TINT_STORAGE_KEY);
     else localStorage.setItem(TINT_STORAGE_KEY, tint);
-  } catch {
-  }
+  } catch {}
   listeners.forEach((notify) => notify());
 }
 

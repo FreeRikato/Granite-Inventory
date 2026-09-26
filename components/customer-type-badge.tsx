@@ -12,7 +12,13 @@ const TONE: Record<CustomerType, string> = {
 export function CustomerTypeBadge({ type, className }: { type: string | null; className?: string }) {
   const t: CustomerType = isCustomerType(type) ? type : "REGULAR";
   return (
-    <span className={cn("inline-flex h-6 items-center rounded-full px-3 text-[11px] font-bold uppercase tracking-wide", TONE[t], className)}>
+    <span
+      className={cn(
+        "inline-flex h-6 items-center rounded-full px-3 text-[11px] font-bold uppercase tracking-wide",
+        TONE[t],
+        className,
+      )}
+    >
       {CUSTOMER_TYPE_LABEL[t]}
     </span>
   );
