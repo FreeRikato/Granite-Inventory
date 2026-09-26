@@ -60,9 +60,6 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
-          /* Editing a sale can move it off this customer, which unmounts the row this dialog was
-             opened from, so the opener is only worth focusing once the refetched rows have
-             painted and it is still there. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const trigger = triggerRef.current;
@@ -96,7 +93,6 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
   });
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  /* Batches offered: the current one plus any with stock, so a sale can move to the right pile. */
   const current = lists.batches.find((b) => b.id === sale.batch_id);
   const options = lists.batches
     .filter((b) => b.id === sale.batch_id || (b.available ?? 0) > 0)

@@ -16,7 +16,6 @@ const TONE: Record<NonNullable<Props["tone"]>, string> = {
   fresh: "border-fresh/40 bg-fresh-soft text-fresh",
 };
 
-/* Soft bordered message block from the design (the inward and sell side notes). */
 export function Notice({ tone = "accent", icon = "info", className, children }: Props) {
   const Icon = icon === "alert" ? AlertCircle : Info;
   return (

@@ -1,4 +1,3 @@
-/* Shared skeleton and error line for pages whose rows come from the browser cache. */
 
 export function ViewSkeleton() {
   return (

@@ -2,7 +2,6 @@ import { formatNumber } from "@/lib/format";
 
 type Row = { readonly label: string; readonly units: number };
 
-/* Units sold per size in the window, ranked. One series, so one hue and direct labels. */
 export function MovingBars({ rows }: { readonly rows: readonly Row[] }) {
   const max = Math.max(1, ...rows.map((r) => r.units));
   if (rows.length === 0) {

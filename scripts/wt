@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-# Ready-to-run git worktrees for this repo, kept in ../granite-wt/<branch>.
-#
-#   scripts/wt new <branch> [base]   branch off origin/<base> (default staging), copy the env files,
-#                                    install deps, run next typegen and give it its own dev port
-#   scripts/wt ls                    every worktree with its branch, port and state
-#   scripts/wt rm <branch> [--force] remove a worktree and its local branch; refuses unless the
-#                                    branch is merged into staging or main and has no local changes
-#
-# The port lives in the worktree's .port file, which `pnpm dev` and Playwright both read. All
-# worktrees share the one local Supabase; the test suites queue on a lock (tests/db-lock.ts).
 set -euo pipefail
 
 PRIMARY="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
@@ -37,6 +27,21 @@ is_merged() {
     git_p merge-base --is-ancestor "$branch" origin/main 2>/dev/null
 }
 
+usage() {
+  cat <<'EOF'
+Ready-to-run git worktrees for this repo, kept in ../granite-wt/<branch>.
+
+  scripts/wt new <branch> [base]   branch off origin/<base> (default staging), copy the env files,
+                                   install deps, run next typegen and give it its own dev port
+  scripts/wt ls                    every worktree with its branch, port and state
+  scripts/wt rm <branch> [--force] remove a worktree and its local branch; refuses unless the
+                                   branch is merged into staging or main and has no local changes
+
+The port lives in the worktree's .port file, which `pnpm dev` and Playwright both read. All
+worktrees share the one local Supabase; the test suites queue on a lock (tests/db-lock.ts).
+EOF
+}
+
 cmd_new() {
   local branch="${1:?usage: scripts/wt new <branch> [base]}" base="${2:-staging}" dir
   dir="$(dir_for "$branch")"
@@ -48,7 +53,6 @@ cmd_new() {
   if git_p show-ref --verify --quiet "refs/heads/$branch"; then
     git_p worktree add --quiet "$dir" "$branch"
   else
-    # --no-track so a bare `git push` never targets the base branch.
     git_p worktree add --quiet --no-track -b "$branch" "$dir" "origin/$base"
   fi
   for file in "${ENV_FILES[@]}"; do
@@ -105,7 +109,7 @@ case "${1:-}" in
   ls) cmd_ls ;;
   rm) shift && cmd_rm "$@" ;;
   *)
-    sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+    usage
     exit 1
     ;;
 esac

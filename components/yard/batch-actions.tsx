@@ -25,8 +25,6 @@ export type EditLists = {
 
 type Props = { readonly batch: YardBatch; readonly lists: EditLists };
 
-/* Admin-only edit and delete on a yard card. Delete is refused by the database while
-   sales exist, so the button is simply hidden in that case. */
 export function BatchActions({ batch, lists }: Props) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
@@ -62,9 +60,6 @@ export function BatchActions({ batch, lists }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
-          /* Saving can move the batch into another slot group, which unmounts this card and its
-             Edit button. Which target is right is therefore only knowable once the refetched rows
-             have painted, so the choice waits for that rather than reading the DOM at close time. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const trigger = triggerRef.current;

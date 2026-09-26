@@ -20,7 +20,6 @@ type Props = {
   readonly onSaved: (customer: Tables<"customers">) => void;
 };
 
-/* Add or edit a Customer. Shared by the Sell form, the Customers list and the detail page. */
 export function CustomerDialog({ draft, existingId, onClose, onSaved }: Props) {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const lastPageFocusRef = useRef<HTMLElement | null>(null);

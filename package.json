@@ -6,7 +6,10 @@
     "dev": "next dev --port $(cat .port 2>/dev/null || echo 3000)",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "comments": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/comments.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
@@ -14,7 +17,8 @@
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "db:push:staging": "supabase link --project-ref tyiepanibaqwpubajsya && supabase db push",
     "db:push:prod": "supabase link --project-ref nugnqzqglldacalkmgyn && supabase db push",
-    "db:link:local": "supabase unlink"
+    "db:link:local": "supabase unlink",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -49,8 +53,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "oxc-parser": "^0.151.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
     "pg": "^8.23.0",
     "tailwindcss": "^4",
     "typescript": "^5",

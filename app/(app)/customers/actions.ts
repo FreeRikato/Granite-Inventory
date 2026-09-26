@@ -9,7 +9,6 @@ import type { Tables } from "@/lib/database.types";
 
 export type CreatedCustomer = Tables<"customers"> & { readonly existed: boolean };
 
-/* A phone that is already on file selects that customer instead of creating a duplicate. */
 export async function createCustomerAction(input: unknown): Promise<ActionResult<CreatedCustomer>> {
   const parsed = customerSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid customer");

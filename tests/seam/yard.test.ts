@@ -18,8 +18,6 @@ describe("yard: v_yard_batches", () => {
     supplierId = await createSupplier(operator, "Madurai Quarry");
   });
 
-  /* Both the JS helper and any SQL fixture must anchor to IST. The UTC clock is a day behind
-     India after 18:30 UTC, which silently added a day to every asserted age. */
   it("date fixtures agree with the calendar the app ages batches in", async () => {
     await createBatch(operator, { productId, supplierId, purchaseDate: daysAgo(232), variantName: "A" });
     const { data } = await operator.from("v_yard_batches").select("age_days").single();

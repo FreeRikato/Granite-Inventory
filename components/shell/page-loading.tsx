@@ -5,8 +5,6 @@ type Props = {
   readonly href?: string;
 };
 
-/* Static placeholder shown while a page's server render is in flight, so a tap on the nav responds immediately.
-   No animation on purpose; the title is aria-hidden so heading-based readiness signals and screen readers are unaffected. */
 export function PageLoading({ href, title }: Props) {
   const resolvedTitle = title ?? NAV_ITEMS.find((item) => item.href === href)?.label;
 

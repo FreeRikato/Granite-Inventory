@@ -10,7 +10,6 @@ type Line = {
   readonly available: number | null;
 };
 
-/* Photos are Phase 2. Until then each stone gets a stable two-tone swatch from its name. */
 function swatch(name: string): string {
   let h = 0;
   for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;

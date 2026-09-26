@@ -3,11 +3,6 @@ import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 import type { Page } from "@playwright/test";
 
-/* Yard and Sell are static shells whose rows come straight from Supabase into the browser
-   cache. Under `next dev` a navigation still fetches the shell from the server (dev never
-   prefetches), so the check is: the batches arrive through the Supabase REST API and the
-   server's render payload carries none of them. Production prefetches the static shell, which
-   makes the click free of server round trips; that is measured on staging, not here. */
 function watch(page: Page): { readonly restReads: () => number; readonly serverPayloads: () => Promise<string> } {
   let restReads = 0;
   const payloads: Promise<string>[] = [];

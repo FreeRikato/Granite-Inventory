@@ -1,6 +1,3 @@
--- Ticket 02: Products, Variants, Suppliers and Batches, plus create_batch.
--- Categorical columns are text with check constraints (no enums) so values can change cheaply.
-
 create table public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -67,8 +64,6 @@ create trigger batches_set_updated_at
   before update on public.batches
   for each row execute function private.set_updated_at();
 
--- Size is required for Granite and Tiles and forbidden for Memorial. The rule needs the
--- Product's category, so it lives in a trigger rather than a check constraint.
 create or replace function private.check_batch_size()
 returns trigger
 language plpgsql
@@ -96,7 +91,6 @@ create trigger batches_check_size
   before insert or update on public.batches
   for each row execute function private.check_batch_size();
 
--- Slot suggestion shared by the form and create_batch.
 create or replace function public.suggest_slot(p_category text, p_length_ft numeric)
 returns text
 language sql
@@ -111,8 +105,6 @@ as $$
   end;
 $$;
 
--- Batch Code: {ABBR}-{DDMONYY}-{seq}. The advisory lock serialises two operators logging
--- the same product on the same day so the per-day sequence never collides.
 create or replace function private.next_batch_code(p_product_id uuid, p_date date)
 returns text
 language plpgsql
@@ -134,7 +126,6 @@ begin
 end;
 $$;
 
--- Preview for the form: the code the next save would get (not reserved).
 create or replace function public.preview_batch_code(p_product_id uuid, p_date date)
 returns text
 language sql
@@ -144,8 +135,6 @@ as $$
   select private.next_batch_code(p_product_id, p_date);
 $$;
 
--- Find or create a Variant; two operators typing the same new name at once both land on
--- the single row thanks to the conflict clause on the case-insensitive index.
 create or replace function private.find_or_create_variant(p_product_id uuid, p_name text)
 returns uuid
 language plpgsql
@@ -211,8 +200,6 @@ begin
 end;
 $$;
 
--- Access: every member reads and creates. Batches are only ever edited or deleted through the
--- correction functions (ticket 08), so there is deliberately no update or delete policy.
 alter table public.products enable row level security;
 alter table public.variants enable row level security;
 alter table public.suppliers enable row level security;
@@ -243,7 +230,6 @@ grant execute on function public.create_batch(uuid, text, uuid, date, numeric, n
 grant execute on function public.preview_batch_code(uuid, date) to authenticated, service_role;
 grant execute on function public.suggest_slot(text, numeric) to authenticated, service_role;
 
--- Batches with their names resolved; security_invoker keeps RLS on the underlying tables.
 create view public.v_batches with (security_invoker = true) as
   select
     b.id, b.batch_code, b.purchase_date, b.slot,

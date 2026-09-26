@@ -1,4 +1,3 @@
-/* Uniform shape returned by every server action so forms handle success and failure alike. */
 export type ActionResult<T> =
   | { readonly ok: true; readonly data: T }
   | { readonly ok: false; readonly error: string };
@@ -11,7 +10,6 @@ export function fail<T = never>(error: string): ActionResult<T> {
   return { ok: false, error };
 }
 
-/* Postgres raises the domain rules as errors; the message is the operator-facing text. */
 export function messageOf(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const m = (error as { message: unknown }).message;

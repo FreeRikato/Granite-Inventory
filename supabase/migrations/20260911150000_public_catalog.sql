@@ -1,7 +1,3 @@
--- Ticket 07: the Public Catalog. A view owned by postgres (no security_invoker) reading the
--- base tables directly, so anon can read it without RLS on the underlying tables; it exposes
--- only public columns and nothing at all while the catalog is switched off.
-
 create view public.v_public_catalog as
   select
     b.variant_id || '|' || coalesce(b.length_ft::text, '') || '|' || coalesce(b.breadth_ft::text, '') || '|' || coalesce(b.thickness_mm::text, '') as line_key,

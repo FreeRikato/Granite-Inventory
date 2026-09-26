@@ -15,8 +15,6 @@ export type NavItem = {
   readonly label: string;
   readonly shortLabel: string;
   readonly icon: LucideIcon;
-  /* Pages whose rows come from the browser cache render an empty shell on the server, so the
-     nav prefetches that shell in full and the click itself needs no server round trip. */
   readonly shell?: true;
 };
 
@@ -36,7 +34,6 @@ export const SETTINGS_ITEM: NavItem = {
   icon: Settings,
 };
 
-/* Mobile tab bar shows the first four; the rest live under More. */
 export const MOBILE_TABS = NAV_ITEMS.slice(0, 4);
 export const MOBILE_MORE = [...NAV_ITEMS.slice(4), SETTINGS_ITEM];
 

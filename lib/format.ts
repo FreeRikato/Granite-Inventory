@@ -4,7 +4,6 @@ export function formatRupees(value: number): string {
   return `₹${inr.format(Math.round(value))}`;
 }
 
-/* Compact rupees for KPI tiles: ₹5.2L, ₹1.2Cr. */
 export function formatRupeesCompact(value: number): string {
   const abs = Math.abs(value);
   if (abs >= 1e7) return `₹${(value / 1e7).toFixed(1)}Cr`;

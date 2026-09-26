@@ -2,9 +2,6 @@ import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import type { Page, Request } from "@playwright/test";
 
-/* A sidebar click reaches the server as an RSC fetch (header `rsc: 1`). Prefetches carry
-   `next-router-prefetch` and are not what we count: the point is whether a revisit re-renders
-   the page on the server or is served from the client router cache. */
 function isServerRender(request: Request, pathname: string): boolean {
   const url = new URL(request.url());
   return (

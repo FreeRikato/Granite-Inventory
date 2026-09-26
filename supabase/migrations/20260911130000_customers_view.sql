@@ -1,5 +1,3 @@
--- Ticket 05: customers with their derived purchase history.
-
 create view public.v_customers with (security_invoker = true) as
   select
     c.id, c.name, c.phone, c.customer_type, c.is_walk_in, c.created_at, c.updated_at, c.updated_by,

@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/* Upper bounds match the columns (numeric(12, 2) for money, numeric(5, 2) for sizes, a practical
-   cap for counts and thickness), so an oversized number is refused here with readable copy instead
-   of reaching Postgres as a 22003 overflow. */
 const TOO_LARGE = "Number is too large";
 
 export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date");

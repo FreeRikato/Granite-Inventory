@@ -78,8 +78,6 @@ export async function removeMemberAction(id: string): Promise<ActionResult<null>
   return ok(null);
 }
 
-/* Admin lists: rename or delete Products, Variants and Suppliers. Deletes are refused by
-   the database while Batches reference the row. */
 const renameSchema = z.object({
   table: z.enum(["products", "variants", "suppliers"]),
   id: z.string().uuid(),

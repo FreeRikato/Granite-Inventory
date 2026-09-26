@@ -63,7 +63,6 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     const tooFew = await correctBatch(admin, a, 5);
     expect(expectError(tooFew).message).toMatch(/already has 8 sold/);
 
-    // The earlier sale keeps the landed cost it was recorded at.
     const sale = await admin.from("v_sales").select("landed_cost").single();
     expect(sale.data?.landed_cost).toBe(1000);
   });

@@ -1,6 +1,3 @@
--- Ticket 03: the yard view. Age, Ageing Band, Sold Out and the Clamp gap are all derived here
--- from raw Batch facts and the two thresholds in settings; nothing is stored.
-
 create or replace function public.ageing_band(p_age_days integer)
 returns text
 language sql

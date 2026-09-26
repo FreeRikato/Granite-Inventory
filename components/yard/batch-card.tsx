@@ -11,7 +11,6 @@ type Props = {
   readonly actions?: React.ReactNode;
 };
 
-/* One Batch in the yard: banner, names, the numbers, and the sell action. */
 export function BatchCard({ batch, actions }: Props) {
   const stale = batch.ageing_band === "STALE";
   return (

@@ -25,8 +25,6 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // getClaims() validates the JWT and refreshes it when needed; nothing may run between
-  // creating the client and this call.
   const { data } = await supabase.auth.getClaims();
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));

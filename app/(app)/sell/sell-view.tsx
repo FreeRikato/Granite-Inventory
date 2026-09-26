@@ -23,8 +23,6 @@ export function SellView() {
     return <ViewSkeleton />;
   }
 
-  /* The Sell form wants sellable batches oldest first; Yard wants every batch, so the shared
-     query carries all of them and the narrowing happens here. */
   const sellable = batches.data
     .filter((b) => (b.available ?? 0) > 0)
     .sort((a, b) => (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "") || (a.created_at ?? "").localeCompare(b.created_at ?? ""));

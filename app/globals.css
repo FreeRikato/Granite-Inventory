@@ -165,8 +165,6 @@
   }
 }
 
-/* Tints. Each block restates only the tokens that carry the accent colour; everything else
-   comes from :root / .dark above. Orange is the default and has no block on purpose. */
 [data-tint="amber"] {
   --primary: #96620f; --primary-foreground: #ffffff; --accent: #fbf1e3; --accent-foreground: #8a5a0c;
   --ring: #96620f; --chart-1: #b8780f;

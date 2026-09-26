@@ -4,10 +4,8 @@ import path from "node:path";
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname) } },
   test: {
-    include: ["tests/seam/**/*.test.ts"],
+    include: ["tests/seam/**/*.test.ts", "tests/tooling/**/*.test.ts"],
     environment: "node",
-    // Every test file talks to the same local database, so run them one at a time, and hold the
-    // cross-worktree DB lock for the whole run.
     fileParallelism: false,
     globalSetup: ["tests/db-lock.ts"],
     testTimeout: 20_000,

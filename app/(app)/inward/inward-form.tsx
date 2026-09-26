@@ -80,7 +80,6 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
   const lengthNumber = Number.parseFloat(form.lengthFt);
   const suggested = category ? suggestSlot(category, Number.isFinite(lengthNumber) ? lengthNumber : null) : null;
   const slot = form.slot ?? suggested;
-  // Granite needs a length and breadth before Save Batch enables, the same way it waits for a supplier.
   const hasSize = memorial || (lengthNumber > 0 && Number.parseFloat(form.breadthFt) > 0);
 
   const existingVariantOptions = useMemo(() => {

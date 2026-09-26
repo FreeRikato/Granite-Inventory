@@ -20,8 +20,6 @@ import type { Tables } from "@/lib/database.types";
 type Line = Pick<Tables<"v_stock_lines">, "line_key" | "product_name" | "variant_name" | "variant_id" | "length_ft" | "breadth_ft" | "thickness_mm" | "available" | "category">;
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone">;
 
-/* Search or jump to: pages, Stock Lines (opens the yard filtered to the line) and Customers.
-   Data loads on first open through the browser client, so RLS applies as usual. */
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -30,7 +28,6 @@ export function CommandPalette() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  /* Loaded on first open; the data is small and RLS applies through the browser client. */
   const openPalette = useCallback(
     (next: boolean) => {
       if (next) {

@@ -23,7 +23,6 @@ type Props = {
   readonly batchReferences: readonly BatchReference[];
 };
 
-/* Rename and guarded delete for the three lists that grow from the inward form. */
 export function AdminLists({ products, variants, suppliers, batchReferences }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">

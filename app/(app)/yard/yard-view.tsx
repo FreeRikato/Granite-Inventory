@@ -32,8 +32,6 @@ export function YardView() {
   const isAdmin = useMember().role === "ADMIN";
   const hydrated = useHydrated();
   const batches = useQuery(yardBatchesQuery);
-  /* The edit lists are small and readable by every member; fetching them only for admins would
-     put the role check on the critical path for nothing. */
   const products = useQuery(productsQuery);
   const suppliers = useQuery(suppliersQuery);
 
@@ -45,7 +43,6 @@ export function YardView() {
   }
 
   const all: YardBatch[] = batches.data;
-  /* A deep link to a Stock Line (palette, stale panel) lands on that line's own slot. */
   const lineSlot = parsed.line && !raw.slot ? all.find((b) => b.line_key === parsed.line)?.slot : undefined;
   const query = isSlot(lineSlot) ? { ...parsed, slot: lineSlot } : parsed;
   const editLists: EditLists | null = isAdmin ? { products: products.data ?? [], suppliers: suppliers.data ?? [] } : null;

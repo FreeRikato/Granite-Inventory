@@ -9,7 +9,6 @@ const config = {
   sold: { label: "Sold to date", color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
-/* Part-to-whole: what is still in the yard versus what has been sold, all time. */
 export function StockDonut({ active, sold }: { readonly active: number; readonly sold: number }) {
   const total = active + sold;
   const pct = total === 0 ? 0 : Math.round((active / total) * 100);

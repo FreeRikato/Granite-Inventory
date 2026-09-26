@@ -29,7 +29,6 @@ export function OverviewView() {
   }
 
   const k = kpis.data;
-  /* The stale panel is a slice of the shared batches query: oldest stale batches with stock. */
   const stale = batches.data
     .filter((b) => b.ageing_band === "STALE" && (b.available ?? 0) > 0)
     .sort((a, b) => (a.purchase_date ?? "").localeCompare(b.purchase_date ?? ""))

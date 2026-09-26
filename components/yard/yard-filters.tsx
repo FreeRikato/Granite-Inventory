@@ -22,7 +22,6 @@ type Props = {
 
 const ALL = "__all__";
 
-/* Every filter lives in the URL so a filtered yard can be linked to (dashboard, palette). */
 export function YardFilters({ query, products, variants, thicknesses, suppliers }: Props) {
   const router = useRouter();
   const pathname = usePathname();

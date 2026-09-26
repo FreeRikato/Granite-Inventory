@@ -1,7 +1,3 @@
--- Ticket T04: readable API validation, bounded dates and explicit access errors.
-
--- A two-digit year in a Batch Code is unambiguous for the supported history once
--- dates before 2000 are refused. The upper bound remains the IST business date.
 alter table public.batches drop constraint if exists batches_purchase_date_check;
 alter table public.batches
   add constraint batches_purchase_date_range check (

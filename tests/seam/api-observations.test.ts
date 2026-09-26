@@ -5,8 +5,6 @@ import { saleSchema } from "@/lib/schemas/sale";
 import { expectError, ensureTestUsers, resetDomainData, signedInClient, sql, type Db } from "./harness";
 import { createProduct, today } from "./fixtures";
 
-/* Follow-ups from the audit round 2 observations (SYN2-11, 13, 14, 15): every refusal reads as a
-   business rule, never as a raw Postgres error. */
 describe("API observations: readable refusals", () => {
   let operator: Db;
 
@@ -28,7 +26,6 @@ describe("API observations: readable refusals", () => {
     });
     expect(expectError(unknown).message).toBe("Unknown product");
 
-    // The generated Args type has no nullable date, so the null case goes through SQL.
     await expect(sql("select public.preview_batch_code($1, null)", [productId])).rejects.toThrow("Purchase date is required");
 
     const ok = await operator.rpc("preview_batch_code", { p_product_id: productId, p_date: today() });

@@ -25,8 +25,6 @@ export type SearchOption = {
 
 const CREATE_VALUE_PREFIX = "__create__";
 
-/* The one matching rule for the list: case-insensitive substring of the label or a keyword,
-   or a digit-substring of the phone. Both the list filter and the seam tests go through it. */
 export function searchOptionMatches(option: SearchOption, query: string): boolean {
   const trimmed = query.trim();
   if (!trimmed) return true;
@@ -38,8 +36,6 @@ export function searchOptionMatches(option: SearchOption, query: string): boolea
   return phoneQuery.length > 0 && phoneDigits(option.phone ?? "").includes(phoneQuery);
 }
 
-/* Exact label or exact phone digits. Decides whether the "Add ..." row is offered: a query that
-   only partially matches an option must still be creatable. */
 export function searchOptionIsExact(option: SearchOption, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return true;
@@ -56,7 +52,6 @@ type Props = {
   readonly placeholder: string;
   readonly searchPlaceholder?: string;
   readonly emptyText?: string;
-  /* When given, an "Add ..." row appears for a query that matches nothing. */
   readonly onCreate?: (query: string) => void;
   readonly createLabel?: (query: string) => string;
   readonly disabled?: boolean;
@@ -64,7 +59,6 @@ type Props = {
   readonly className?: string;
 };
 
-/* Searchable single select with optional inline create, built from Popover + Command. */
 export function SearchSelect({
   options,
   value,
@@ -84,8 +78,6 @@ export function SearchSelect({
   const trimmed = query.trim();
   const hasExactMatch = options.some((option) => searchOptionIsExact(option, trimmed));
   const optionsByValue = new Map(options.map((option) => [option.value, option]));
-  /* cmdk hands the filter an item's value, so items carry the option id and the rule looks
-     the option up. The create row is never filtered out. */
   const commandFilter = (value: string, search: string): number => {
     if (value.startsWith(CREATE_VALUE_PREFIX)) return 1;
     const option = optionsByValue.get(value);

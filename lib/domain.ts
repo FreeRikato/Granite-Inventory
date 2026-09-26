@@ -1,4 +1,3 @@
-/* Vocabulary from CONTEXT.md as code. Values match the check constraints in the migrations. */
 
 export const CATEGORIES = ["GRANITE", "MEMORIAL", "TILES"] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -67,7 +66,6 @@ export function isAgeingBand(value: unknown): value is AgeingBand {
   return AGEING_BANDS.includes(value as AgeingBand);
 }
 
-/* Mirrors public.suggest_slot() so the form can preview before saving. */
 export function suggestSlot(category: Category, lengthFt: number | null): Slot {
   if (category === "MEMORIAL") return "DOOM";
   if (lengthFt !== null && lengthFt >= 4 && lengthFt < 5) return "4FT";
@@ -75,7 +73,6 @@ export function suggestSlot(category: Category, lengthFt: number | null): Slot {
   return "CUSTOM";
 }
 
-/* Initials of a product name, e.g. "Black Pearl" -> "BP", "G20" -> "G20". */
 export function suggestAbbreviation(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 1) return words[0].replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase();

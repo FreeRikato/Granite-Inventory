@@ -79,7 +79,6 @@ describe("access: team members and settings", () => {
     await admin.from("team_members").delete().eq("email", "meena@test.local");
     await sql(`update public.settings set ageing_after_days = 90`);
 
-    // Leave only the test admin as ADMIN, then try to delete it.
     await sql(`delete from public.team_members where role = 'ADMIN' and email <> 'admin@test.local'`);
     const del = await admin.from("team_members").delete().eq("email", "admin@test.local").select();
     expectError(del);

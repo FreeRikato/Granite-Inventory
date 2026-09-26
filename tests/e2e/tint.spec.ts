@@ -23,7 +23,6 @@ test("an operator picks a tint in Settings, the app repaints, and the choice sur
   await expect(page.locator("html")).toHaveAttribute("data-tint", "blue");
   await expect(page.getByRole("combobox", { name: "Tint" })).toHaveText("Blue");
 
-  /* Orange is the default and leaves the attribute off, so a fresh device paints the same as before this setting existed. */
   await page.getByRole("combobox", { name: "Tint" }).click();
   await page.getByRole("option", { name: "Orange" }).click();
   await expect(page.locator("html")).not.toHaveAttribute("data-tint");

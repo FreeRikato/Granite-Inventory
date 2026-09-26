@@ -12,7 +12,6 @@ export function bandOf(value: string | null | undefined): AgeingBand {
   return isAgeingBand(value) ? value : "FRESH";
 }
 
-/* Small chip: "232 days" coloured by band. */
 export function AgeingBadge({ band, days, className }: { band: string | null; days: number | null; className?: string }) {
   const b = bandOf(band);
   return (
@@ -22,7 +21,6 @@ export function AgeingBadge({ band, days, className }: { band: string | null; da
   );
 }
 
-/* Full-width banner on a batch card: warning for stale, tag for fresh and ageing. */
 export function AgeingBanner({ band, days }: { band: string | null; days: number | null }) {
   const b = bandOf(band);
   if (b === "STALE") {

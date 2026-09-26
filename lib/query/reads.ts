@@ -2,9 +2,6 @@ import { queryOptions } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/database.types";
 
-/* Browser-side reads for the app's pages. Each is one PostgREST call with the user's JWT, so RLS
-   decides what comes back exactly as it does on the server. Overview, Yard and Sell share the
-   batches query, so visiting one warms the others. */
 
 async function rows<T>(query: PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const { data, error } = await query;

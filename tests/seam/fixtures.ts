@@ -1,6 +1,5 @@
 import type { Db } from "./harness";
 
-/* Small domain builders used across suites. Each returns ids for the next call. */
 
 export async function createProduct(
   db: Db,
@@ -52,11 +51,6 @@ export function createBatch(db: Db, input: BatchInput) {
   });
 }
 
-/* Age, "this month" and every date rule in the app come from private.ist_today(), so the
-   fixtures have to speak the same calendar. The runner and Postgres are both UTC, which is a
-   day behind India between 18:30 and midnight UTC; dates built from the UTC clock would make
-   every asserted age one larger for those five and a half hours. India has no DST, so a fixed
-   offset is exact. */
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 export function today(): string {

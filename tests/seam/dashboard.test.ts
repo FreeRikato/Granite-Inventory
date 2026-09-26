@@ -32,11 +32,9 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
     const supplierId = await createSupplier(operator, "Madurai Quarry");
     const customerId = await createCustomer(operator, { name: "Murugan" });
 
-    // Batch A: 20 pieces at landed 1000, bought last month. Batch B: 10 at 2000, bought this month.
     const a = await createBatch(operator, { productId, supplierId, units: 20, unitPrice: 1000, purchaseDate: iso(lastMonthMid) });
     const b = await createBatch(operator, { productId, supplierId, units: 10, unitPrice: 2000, purchaseDate: iso(monthStart), length: 5, breadth: 3, thickness: 20 });
 
-    // Sold 5 of A last month (not MTD), 3 of A this month with stickering, 2 of B this month.
     await recordSale(operator, { batchId: a.data?.id ?? "", customerId, quantity: 5, salePrice: 1500, saleDate: iso(lastMonthEnd) });
     await recordSale(operator, { batchId: a.data?.id ?? "", customerId, quantity: 3, salePrice: 1500, saleDate: iso(monthStart), stickering: { cost: 100, price: 300 } });
     await recordSale(operator, { batchId: b.data?.id ?? "", customerId, quantity: 2, salePrice: 2500, saleDate: iso(today), misc: 500 });
