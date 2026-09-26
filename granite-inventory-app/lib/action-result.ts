@@ -28,5 +28,6 @@ export function cleanPgMessage(message: string): string {
   if (/violates foreign key constraint/.test(message)) return "Still used by batches or sales in the yard";
   if (/violates check constraint "batches_purchase_date_range"/.test(message)) return "Purchase date cannot be in the future";
   if (/violates check constraint "sales_sale_date_check"/.test(message)) return "Sale date cannot be in the future";
+  if (/numeric field overflow|out of range for type (integer|numeric)/.test(message)) return "Number is too large";
   return message;
 }

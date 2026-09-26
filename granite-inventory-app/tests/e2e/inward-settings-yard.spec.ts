@@ -38,6 +38,8 @@ test("Inward explains a missing Supplier and disables Save Batch until both sele
   await page.getByRole("combobox", { name: "Variant Name" }).click();
   await page.getByPlaceholder("Search variants...").fill("Grade 1");
   await page.getByRole("option", { name: 'Add variant "Grade 1"' }).click();
+  await page.getByLabel("Length (ft)").fill("4");
+  await page.getByLabel("Breadth (ft)").fill("2");
   await expect(saveBatch).toBeDisabled();
 
   await page.locator("form").first().evaluate((form) => {

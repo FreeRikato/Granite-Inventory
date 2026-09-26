@@ -80,6 +80,8 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
   const lengthNumber = Number.parseFloat(form.lengthFt);
   const suggested = category ? suggestSlot(category, Number.isFinite(lengthNumber) ? lengthNumber : null) : null;
   const slot = form.slot ?? suggested;
+  // Granite needs a length and breadth before Save Batch enables, the same way it waits for a supplier.
+  const hasSize = memorial || (lengthNumber > 0 && Number.parseFloat(form.breadthFt) > 0);
 
   const existingVariantOptions = useMemo(() => {
     return variants.filter((v) => v.product_id === form.productId).map((v) => ({ value: v.name, label: v.name }));
@@ -298,7 +300,7 @@ export function InwardForm({ products: initialProducts, variants: initialVariant
       ) : null}
 
       <div className="mt-6 flex justify-end">
-        <Button type="submit" disabled={pending || !form.productId || !form.supplierId} className="h-11 px-6 font-semibold">
+        <Button type="submit" disabled={pending || !form.productId || !form.supplierId || !hasSize} className="h-11 px-6 font-semibold">
           {pending ? "Saving..." : "Save Batch"}
         </Button>
       </div>
