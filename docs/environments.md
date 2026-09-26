@@ -18,7 +18,7 @@ the database.
 ## Day to day
 
 Build on a feature branch off `staging`. Merge into `staging`, look at
-`https://granite-staging.vercel.app`, then open a PR from `staging` into `main`. Merging that
+`https://staging-granite-inventory.vercel.app`, then open a PR from `staging` into `main`. Merging that
 deploys production.
 
 ## Migrations
