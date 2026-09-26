@@ -12,17 +12,29 @@ export function bandOf(value: string | null | undefined): AgeingBand {
   return isAgeingBand(value) ? value : "FRESH";
 }
 
-/* Small chip: "232 days" coloured by band. */
-export function AgeingBadge({ band, days, className }: { band: string | null; days: number | null; className?: string }) {
+export function AgeingBadge({
+  band,
+  days,
+  className,
+}: {
+  band: string | null;
+  days: number | null;
+  className?: string;
+}) {
   const b = bandOf(band);
   return (
-    <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold tabular", TONE[b], className)}>
+    <span
+      className={cn(
+        "inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold tabular",
+        TONE[b],
+        className,
+      )}
+    >
       {days ?? 0} days
     </span>
   );
 }
 
-/* Full-width banner on a batch card: warning for stale, tag for fresh and ageing. */
 export function AgeingBanner({ band, days }: { band: string | null; days: number | null }) {
   const b = bandOf(band);
   if (b === "STALE") {
@@ -34,7 +46,12 @@ export function AgeingBanner({ band, days }: { band: string | null; days: number
     );
   }
   return (
-    <span className={cn("inline-flex h-6 items-center rounded-md px-2 text-[11px] font-semibold uppercase tracking-wide", TONE[b])}>
+    <span
+      className={cn(
+        "inline-flex h-6 items-center rounded-md px-2 text-[11px] font-semibold uppercase tracking-wide",
+        TONE[b],
+      )}
+    >
       {b === "AGEING" ? `Ageing · ${days} days` : "New stock"}
     </span>
   );

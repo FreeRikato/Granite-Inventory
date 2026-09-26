@@ -45,7 +45,10 @@ test("showing sold-out batches exposes a Sold out marker", async ({ page, signIn
   await expect(card.getByText("Sold out", { exact: true })).toBeVisible();
 });
 
-test("yard filter controls keep product, variant, thickness, supplier, age band, and sort wired", async ({ page, signIn }) => {
+test("yard filter controls keep product, variant, thickness, supplier, age band, and sort wired", async ({
+  page,
+  signIn,
+}) => {
   await signIn("operator");
   const cards = page.getByTestId("yard-batch");
 

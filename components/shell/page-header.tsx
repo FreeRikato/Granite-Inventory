@@ -7,8 +7,6 @@ type Props = {
   readonly actions?: ReactNode;
 };
 
-/* Title row with the palette trigger (desktop), the theme toggle (mobile only, the sidebar
-   carries it on desktop) and any page actions on the right. */
 export function PageHeader({ title, actions }: Props) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">

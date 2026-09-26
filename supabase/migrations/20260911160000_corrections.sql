@@ -1,7 +1,3 @@
--- Ticket 08: Corrections. Admin-only edits and deletes of Batches and Sales that keep
--- Available consistent. Security definer so the batch counters can move; the first line of
--- each function is the Admin check.
-
 create or replace function private.require_admin()
 returns void
 language plpgsql
@@ -58,7 +54,6 @@ begin
 
   v_variant_id := private.find_or_create_variant(p_product_id, p_variant_name);
 
-  -- The Batch Code is kept: it is written on the physical stack.
   update public.batches set
     variant_id = v_variant_id,
     supplier_id = p_supplier_id,
@@ -133,7 +128,6 @@ begin
     raise exception 'Unknown sale' using errcode = 'foreign_key_violation';
   end if;
 
-  -- Lock both batches in a fixed order so two corrections cannot deadlock.
   perform 1 from public.batches where id in (v_sale.batch_id, p_batch_id) order by id for update;
   select * into v_old from public.batches where id = v_sale.batch_id;
   select * into v_new from public.batches where id = p_batch_id;
@@ -141,7 +135,6 @@ begin
     raise exception 'Unknown batch' using errcode = 'foreign_key_violation';
   end if;
 
-  -- Give the old pieces back, then take the new quantity from the (possibly same) batch.
   update public.batches set units_sold = units_sold - v_sale.quantity where id = v_old.id;
   select * into v_new from public.batches where id = p_batch_id;
   if p_quantity > v_new.initial_units - v_new.units_sold then
@@ -156,7 +149,6 @@ begin
     sale_date = p_sale_date,
     quantity = p_quantity,
     sale_price = p_sale_price,
-    -- The snapshot moves only when the sale moves to another batch.
     landed_cost = case when p_batch_id = v_sale.batch_id then v_sale.landed_cost else v_new.landed_cost end,
     has_stickering = coalesce(p_has_stickering, false),
     stickering_cost = case when coalesce(p_has_stickering, false) then coalesce(p_stickering_cost, 0) else 0 end,

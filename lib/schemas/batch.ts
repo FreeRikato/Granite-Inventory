@@ -2,7 +2,6 @@ import { z } from "zod";
 import { CATEGORIES, SLOTS } from "@/lib/domain";
 import { isoDate, money, positiveInteger, positiveNumber } from "./common";
 
-
 export const productSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
   abbreviation: z

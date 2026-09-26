@@ -8,7 +8,13 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { deleteBlockedMessage, referencesForTable, type AdminListTable, type BatchReference, type VariantReference } from "@/lib/admin-list-references";
+import {
+  deleteBlockedMessage,
+  referencesForTable,
+  type AdminListTable,
+  type BatchReference,
+  type VariantReference,
+} from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
 import { deleteRowAction, renameRowAction } from "./actions";
 
@@ -23,12 +29,13 @@ type Props = {
   readonly batchReferences: readonly BatchReference[];
 };
 
-/* Rename and guarded delete for the three lists that grow from the inward form. */
 export function AdminLists({ products, variants, suppliers, batchReferences }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
       <h2 className="text-base font-bold">Products, variants and suppliers</h2>
-      <p className="text-sm text-muted-foreground">Rename typos here; it updates every batch. Rows still used by batches cannot be deleted.</p>
+      <p className="text-sm text-muted-foreground">
+        Rename typos here; it updates every batch. Rows still used by batches cannot be deleted.
+      </p>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-3">
         <ListBlock title="Products">
@@ -100,9 +107,13 @@ function EditableRow({
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ name, abbreviation: extra?.abbreviation ?? "", category: extra?.category ?? "" });
+  const [draft, setDraft] = useState({
+    name,
+    abbreviation: extra?.abbreviation ?? "",
+    category: extra?.category ?? "",
+  });
   const blockingBatches = referencesForTable(table, id, batchReferences);
-  const blockingVariants = table === "products" ? variantReferences ?? [] : [];
+  const blockingVariants = table === "products" ? (variantReferences ?? []) : [];
 
   function save() {
     startTransition(async () => {
@@ -137,19 +148,42 @@ function EditableRow({
   if (editing) {
     return (
       <li className="flex flex-col gap-2 py-2">
-        <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label={`Name for ${name}`} className="h-8" />
+        <Input
+          value={draft.name}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          aria-label={`Name for ${name}`}
+          className="h-8"
+        />
         {extra ? (
           <div className="flex gap-2">
-            <Input value={draft.abbreviation} maxLength={4} onChange={(e) => setDraft({ ...draft, abbreviation: e.target.value.toUpperCase() })} aria-label="Abbreviation" className="h-8 w-24 font-mono uppercase" />
+            <Input
+              value={draft.abbreviation}
+              maxLength={4}
+              onChange={(e) => setDraft({ ...draft, abbreviation: e.target.value.toUpperCase() })}
+              aria-label="Abbreviation"
+              className="h-8 w-24 font-mono uppercase"
+            />
             <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
-              <SelectTrigger className="h-8 flex-1" aria-label="Category"><SelectValue /></SelectTrigger>
-              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{CATEGORY_LABEL[c]}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="h-8 flex-1" aria-label="Category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {CATEGORY_LABEL[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         ) : null}
         <div className="flex justify-end gap-1">
-          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}><X className="size-4" /> Cancel</Button>
-          <Button size="sm" onClick={save} disabled={pending || !draft.name.trim()}><Check className="size-4" /> Save</Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            <X className="size-4" /> Cancel
+          </Button>
+          <Button size="sm" onClick={save} disabled={pending || !draft.name.trim()}>
+            <Check className="size-4" /> Save
+          </Button>
         </div>
       </li>
     );
@@ -161,7 +195,9 @@ function EditableRow({
         <span className="truncate text-sm font-medium">{name}</span>
         {meta ? <span className="truncate text-xs text-muted-foreground">{meta}</span> : null}
       </span>
-      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}><Pencil className="size-4" /></Button>
+      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}>
+        <Pencil className="size-4" />
+      </Button>
       <ConfirmDelete
         title={`Delete ${name}?`}
         description={deleteBlockedMessage(table, blockingBatches, blockingVariants, name)}

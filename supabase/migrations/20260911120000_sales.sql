@@ -1,5 +1,3 @@
--- Ticket 04: Customers, Sales, Stock Lines and record_sale.
-
 create table public.customers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -13,8 +11,6 @@ create table public.customers (
   constraint customers_name_not_blank check (length(trim(name)) > 0),
   constraint customers_phone_shape check (phone is null or phone ~ '^\+?[0-9 ]{6,20}$')
 );
--- Phone identifies a customer in this trade. Compare on the last ten digits so
--- "+91 98765 43210" and "9876543210" collide as they should.
 create unique index customers_phone_key on public.customers ((right(regexp_replace(phone, '[^0-9]', '', 'g'), 10)))
   where phone is not null;
 create unique index customers_one_walk_in on public.customers (is_walk_in) where is_walk_in;
@@ -78,12 +74,8 @@ create policy customers_insert on public.customers for insert to authenticated w
 create policy customers_update on public.customers for update to authenticated using ((select public.is_member())) with check ((select public.is_member()));
 create policy customers_delete on public.customers for delete to authenticated using ((select public.is_admin()));
 
--- Sales are written only through record_sale and the correction functions; no insert,
--- update or delete policy on purpose, so Available can never drift.
 create policy sales_select on public.sales for select to authenticated using ((select public.is_member()));
 
--- Security definer because operators may not update batches directly, yet a sale must
--- decrement the batch. The member check is the first thing it does.
 create or replace function public.record_sale(
   p_batch_id uuid,
   p_customer_id uuid,
@@ -139,7 +131,6 @@ $$;
 revoke execute on function public.record_sale(uuid, uuid, date, integer, numeric, text, boolean, numeric, numeric, numeric, text) from public, anon;
 grant execute on function public.record_sale(uuid, uuid, date, integer, numeric, text, boolean, numeric, numeric, numeric, text) to authenticated, service_role;
 
--- Sales with names and derived money. Margin excludes misc expense by design.
 create view public.v_sales with (security_invoker = true) as
   select
     s.id, s.sale_date, s.quantity, s.sale_price, s.landed_cost,
@@ -164,7 +155,6 @@ create view public.v_sales with (security_invoker = true) as
   join public.v_batches b on b.id = s.batch_id
   join public.customers c on c.id = s.customer_id;
 
--- Stock Lines: every Batch sharing product, variant and size seen as one sellable item.
 create view public.v_stock_lines with (security_invoker = true) as
   select
     b.line_key,

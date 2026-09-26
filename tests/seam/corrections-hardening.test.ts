@@ -36,7 +36,12 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
   function correctBatch(
     db: Db,
     id: string,
-    input: { readonly purchaseDate?: string; readonly units?: number; readonly freight?: number; readonly price?: number } = {},
+    input: {
+      readonly purchaseDate?: string;
+      readonly units?: number;
+      readonly freight?: number;
+      readonly price?: number;
+    } = {},
   ) {
     return db.rpc("correct_batch", {
       p_batch_id: id,
@@ -129,9 +134,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
 
   it("refuses sale dates before purchase and accepts the purchase date for both sale RPCs", async () => {
     const beforePurchase = daysAgo(1);
-    const recordError = expectError(
-      await recordSale(operator, { batchId, customerId, saleDate: beforePurchase }),
-    );
+    const recordError = expectError(await recordSale(operator, { batchId, customerId, saleDate: beforePurchase }));
     expect(recordError.message).toBe(`Sale date cannot be before the batch was bought (${today()})`);
     expectNoEmail(recordError);
 

@@ -22,7 +22,7 @@ describe("batches: create_batch", () => {
     const { data, error } = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 1400 });
     expect(error).toBeNull();
     const [yyyy, mm, dd] = today().split("-");
-    const mon = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][Number(mm) - 1];
+    const mon = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][Number(mm) - 1];
     const yy = yyyy.slice(-2);
     expect(data?.batch_code).toBe(`BP-${dd}${mon}${yy}-01`);
     expect(data?.slot).toBe("4FT");

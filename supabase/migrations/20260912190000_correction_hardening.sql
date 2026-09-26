@@ -1,8 +1,3 @@
--- Ticket T09: keep correction RPCs on the same readable validation path as new writes.
--- record_sale checks customer and batch existence before validating the other inputs, so an unknown
--- customer is reported ahead of a quantity or price error; correct_sale validates the inputs first and
--- checks the customer last.
-
 create or replace function private.validate_batch_input(
   p_purchase_date date,
   p_variant_name text,
@@ -371,7 +366,6 @@ begin
     raise exception 'Unknown sale' using errcode = 'foreign_key_violation';
   end if;
 
-  -- Lock both batches in a fixed order so two corrections cannot deadlock.
   perform 1 from public.batches where id in (v_sale.batch_id, p_batch_id) order by id for update;
   select * into v_old from public.batches where id = v_sale.batch_id;
   select * into v_new from public.batches where id = p_batch_id;
@@ -395,7 +389,6 @@ begin
     raise exception 'Unknown customer' using errcode = 'foreign_key_violation';
   end if;
 
-  -- Give the old pieces back, then take the new quantity from the (possibly same) batch.
   update public.batches set units_sold = units_sold - v_sale.quantity where id = v_old.id;
   select * into v_new from public.batches where id = p_batch_id;
   if p_quantity > v_new.initial_units - v_new.units_sold then
@@ -410,7 +403,6 @@ begin
     sale_date = p_sale_date,
     quantity = p_quantity,
     sale_price = p_sale_price,
-    -- The snapshot moves only when the sale moves to another batch.
     landed_cost = case when p_batch_id = v_sale.batch_id then v_sale.landed_cost else v_new.landed_cost end,
     has_stickering = coalesce(p_has_stickering, false),
     stickering_cost = case when coalesce(p_has_stickering, false) then coalesce(p_stickering_cost, 0) else 0 end,

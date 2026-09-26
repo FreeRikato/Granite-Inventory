@@ -11,7 +11,6 @@ type Props = {
   readonly children: ReactNode;
 };
 
-/* Label above control, error below. Every form field in the app uses this. */
 export function Field({ label, htmlFor, error, hint, className, children }: Props) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
@@ -20,7 +19,9 @@ export function Field({ label, htmlFor, error, hint, className, children }: Prop
       </Label>
       {children}
       {error ? (
-        <p className="text-xs text-stale" role="alert">{error}</p>
+        <p className="text-xs text-stale" role="alert">
+          {error}
+        </p>
       ) : hint ? (
         <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}

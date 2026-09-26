@@ -9,10 +9,15 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
 });
 
-test("palette jumps to a stock line in the yard and to a customer; sell deep link preselects the batch", async ({ page, signIn }, testInfo) => {
+test("palette jumps to a stock line in the yard and to a customer; sell deep link preselects the batch", async ({
+  page,
+  signIn,
+}, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "the palette is desktop only");
   await signIn("operator");
   await page.goto("/");
@@ -35,7 +40,10 @@ test("palette jumps to a stock line in the yard and to a customer; sell deep lin
   await expect(page.getByTestId("fifo-batch").filter({ hasText: "BP-OLD-01" })).toHaveAttribute("aria-checked", "true");
 });
 
-test("mobile: More sheet reaches Customers, Settings and Sign out; manifest is served", async ({ page, signIn }, testInfo) => {
+test("mobile: More sheet reaches Customers, Settings and Sign out; manifest is served", async ({
+  page,
+  signIn,
+}, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile only");
   await signIn("operator");
   await page.goto("/");

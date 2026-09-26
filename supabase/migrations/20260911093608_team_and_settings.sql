@@ -1,13 +1,6 @@
--- Ticket 01: access model and settings.
--- Team Members are the Google accounts allowed in. Every policy in later migrations
--- goes through is_member() / is_admin(), which read the caller's JWT email.
-
 create schema if not exists private;
--- Trigger functions live here and run as the calling role, so members need usage on the
--- schema. Nothing in it is exposed through the API (only public is).
 grant usage on schema private to authenticated, service_role;
 
--- Every date rule in the yard is "today in India", whatever zone the server runs in.
 create or replace function private.ist_today()
 returns date
 language sql
@@ -37,8 +30,6 @@ create table public.team_members (
   constraint team_members_email_lowercase check (email = lower(email))
 );
 
--- Security definer so the lookup bypasses RLS on team_members itself; the function only
--- ever answers a question about the caller, never about anyone else.
 create or replace function public.member_role()
 returns text
 language sql
@@ -87,7 +78,6 @@ create policy team_members_update on public.team_members
 create policy team_members_delete on public.team_members
   for delete to authenticated using ((select public.is_admin()));
 
--- The yard must always keep at least one Admin, otherwise nobody can manage access.
 create or replace function private.keep_one_admin()
 returns trigger
 language plpgsql
@@ -121,7 +111,6 @@ begin
 end;
 $$;
 
--- Single-row settings table: the primary key is a boolean that must be true.
 create table public.settings (
   id boolean primary key default true check (id),
   business_name text not null default 'Kirthik Granite',
@@ -147,15 +136,12 @@ create trigger settings_set_updated_at
   before update on public.settings
   for each row execute function private.set_updated_at();
 
--- What the unauthenticated catalog page may know about the business. A plain view owned by
--- postgres deliberately bypasses RLS; it exposes only these columns.
 create view public.v_public_business as
   select business_name, tagline, catalog_public, whatsapp_number from public.settings;
 
 revoke all on public.v_public_business from public;
 grant select on public.v_public_business to anon, authenticated;
 
--- Rows the app cannot run without. Idempotent so local seed.sql and this agree.
 insert into public.settings (id) values (true) on conflict (id) do nothing;
 insert into public.team_members (email, name, role)
 values ('aravinthanrc@gmail.com', 'Aravinthan', 'ADMIN')

@@ -19,7 +19,19 @@ import { formatDate, formatSize, todayIso } from "@/lib/format";
 import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
 
 type Sale = Tables<"v_sales">;
-type BatchOption = Pick<Tables<"v_yard_batches">, "id" | "batch_code" | "line_key" | "available" | "purchase_date" | "product_name" | "variant_name" | "length_ft" | "breadth_ft" | "thickness_mm">;
+type BatchOption = Pick<
+  Tables<"v_yard_batches">,
+  | "id"
+  | "batch_code"
+  | "line_key"
+  | "available"
+  | "purchase_date"
+  | "product_name"
+  | "variant_name"
+  | "length_ft"
+  | "breadth_ft"
+  | "thickness_mm"
+>;
 type CustomerOption = { id: string; name: string; phone: string | null };
 
 export type SaleEditLists = {
@@ -48,7 +60,14 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
 
   return (
     <div className="flex justify-end gap-2">
-      <Button ref={triggerRef} variant="outline" size="sm" className="h-8 bg-card" onClick={() => setOpen(true)} aria-label={`Edit sale of ${sale.batch_code}`}>
+      <Button
+        ref={triggerRef}
+        variant="outline"
+        size="sm"
+        className="h-8 bg-card"
+        onClick={() => setOpen(true)}
+        aria-label={`Edit sale of ${sale.batch_code}`}
+      >
         <Pencil className="size-3.5" /> Edit
       </Button>
       <ConfirmDelete
@@ -60,9 +79,6 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
-          /* Editing a sale can move it off this customer, which unmounts the row this dialog was
-             opened from, so the opener is only worth focusing once the refetched rows have
-             painted and it is still there. */
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const trigger = triggerRef.current;
@@ -71,8 +87,19 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
             });
           }}
         >
-          <DialogHeader><DialogTitle>Edit sale</DialogTitle></DialogHeader>
-          {open ? <SaleEditForm sale={sale} lists={lists} onDone={() => { setOpen(false); afterWrite(); }} /> : null}
+          <DialogHeader>
+            <DialogTitle>Edit sale</DialogTitle>
+          </DialogHeader>
+          {open ? (
+            <SaleEditForm
+              sale={sale}
+              lists={lists}
+              onDone={() => {
+                setOpen(false);
+                afterWrite();
+              }}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
@@ -96,7 +123,6 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
   });
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  /* Batches offered: the current one plus any with stock, so a sale can move to the right pile. */
   const current = lists.batches.find((b) => b.id === sale.batch_id);
   const options = lists.batches
     .filter((b) => b.id === sale.batch_id || (b.available ?? 0) > 0)
@@ -120,16 +146,42 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Sale Date" htmlFor="es-date">
-          <Input id="es-date" type="date" max={todayIso()} value={form.saleDate} onChange={(e) => set("saleDate", e.target.value)} />
+          <Input
+            id="es-date"
+            type="date"
+            max={todayIso()}
+            value={form.saleDate}
+            onChange={(e) => set("saleDate", e.target.value)}
+          />
         </Field>
         <Field label="Payment Mode" htmlFor="es-payment">
-          <Select value={form.paymentMode} onValueChange={(v) => { if (isPaymentMode(v)) set("paymentMode", v); }}>
-            <SelectTrigger id="es-payment" className="w-full"><SelectValue /></SelectTrigger>
-            <SelectContent>{PAYMENT_MODES.map((m) => <SelectItem key={m} value={m}>{PAYMENT_MODE_LABEL[m]}</SelectItem>)}</SelectContent>
+          <Select
+            value={form.paymentMode}
+            onValueChange={(v) => {
+              if (isPaymentMode(v)) set("paymentMode", v);
+            }}
+          >
+            <SelectTrigger id="es-payment" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_MODES.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {PAYMENT_MODE_LABEL[m]}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </Field>
         <Field label="Customer" htmlFor="es-customer">
-          <SearchSelect id="es-customer" className="h-9" options={lists.customers.map((c) => ({ value: c.id, label: c.name, hint: c.phone ?? undefined }))} value={form.customerId} onChange={(v) => set("customerId", v)} placeholder="Customer" />
+          <SearchSelect
+            id="es-customer"
+            className="h-9"
+            options={lists.customers.map((c) => ({ value: c.id, label: c.name, hint: c.phone ?? undefined }))}
+            value={form.customerId}
+            onChange={(v) => set("customerId", v)}
+            placeholder="Customer"
+          />
         </Field>
         <Field label="Batch" htmlFor="es-batch">
           <SearchSelect
@@ -147,9 +199,36 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Quantity" htmlFor="es-qty"><Input id="es-qty" type="number" min="1" step="1" value={form.quantity} onChange={(e) => set("quantity", e.target.value)} /></Field>
-        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint="Per piece"><Input id="es-price" type="number" min="0" step="1" value={form.salePrice} onChange={(e) => set("salePrice", e.target.value)} /></Field>
-        <Field label="Misc Expense (₹)" htmlFor="es-misc"><Input id="es-misc" type="number" min="0" step="1" value={form.miscExpense} onChange={(e) => set("miscExpense", e.target.value)} /></Field>
+        <Field label="Quantity" htmlFor="es-qty">
+          <Input
+            id="es-qty"
+            type="number"
+            min="1"
+            step="1"
+            value={form.quantity}
+            onChange={(e) => set("quantity", e.target.value)}
+          />
+        </Field>
+        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint="Per piece">
+          <Input
+            id="es-price"
+            type="number"
+            min="0"
+            step="1"
+            value={form.salePrice}
+            onChange={(e) => set("salePrice", e.target.value)}
+          />
+        </Field>
+        <Field label="Misc Expense (₹)" htmlFor="es-misc">
+          <Input
+            id="es-misc"
+            type="number"
+            min="0"
+            step="1"
+            value={form.miscExpense}
+            onChange={(e) => set("miscExpense", e.target.value)}
+          />
+        </Field>
       </div>
       <div className="flex items-center justify-between rounded-tile border border-border p-3">
         <span className="text-sm font-semibold">Stickering / Engraving</span>
@@ -157,17 +236,44 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
       </div>
       {form.hasStickering ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Stickering Cost (₹)" htmlFor="es-scost"><Input id="es-scost" type="number" min="0" step="1" value={form.stickeringCost} onChange={(e) => set("stickeringCost", e.target.value)} /></Field>
-          <Field label="Stickering Price (₹)" htmlFor="es-sprice"><Input id="es-sprice" type="number" min="0" step="1" value={form.stickeringPrice} onChange={(e) => set("stickeringPrice", e.target.value)} /></Field>
+          <Field label="Stickering Cost (₹)" htmlFor="es-scost">
+            <Input
+              id="es-scost"
+              type="number"
+              min="0"
+              step="1"
+              value={form.stickeringCost}
+              onChange={(e) => set("stickeringCost", e.target.value)}
+            />
+          </Field>
+          <Field label="Stickering Price (₹)" htmlFor="es-sprice">
+            <Input
+              id="es-sprice"
+              type="number"
+              min="0"
+              step="1"
+              value={form.stickeringPrice}
+              onChange={(e) => set("stickeringPrice", e.target.value)}
+            />
+          </Field>
         </div>
       ) : null}
       <Notice tone="accent" className="text-xs">
-        Moving the sale to another batch re-snapshots the landed cost from that batch; otherwise the original cost stays.
+        Moving the sale to another batch re-snapshots the landed cost from that batch; otherwise the original cost
+        stays.
       </Notice>
-      {error ? <Notice tone="error" icon="alert">{error}</Notice> : null}
+      {error ? (
+        <Notice tone="error" icon="alert">
+          {error}
+        </Notice>
+      ) : null}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onDone}>Cancel</Button>
-        <Button type="submit" disabled={pending}>{pending ? "Saving..." : "Save changes"}</Button>
+        <Button type="button" variant="ghost" onClick={onDone}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving..." : "Save changes"}
+        </Button>
       </div>
     </form>
   );

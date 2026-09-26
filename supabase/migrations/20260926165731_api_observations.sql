@@ -1,6 +1,3 @@
--- Audit round 2 observations: readable refusals where direct API callers saw raw Postgres text.
-
--- SYN2-14: the preview mirrors create_batch's first guards instead of returning null.
 create or replace function public.preview_batch_code(p_product_id uuid, p_date date)
 returns text
 language plpgsql
@@ -18,8 +15,6 @@ begin
 end;
 $$;
 
--- SYN2-15: a second Walk-in Customer is refused before the customers_one_walk_in index names
--- itself in the error. The index stays as the backstop for two concurrent inserts.
 create or replace function private.validate_customer_input()
 returns trigger
 language plpgsql

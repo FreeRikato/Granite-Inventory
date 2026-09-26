@@ -13,8 +13,6 @@ export type Session =
   | { readonly status: "not-member"; readonly email: string }
   | { readonly status: "member"; readonly member: Member };
 
-/* Resolves the signed-in Google account to a Team Member. Cached per request so layout and
-   pages share one round trip. */
 export const getSession = cache(async (): Promise<Session> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();

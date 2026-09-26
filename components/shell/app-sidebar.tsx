@@ -14,7 +14,10 @@ export function AppSidebar({ businessName, member }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside aria-label="Application sidebar" className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 md:flex">
+    <aside
+      aria-label="Application sidebar"
+      className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 md:flex"
+    >
       <div className="flex items-center justify-between px-1">
         <span className="text-base font-bold">{businessName}</span>
         <Link

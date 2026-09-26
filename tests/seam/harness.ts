@@ -36,8 +36,6 @@ export async function sql<T = Record<string, unknown>>(text: string, params: unk
   }
 }
 
-/* Creates the three test accounts in Auth (idempotent) and puts admin and operator on the
-   Team Member list. Domain tables are left to each suite's own seeding. */
 export async function ensureTestUsers(): Promise<void> {
   const admin = serviceClient();
   for (const user of Object.values(TEST_USERS)) {
@@ -65,7 +63,6 @@ export async function signedInClient(who: keyof typeof TEST_USERS): Promise<Db> 
   return client;
 }
 
-/* Wipes domain data between suites. Team Members, settings and the Walk-in Customer stay. */
 export async function resetDomainData(): Promise<void> {
   const tables = await sql<{ table_name: string }>(
     `select table_name from information_schema.tables
@@ -75,8 +72,12 @@ export async function resetDomainData(): Promise<void> {
   if (tables.length === 0) return;
   const names = tables.map((t) => `public.${t.table_name}`).join(", ");
   await sql(`truncate ${names} restart identity cascade`);
-  await sql(`update public.settings set ageing_after_days = 90, stale_after_days = 180, catalog_public = false, whatsapp_number = ''`);
-  await sql(`insert into public.customers (name, customer_type, is_walk_in) values ('Walk-in Customer', 'RETAIL', true) on conflict do nothing`);
+  await sql(
+    `update public.settings set ageing_after_days = 90, stale_after_days = 180, catalog_public = false, whatsapp_number = ''`,
+  );
+  await sql(
+    `insert into public.customers (name, customer_type, is_walk_in) values ('Walk-in Customer', 'RETAIL', true) on conflict do nothing`,
+  );
 }
 
 export function expectError<T>(result: { error: T | null }): T {

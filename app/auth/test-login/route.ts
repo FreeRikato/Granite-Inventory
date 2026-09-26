@@ -4,8 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 
 const credentials = z.object({ email: z.string().email(), password: z.string().min(1) });
 
-/* Test-only sign-in used by Playwright, since the Google consent screen cannot be automated.
-   Disabled unless E2E_TEST_LOGIN=1, and never in production builds. */
 export async function POST(request: Request) {
   if (process.env.E2E_TEST_LOGIN !== "1" || process.env.NODE_ENV === "production") {
     return new NextResponse(null, { status: 404 });

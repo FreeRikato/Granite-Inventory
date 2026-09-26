@@ -5,8 +5,6 @@ import { saleSchema } from "@/lib/schemas/sale";
 import { expectError, ensureTestUsers, resetDomainData, signedInClient, sql, type Db } from "./harness";
 import { createProduct, today } from "./fixtures";
 
-/* Follow-ups from the audit round 2 observations (SYN2-11, 13, 14, 15): every refusal reads as a
-   business rule, never as a raw Postgres error. */
 describe("API observations: readable refusals", () => {
   let operator: Db;
 
@@ -28,15 +26,18 @@ describe("API observations: readable refusals", () => {
     });
     expect(expectError(unknown).message).toBe("Unknown product");
 
-    // The generated Args type has no nullable date, so the null case goes through SQL.
-    await expect(sql("select public.preview_batch_code($1, null)", [productId])).rejects.toThrow("Purchase date is required");
+    await expect(sql("select public.preview_batch_code($1, null)", [productId])).rejects.toThrow(
+      "Purchase date is required",
+    );
 
     const ok = await operator.rpc("preview_batch_code", { p_product_id: productId, p_date: today() });
     expect(ok.data).toMatch(/^BP-\d{2}[A-Z]{3}\d{2}-01$/);
   });
 
   it("refuses a second Walk-in Customer with a business-rule message", async () => {
-    const result = await operator.from("customers").insert({ name: "Another Walk-in", customer_type: "RETAIL", is_walk_in: true });
+    const result = await operator
+      .from("customers")
+      .insert({ name: "Another Walk-in", customer_type: "RETAIL", is_walk_in: true });
 
     const error = expectError(result);
     expect(error.message).toBe("Only one Walk-in Customer is allowed");
@@ -93,7 +94,11 @@ describe("API observations: readable refusals", () => {
     const units = batchSchema.safeParse({ initialUnits: 0 });
     const quantity = saleSchema.safeParse({ quantity: 0 });
 
-    expect(units.error?.issues.find((i) => i.path[0] === "initialUnits")?.message).toBe("Initial units must be greater than zero");
-    expect(quantity.error?.issues.find((i) => i.path[0] === "quantity")?.message).toBe("Sale quantity must be greater than zero");
+    expect(units.error?.issues.find((i) => i.path[0] === "initialUnits")?.message).toBe(
+      "Initial units must be greater than zero",
+    );
+    expect(quantity.error?.issues.find((i) => i.path[0] === "quantity")?.message).toBe(
+      "Sale quantity must be greater than zero",
+    );
   });
 });

@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-/* Partial update: each field optional so a page can save just the ones it owns. */
 export const settingsSchema = z
   .object({
     businessName: z.string().trim().min(1, "Name is required").max(80),

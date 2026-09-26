@@ -11,7 +11,11 @@ test.beforeEach(async () => {
   await seedYard();
 });
 
-test("catalog is hidden while off, then a logged-out visitor sees stock without prices", async ({ page, signIn, browser }) => {
+test("catalog is hidden while off, then a logged-out visitor sees stock without prices", async ({
+  page,
+  signIn,
+  browser,
+}) => {
   await signIn("admin");
   await page.goto("/public-link");
   await expect(page.getByTestId("catalog-status")).toHaveText(/Off/);
@@ -37,7 +41,10 @@ test("catalog is hidden while off, then a logged-out visitor sees stock without 
   await expect(tiles.filter({ hasText: "Doom Stone" })).toContainText("9 units in stock");
   const body = await anon.locator("body").innerText();
   expect(body).not.toMatch(/₹|Madurai|BP-OLD|Bought/);
-  await expect(anon.getByRole("link", { name: /Call to Inquire/ }).first()).toHaveAttribute("href", /wa\.me\/919876543210/);
+  await expect(anon.getByRole("link", { name: /Call to Inquire/ }).first()).toHaveAttribute(
+    "href",
+    /wa\.me\/919876543210/,
+  );
 
   await anon.getByRole("tab", { name: "Doom Stone" }).click();
   await expect(tiles).toHaveCount(1);

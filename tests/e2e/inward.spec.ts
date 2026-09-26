@@ -70,7 +70,6 @@ test("Save Batch waits for a positive size on granite and the click still refuse
   await page.getByLabel("Breadth (ft)").fill("2");
   await expect(saveBatch).toBeEnabled();
 
-  // A zero thickness keeps the button enabled so the click shows which field is wrong.
   await page.getByLabel("Thickness (mm)").fill("0");
   await saveBatch.click();
   await expect(page.getByText(/Must be more than 0/)).toBeVisible();

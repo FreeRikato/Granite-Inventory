@@ -1,6 +1,3 @@
--- Ticket 06: dashboard figures, every one derived from batches and sales.
--- "This month" is the calendar month in India (private.ist_today()).
-
 create view public.v_dashboard_kpis with (security_invoker = true) as
   with bounds as (
     select
@@ -40,8 +37,6 @@ create view public.v_dashboard_kpis with (security_invoker = true) as
     bounds.month_start
   from stock, past, month, bounds;
 
--- Units sold in the last N days per length x breadth (thickness ignored); Memorial as one
--- row per Variant since it has no size.
 create or replace function public.fast_moving(p_days integer default 90, p_limit integer default 5)
 returns table (label text, units integer)
 language sql

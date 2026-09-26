@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -25,8 +18,6 @@ export type SearchOption = {
 
 const CREATE_VALUE_PREFIX = "__create__";
 
-/* The one matching rule for the list: case-insensitive substring of the label or a keyword,
-   or a digit-substring of the phone. Both the list filter and the seam tests go through it. */
 export function searchOptionMatches(option: SearchOption, query: string): boolean {
   const trimmed = query.trim();
   if (!trimmed) return true;
@@ -38,8 +29,6 @@ export function searchOptionMatches(option: SearchOption, query: string): boolea
   return phoneQuery.length > 0 && phoneDigits(option.phone ?? "").includes(phoneQuery);
 }
 
-/* Exact label or exact phone digits. Decides whether the "Add ..." row is offered: a query that
-   only partially matches an option must still be creatable. */
 export function searchOptionIsExact(option: SearchOption, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return true;
@@ -56,7 +45,6 @@ type Props = {
   readonly placeholder: string;
   readonly searchPlaceholder?: string;
   readonly emptyText?: string;
-  /* When given, an "Add ..." row appears for a query that matches nothing. */
   readonly onCreate?: (query: string) => void;
   readonly createLabel?: (query: string) => string;
   readonly disabled?: boolean;
@@ -64,7 +52,6 @@ type Props = {
   readonly className?: string;
 };
 
-/* Searchable single select with optional inline create, built from Popover + Command. */
 export function SearchSelect({
   options,
   value,
@@ -84,8 +71,6 @@ export function SearchSelect({
   const trimmed = query.trim();
   const hasExactMatch = options.some((option) => searchOptionIsExact(option, trimmed));
   const optionsByValue = new Map(options.map((option) => [option.value, option]));
-  /* cmdk hands the filter an item's value, so items carry the option id and the rule looks
-     the option up. The create row is never filtered out. */
   const commandFilter = (value: string, search: string): number => {
     if (value.startsWith(CREATE_VALUE_PREFIX)) return 1;
     const option = optionsByValue.get(value);
@@ -93,7 +78,13 @@ export function SearchSelect({
   };
 
   return (
-    <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setQuery("");
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           id={id}
@@ -129,9 +120,7 @@ export function SearchSelect({
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate">{option.label}</span>
-                    {option.hint ? (
-                      <span className="truncate text-xs text-muted-foreground">{option.hint}</span>
-                    ) : null}
+                    {option.hint ? <span className="truncate text-xs text-muted-foreground">{option.hint}</span> : null}
                   </span>
                   <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>

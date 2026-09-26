@@ -3,25 +3,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/lib/nav";
 import { formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/database.types";
 
-type Line = Pick<Tables<"v_stock_lines">, "line_key" | "product_name" | "variant_name" | "variant_id" | "length_ft" | "breadth_ft" | "thickness_mm" | "available" | "category">;
+type Line = Pick<
+  Tables<"v_stock_lines">,
+  | "line_key"
+  | "product_name"
+  | "variant_name"
+  | "variant_id"
+  | "length_ft"
+  | "breadth_ft"
+  | "thickness_mm"
+  | "available"
+  | "category"
+>;
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone">;
 
-/* Search or jump to: pages, Stock Lines (opens the yard filtered to the line) and Customers.
-   Data loads on first open through the browser client, so RLS applies as usual. */
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -30,7 +32,6 @@ export function CommandPalette() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  /* Loaded on first open; the data is small and RLS applies through the browser client. */
   const openPalette = useCallback(
     (next: boolean) => {
       if (next) {
@@ -41,7 +42,13 @@ export function CommandPalette() {
       if (!next || lines !== null) return;
       const supabase = createClient();
       void Promise.all([
-        supabase.from("v_stock_lines").select("line_key, product_name, variant_name, variant_id, length_ft, breadth_ft, thickness_mm, available, category").gt("available", 0).order("product_name"),
+        supabase
+          .from("v_stock_lines")
+          .select(
+            "line_key, product_name, variant_name, variant_id, length_ft, breadth_ft, thickness_mm, available, category",
+          )
+          .gt("available", 0)
+          .order("product_name"),
         supabase.from("customers").select("id, name, phone").order("name"),
       ]).then(([l, c]) => {
         setLines(l.data ?? []);
@@ -111,13 +118,25 @@ export function CommandPalette() {
               </CommandGroup>
               <CommandGroup heading="Stock lines">
                 {(lines ?? []).map((l) => {
-                  const size = formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
+                  const size = formatSize({
+                    length_ft: l.length_ft,
+                    breadth_ft: l.breadth_ft,
+                    thickness_mm: l.thickness_mm,
+                  });
                   const href = `/yard?line=${encodeURIComponent(l.line_key ?? "")}`;
                   return (
-                    <CommandItem key={l.line_key} value={`stone ${l.product_name} ${l.variant_name} ${size}`} onSelect={() => go(href)}>
+                    <CommandItem
+                      key={l.line_key}
+                      value={`stone ${l.product_name} ${l.variant_name} ${size}`}
+                      onSelect={() => go(href)}
+                    >
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate">{l.product_name} · {l.variant_name}</span>
-                        <span className="text-xs text-muted-foreground">{size} · {l.available} available</span>
+                        <span className="truncate">
+                          {l.product_name} · {l.variant_name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {size} · {l.available} available
+                        </span>
                       </span>
                     </CommandItem>
                   );
@@ -125,7 +144,11 @@ export function CommandPalette() {
               </CommandGroup>
               <CommandGroup heading="Customers">
                 {(customers ?? []).map((c) => (
-                  <CommandItem key={c.id} value={`customer ${c.name} ${c.phone ?? ""}`} onSelect={() => go(`/customers/${c.id}`)}>
+                  <CommandItem
+                    key={c.id}
+                    value={`customer ${c.name} ${c.phone ?? ""}`}
+                    onSelect={() => go(`/customers/${c.id}`)}
+                  >
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate">{c.name}</span>
                       {c.phone ? <span className="text-xs text-muted-foreground">{c.phone}</span> : null}

@@ -19,12 +19,7 @@ export function MobileTabBar() {
       aria-label="Main"
     >
       {MOBILE_TABS.map((item) => (
-        <TabLink
-          key={item.href}
-          href={item.href}
-          label={item.shortLabel}
-          active={isActivePath(pathname, item.href)}
-        >
+        <TabLink key={item.href} href={item.href} label={item.shortLabel} active={isActivePath(pathname, item.href)}>
           <item.icon className="size-5" />
         </TabLink>
       ))}

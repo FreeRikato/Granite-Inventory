@@ -4,7 +4,6 @@ import { config } from "dotenv";
 
 config({ path: ".env.test" });
 
-// Each worktree runs on its own port, written to .port by scripts/wt; the primary checkout has none.
 const port = existsSync(".port") ? readFileSync(".port", "utf8").trim() : "3000";
 const origin = `http://127.0.0.1:${port}`;
 

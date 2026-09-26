@@ -13,9 +13,6 @@ async function getBusinessName(): Promise<string | null> {
 }
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  // Both reads run as the signed-in user, so a non-member's settings read returns null under RLS
-  // and nothing renders before the redirect. Running them at once makes a hard load pay for the
-  // slower of the two instead of their sum.
   const [session, businessName] = await Promise.all([getSession(), getBusinessName()]);
   if (session.status !== "member") redirect("/login");
 

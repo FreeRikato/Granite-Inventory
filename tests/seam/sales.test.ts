@@ -18,7 +18,11 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     await resetDomainData();
     productId = await createProduct(operator, { name: "Black Pearl", abbreviation: "BP" });
     supplierId = await createSupplier(operator, "Madurai Quarry");
-    customerId = await createCustomer(operator, { name: "Murugan Constructions", phone: "+91 98765 43210", type: "CONTRACTOR" });
+    customerId = await createCustomer(operator, {
+      name: "Murugan Constructions",
+      phone: "+91 98765 43210",
+      type: "CONTRACTOR",
+    });
     const batch = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 1400, freight: 750 });
     batchId = batch.data?.id ?? "";
   });
@@ -33,7 +37,14 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
   });
 
   it("computes margin with and without stickering, misc expense excluded", async () => {
-    await recordSale(operator, { batchId, customerId, quantity: 5, salePrice: 1650, stickering: { cost: 100, price: 250 }, misc: 300 });
+    await recordSale(operator, {
+      batchId,
+      customerId,
+      quantity: 5,
+      salePrice: 1650,
+      stickering: { cost: 100, price: 250 },
+      misc: 300,
+    });
     const { data } = await operator.from("v_sales").select("*").single();
     expect(data?.stone_total).toBe(8250);
     expect(data?.stickering_total).toBe(1250);
@@ -45,7 +56,11 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     expect(data?.misc_expense).toBe(300);
 
     await recordSale(operator, { batchId, customerId, quantity: 1, salePrice: 1650, stickering: undefined });
-    const plain = await operator.from("v_sales").select("margin, margin_pct, stickering_total").eq("has_stickering", false).single();
+    const plain = await operator
+      .from("v_sales")
+      .select("margin, margin_pct, stickering_total")
+      .eq("has_stickering", false)
+      .single();
     expect(plain.data).toEqual({ margin: 200, margin_pct: 12.12, stickering_total: 0 });
   });
 
@@ -74,7 +89,10 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     await createBatch(operator, { productId, supplierId, units: 10, purchaseDate: daysAgo(30) });
     await createBatch(operator, { productId, supplierId, units: 6, length: 5, breadth: 3, thickness: 20 });
     const { data } = await operator.from("v_stock_lines").select("*").order("length_ft");
-    expect(data?.map((l) => [l.length_ft, l.available, l.batch_count])).toEqual([[4, 25, 2], [5, 6, 1]]);
+    expect(data?.map((l) => [l.length_ft, l.available, l.batch_count])).toEqual([
+      [4, 25, 2],
+      [5, 6, 1],
+    ]);
 
     const fifo = await operator
       .from("v_yard_batches")

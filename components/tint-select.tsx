@@ -4,8 +4,6 @@ import { useSyncExternalStore } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DEFAULT_TINT, TINTS, applyTint, isTint, tintStore } from "@/lib/tint";
 
-/* Per-device accent colour, stored in localStorage like dark mode. The server renders the
-   default and the browser snapshot takes over on hydration. */
 export function TintSelect() {
   const tint = useSyncExternalStore(tintStore.subscribe, tintStore.getSnapshot, tintStore.getServerSnapshot);
 

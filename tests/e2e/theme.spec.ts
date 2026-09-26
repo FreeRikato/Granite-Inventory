@@ -8,15 +8,15 @@ test.beforeAll(async () => {
 
 const DARK = /\bdark\b/;
 
-/* Clicks the toggle until the html class flips. A click that lands before hydration on a cold
-   dev server is dropped, so a single click is not enough to assert on. */
 async function flipTheme(page: Page, expectDark: boolean): Promise<void> {
   const toggle = page.getByRole("button", { name: "Toggle dark mode" }).locator("visible=true");
   await expect(toggle).toHaveCount(1);
   await expect(async () => {
     await toggle.click();
     const matcher = expect(page.locator("html"));
-    await (expectDark ? matcher.toHaveClass(DARK, { timeout: 2_000 }) : matcher.not.toHaveClass(DARK, { timeout: 2_000 }));
+    await (expectDark
+      ? matcher.toHaveClass(DARK, { timeout: 2_000 })
+      : matcher.not.toHaveClass(DARK, { timeout: 2_000 }));
   }).toPass({ timeout: 20_000 });
 }
 

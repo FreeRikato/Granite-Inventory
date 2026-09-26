@@ -13,14 +13,27 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
   const supabase = await createClient();
   const [{ data: customer }, { data: sales }, session] = await Promise.all([
     supabase.from("v_customers").select("*").eq("id", id).maybeSingle(),
-    supabase.from("v_sales").select("*").eq("customer_id", id).order("sale_date", { ascending: false }).order("created_at", { ascending: false }),
+    supabase
+      .from("v_sales")
+      .select("*")
+      .eq("customer_id", id)
+      .order("sale_date", { ascending: false })
+      .order("created_at", { ascending: false }),
     getSession(),
   ]);
   if (!customer) notFound();
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: SaleEditLists | null = isAdmin
     ? {
-        batches: (await supabase.from("v_yard_batches").select("id, batch_code, line_key, available, purchase_date, product_name, variant_name, length_ft, breadth_ft, thickness_mm").order("purchase_date")).data ?? [],
+        batches:
+          (
+            await supabase
+              .from("v_yard_batches")
+              .select(
+                "id, batch_code, line_key, available, purchase_date, product_name, variant_name, length_ft, breadth_ft, thickness_mm",
+              )
+              .order("purchase_date")
+          ).data ?? [],
         customers: (await supabase.from("customers").select("id, name, phone").order("name")).data ?? [],
       }
     : null;
@@ -41,8 +54,14 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
         <div className="flex items-center gap-2">
           <CommandPalette />
           <CustomerActions
-          customer={{ id: customer.id ?? id, name: customer.name ?? "", phone: customer.phone, customer_type: customer.customer_type ?? "REGULAR", is_walk_in: customer.is_walk_in ?? false }}
-          canDelete={isAdmin && !customer.is_walk_in && (customer.sale_count ?? 0) === 0}
+            customer={{
+              id: customer.id ?? id,
+              name: customer.name ?? "",
+              phone: customer.phone,
+              customer_type: customer.customer_type ?? "REGULAR",
+              is_walk_in: customer.is_walk_in ?? false,
+            }}
+            canDelete={isAdmin && !customer.is_walk_in && (customer.sale_count ?? 0) === 0}
           />
         </div>
       </div>
@@ -50,7 +69,10 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
       <dl className="flex divide-x divide-border">
         <Kpi label="Sales" value={String(customer.sale_count ?? 0)} />
         <Kpi label="Lifetime revenue" value={formatRupees(customer.lifetime_revenue ?? 0)} />
-        <Kpi label="Last purchase" value={customer.last_purchase_date ? relativeDays(customer.last_purchase_date) : "No purchases"} />
+        <Kpi
+          label="Last purchase"
+          value={customer.last_purchase_date ? relativeDays(customer.last_purchase_date) : "No purchases"}
+        />
       </dl>
 
       <section className="rounded-card bg-card p-6 shadow-sm">
@@ -68,12 +90,20 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                   <th className="py-2 pr-4 text-right font-medium">Qty</th>
                   <th className="py-2 pr-4 text-right font-medium">Total</th>
                   <th className="py-2 text-right font-medium">Margin</th>
-                  {editLists ? <th className="py-2 pl-4"><span className="sr-only">Sale actions</span></th> : null}
+                  {editLists ? (
+                    <th className="py-2 pl-4">
+                      <span className="sr-only">Sale actions</span>
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="block sm:table-row-group">
                 {sales.map((s) => (
-                  <tr key={s.id} className="block border-t border-border py-2.5 sm:table-row sm:py-0" data-testid="sale-row">
+                  <tr
+                    key={s.id}
+                    className="block border-t border-border py-2.5 sm:table-row sm:py-0"
+                    data-testid="sale-row"
+                  >
                     <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
                       <MobileLabel className="mr-2">Date</MobileLabel>
                       {s.sale_date ? formatDate(s.sale_date) : ""}
@@ -101,7 +131,9 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                     <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:text-right">
                       <MobileLabel className="mr-2 font-sans">Margin</MobileLabel>
                       {formatRupees(s.margin ?? 0)}
-                      {s.margin_pct !== null ? <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span> : null}
+                      {s.margin_pct !== null ? (
+                        <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span>
+                      ) : null}
                     </td>
                     {editLists ? (
                       <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4">

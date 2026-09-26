@@ -21,7 +21,11 @@ export const tableLabel: Record<AdminListTable, string> = {
   suppliers: "Supplier",
 };
 
-export function referencesForTable(table: AdminListTable, id: string, references: readonly BatchReference[]): readonly BatchReference[] {
+export function referencesForTable(
+  table: AdminListTable,
+  id: string,
+  references: readonly BatchReference[],
+): readonly BatchReference[] {
   return references.filter((reference) => reference[batchReferenceColumn[table]] === id);
 }
 
@@ -50,5 +54,7 @@ export function deleteBlockedMessage(
   if (table === "products" && variants.length > 0) {
     return `Cannot delete ${rowName}: ${variants.length} variants still belong to it.`;
   }
-  return table === "products" ? "Only possible when no batch or variant uses it." : "Only possible when no batch uses it.";
+  return table === "products"
+    ? "Only possible when no batch or variant uses it."
+    : "Only possible when no batch uses it.";
 }

@@ -1,4 +1,3 @@
-/* wa.me needs digits only with the country code; Indian numbers without one get +91. */
 export function whatsappLink(number: string, message: string): string | null {
   const digits = number.replace(/\D/g, "");
   if (digits.length < 10) return null;

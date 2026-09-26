@@ -1,5 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { deleteBlockedMessage, hasDeleteReferences, type BatchReference, type VariantReference } from "@/lib/admin-list-references";
+import {
+  deleteBlockedMessage,
+  hasDeleteReferences,
+  type BatchReference,
+  type VariantReference,
+} from "@/lib/admin-list-references";
 import { ensureTestUsers, expectError, resetDomainData, signedInClient, type Db } from "./harness";
 import { createBatch, createProduct, createSupplier } from "./fixtures";
 
@@ -78,7 +83,13 @@ describe("admin lists: rename and guarded delete", () => {
     expectError(await admin.from("products").delete().eq("id", productId).select());
     expectError(await admin.from("suppliers").delete().eq("id", supplierId).select());
     const variant = await admin.from("variants").select("id").single();
-    expectError(await admin.from("variants").delete().eq("id", variant.data?.id ?? "").select());
+    expectError(
+      await admin
+        .from("variants")
+        .delete()
+        .eq("id", variant.data?.id ?? "")
+        .select(),
+    );
 
     const gone = await admin.from("suppliers").delete().eq("id", spare).select();
     expect(gone.data).toHaveLength(1);

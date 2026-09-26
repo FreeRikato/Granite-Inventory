@@ -9,7 +9,9 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`);
+  await sql(
+    `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
+  );
 });
 
 test("collision selection leaves one customer option and no duplicate key warning", async ({ page, signIn }) => {

@@ -23,7 +23,12 @@ export function InwardView() {
   }
 
   const fetching = products.isFetching || variants.isFetching || suppliers.isFetching || recent.isFetching;
-  const updatedAt = Math.min(products.dataUpdatedAt, variants.dataUpdatedAt, suppliers.dataUpdatedAt, recent.dataUpdatedAt);
+  const updatedAt = Math.min(
+    products.dataUpdatedAt,
+    variants.dataUpdatedAt,
+    suppliers.dataUpdatedAt,
+    recent.dataUpdatedAt,
+  );
 
   return (
     <>
@@ -33,8 +38,8 @@ export function InwardView() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <InwardForm products={products.data} variants={variants.data} suppliers={suppliers.data} />
         <Notice className="h-fit">
-          Batches are never merged. Every purchase becomes its own tracked lot, even if it&apos;s
-          the same product and size as existing stock.
+          Batches are never merged. Every purchase becomes its own tracked lot, even if it&apos;s the same product and
+          size as existing stock.
         </Notice>
       </div>
       <RecentBatches batches={recent.data} />

@@ -22,7 +22,6 @@ type Props = {
 
 const ALL = "__all__";
 
-/* Every filter lives in the URL so a filtered yard can be linked to (dashboard, palette). */
 export function YardFilters({ query, products, variants, thicknesses, suppliers }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -61,19 +60,40 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
           />
         </div>
         {query.line ? (
-          <Button type="button" variant="outline" size="sm" className="h-10 rounded-full bg-card" onClick={() => update({ line: null })}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-full bg-card"
+            onClick={() => update({ line: null })}
+          >
             <X className="size-3.5" /> Clear stock line
           </Button>
         ) : null}
-        <FilterSelect label="Product" value={query.product} options={products} onChange={(v) => update({ product: v, variant: null })} />
-        <FilterSelect label="Variant" value={query.variant} options={variants} onChange={(v) => update({ variant: v })} />
+        <FilterSelect
+          label="Product"
+          value={query.product}
+          options={products}
+          onChange={(v) => update({ product: v, variant: null })}
+        />
+        <FilterSelect
+          label="Variant"
+          value={query.variant}
+          options={variants}
+          onChange={(v) => update({ variant: v })}
+        />
         <FilterSelect
           label="Thickness"
           value={query.thickness === null ? null : String(query.thickness)}
           options={thicknesses.map((t) => ({ value: String(t), label: `${t}mm` }))}
           onChange={(v) => update({ thickness: v })}
         />
-        <FilterSelect label="Supplier" value={query.supplier} options={suppliers} onChange={(v) => update({ supplier: v })} />
+        <FilterSelect
+          label="Supplier"
+          value={query.supplier}
+          options={suppliers}
+          onChange={(v) => update({ supplier: v })}
+        />
         <FilterSelect
           label="Age"
           value={query.band === "STALE" ? "stale" : query.age === null ? null : String(query.age)}
@@ -97,7 +117,9 @@ export function YardFilters({ query, products, variants, thicknesses, suppliers 
         </Select>
         <div className="flex items-center gap-2 pl-1">
           <Switch id="show-sold" checked={query.sold} onCheckedChange={(c) => update({ sold: c ? "1" : null })} />
-          <Label htmlFor="show-sold" className="text-sm text-muted-foreground">Show sold out</Label>
+          <Label htmlFor="show-sold" className="text-sm text-muted-foreground">
+            Show sold out
+          </Label>
         </div>
       </div>
     </div>
@@ -119,7 +141,7 @@ function FilterSelect({
     if (value !== null && !options.some((option) => option.value === value)) onChange(null);
   }, [onChange, options, value]);
 
-  const valueLabel = value === null ? "All" : options.find((option) => option.value === value)?.label ?? value;
+  const valueLabel = value === null ? "All" : (options.find((option) => option.value === value)?.label ?? value);
 
   return (
     <Select value={value ?? ALL} onValueChange={(v) => onChange(v === ALL ? null : v)}>
@@ -130,7 +152,9 @@ function FilterSelect({
       <SelectContent>
         <SelectItem value={ALL}>All</SelectItem>
         {options.map((o) => (
-          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>

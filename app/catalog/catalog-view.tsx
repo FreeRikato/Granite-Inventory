@@ -44,7 +44,10 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
             <div>
               <h1 className="flex items-center gap-2 text-lg font-bold">
                 {businessName}
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-fresh"><span className="size-1.5 rounded-full bg-fresh" />Live</span>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-fresh">
+                  <span className="size-1.5 rounded-full bg-fresh" />
+                  Live
+                </span>
               </h1>
               {tagline ? <p className="text-sm text-muted-foreground">{tagline}</p> : null}
             </div>
@@ -52,12 +55,23 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
           </div>
           <div className="relative w-full md:w-[360px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search stone, size, thickness..." className="h-10 rounded-full pl-9" aria-label="Search stock" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search stone, size, thickness..."
+              className="h-10 rounded-full pl-9"
+              aria-label="Search stock"
+            />
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle className="hidden md:inline-flex" />
             {generalLink ? (
-              <a href={generalLink} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-black">
+              <a
+                href={generalLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-whatsapp px-4 text-sm font-semibold text-black"
+              >
                 <MessageCircle className="size-4" /> Call to Inquire
               </a>
             ) : null}
@@ -67,9 +81,13 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
 
       <div className="mx-auto max-w-[1344px] px-4 py-5 md:px-6">
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Category">
-          <CategoryChip active={category === null} onClick={() => setCategory(null)}>All</CategoryChip>
+          <CategoryChip active={category === null} onClick={() => setCategory(null)}>
+            All
+          </CategoryChip>
           {CATEGORIES.map((c) => (
-            <CategoryChip key={c} active={category === c} onClick={() => setCategory(c)}>{CATEGORY_LABEL[c]}</CategoryChip>
+            <CategoryChip key={c} active={category === c} onClick={() => setCategory(c)}>
+              {CATEGORY_LABEL[c]}
+            </CategoryChip>
           ))}
         </div>
 
@@ -80,13 +98,24 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
         ) : (
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {visible.map((l) => {
-              const size = l.length_ft === null ? "standard size" : formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
-              const link = whatsappLink(whatsappNumber, `Hi ${businessName}, is ${l.product_name} ${l.variant_name} (${size}) available? I saw ${l.available} in stock.`);
+              const size =
+                l.length_ft === null
+                  ? "standard size"
+                  : formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
+              const link = whatsappLink(
+                whatsappNumber,
+                `Hi ${businessName}, is ${l.product_name} ${l.variant_name} (${size}) available? I saw ${l.available} in stock.`,
+              );
               return (
                 <div key={l.line_key} className="flex flex-col gap-2">
                   <StoneTile line={l} />
                   {link ? (
-                    <a href={link} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-border bg-card text-xs font-semibold hover:bg-secondary">
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-border bg-card text-xs font-semibold hover:bg-secondary"
+                    >
                       <MessageCircle className="size-3.5" /> Call to Inquire about this stone
                     </a>
                   ) : null}
@@ -98,7 +127,12 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
       </div>
 
       {generalLink ? (
-        <a href={generalLink} target="_blank" rel="noreferrer" className="fixed bottom-4 right-4 inline-flex h-12 items-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-black shadow-lg md:hidden">
+        <a
+          href={generalLink}
+          target="_blank"
+          rel="noreferrer"
+          className="fixed bottom-4 right-4 inline-flex h-12 items-center gap-2 rounded-full bg-whatsapp px-5 text-sm font-semibold text-black shadow-lg md:hidden"
+        >
           <MessageCircle className="size-4" /> Call to Inquire
         </a>
       ) : null}
@@ -106,7 +140,15 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
   );
 }
 
-function CategoryChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function CategoryChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"

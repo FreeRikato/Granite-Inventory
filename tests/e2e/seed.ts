@@ -1,11 +1,5 @@
 import { sql } from "../seam/harness";
 
-/* A small yard used by the browser specs: two Black Pearl 4x2 batches (one stale, one fresh),
-   one 5x3 batch and one Doom Stone batch.
-
-   Every date is an offset from private.ist_today(), the same calendar the app derives Age from.
-   Postgres runs in UTC, so current_date is a day behind IST between 18:30 and midnight UTC and
-   would make every age one larger than the specs expect. */
 export async function seedYard(): Promise<{ oldBatchId: string; newBatchId: string }> {
   await sql(`insert into public.suppliers (name) values ('Madurai Quarry') on conflict do nothing`);
   await sql(`insert into public.products (name, abbreviation, category) values

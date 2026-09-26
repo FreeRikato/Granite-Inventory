@@ -15,18 +15,12 @@ export async function updateSession(request: NextRequest) {
       setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         supabaseResponse = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
-        );
-        Object.entries(headers).forEach(([key, value]) =>
-          supabaseResponse.headers.set(key, value),
-        );
+        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        Object.entries(headers).forEach(([key, value]) => supabaseResponse.headers.set(key, value));
       },
     },
   });
 
-  // getClaims() validates the JWT and refreshes it when needed; nothing may run between
-  // creating the client and this call.
   const { data } = await supabase.auth.getClaims();
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));

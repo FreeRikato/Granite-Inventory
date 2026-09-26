@@ -1,0 +1,2 @@
+#!/bin/sh
+exec node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/comments.ts --staged

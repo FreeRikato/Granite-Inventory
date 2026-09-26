@@ -1,5 +1,3 @@
-/* Shared skeleton and error line for pages whose rows come from the browser cache. */
-
 export function ViewSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">

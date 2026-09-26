@@ -1,5 +1,3 @@
-/* Margin math mirrored from v_sales so the Sell form can show it live before saving.
-   Misc expense is tracked but never part of margin. */
 export type SaleFigures = {
   readonly quantity: number;
   readonly salePrice: number;
@@ -40,7 +38,6 @@ export function computeMargin(f: SaleFigures): MarginBreakdown {
   };
 }
 
-/* Green above 25 percent, red below 10, amber between (from the meeting brief). */
 export function marginHealth(pct: number | null): "good" | "ok" | "bad" | "none" {
   if (pct === null) return "none";
   if (pct > 25) return "good";

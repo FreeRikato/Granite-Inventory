@@ -18,6 +18,7 @@ The repo root is the app. Before starting any ticket, read in this order:
 4. `docs/tech_stack.md`: the stack
 5. `docs/local-dev.md`: how to run Supabase locally, env vars, how tests sign in, non-interactive CLI flags
 6. `docs/phase-1/spec.md` and `docs/phase-1/issues/`: the spec and the ticket you are implementing
+7. `docs/knowledge/`: the knowledge graph that explains the code; start at its README and read the notes for the area you touch
 
 Working rules:
 
@@ -26,5 +27,7 @@ Working rules:
 - No Postgres enum types; use text with check constraints. Store raw facts, derive in views.
 - Tests: Vitest against local Supabase for rules and RLS (primary seam); Playwright holds one thin flow per ticket (wiring, not rules) plus `capture.spec.ts`, a screenshot tool for design comparison that only runs with `CAPTURE=<dir>`.
 - Update `CONTEXT.md` and `docs/phase1_decisions.md` in the same commit whenever a rule changes.
+- No comments in code (TS, JS, SQL, CSS, shell). Put the why in the matching `docs/knowledge/` note and list the file under its `code:`; update notes in the same commit when the code they describe changes. The pre-commit hook refuses staged comments; `pnpm comments` checks the tree.
+- Before committing: `pnpm lint`, `pnpm format`, `pnpm typecheck`, `pnpm test`.
 - No em dashes anywhere. Match the existing code style.
 - Design tokens and screens come from the Pencil file; if the pencil MCP is available, use it to read exact values instead of guessing.

@@ -55,10 +55,6 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
-  /* A customer created from this form is selectable at once; the browser cache catches up on
-     its own refetch and then carries them too, so the merge de-duplicates by id. Saving against
-     an existing phone returns that customer, so the locally added copy wins over the cached one
-     rather than appearing twice. */
   const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
   const customers = useMemo(() => {
     const byId = new Map(initialCustomers.map((c) => [c.id, c]));
@@ -82,10 +78,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [error, setError] = useState<string | null>(null);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
-  const lineBatches = useMemo(
-    () => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []),
-    [batches, lineKey],
-  );
+  const lineBatches = useMemo(() => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []), [batches, lineKey]);
   const batch = lineBatches.find((b) => b.id === batchId) ?? null;
 
   const figures = computeMargin({
@@ -131,17 +124,30 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   }
 
   return (
-    <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+    <form
+      onSubmit={submit}
+      noValidate
+      className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
+    >
       <div className="flex min-w-0 flex-col gap-4">
         <Card>
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label="Sale Date" htmlFor="saleDate">
-              <Input id="saleDate" type="date" max={todayIso()} value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-11" />
+              <Input
+                id="saleDate"
+                type="date"
+                max={todayIso()}
+                value={saleDate}
+                onChange={(e) => setSaleDate(e.target.value)}
+                className="h-11"
+              />
             </Field>
             <Field label="Payment Mode">
               <div className="flex min-h-11 flex-wrap items-center gap-2" role="radiogroup" aria-label="Payment Mode">
                 {PAYMENT_MODES.map((m) => (
-                  <Chip key={m} active={paymentMode === m} onClick={() => setPaymentMode(m)}>{PAYMENT_MODE_LABEL[m]}</Chip>
+                  <Chip key={m} active={paymentMode === m} onClick={() => setPaymentMode(m)}>
+                    {PAYMENT_MODE_LABEL[m]}
+                  </Chip>
                 ))}
               </div>
             </Field>
@@ -168,13 +174,21 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               />
             </Field>
             <Field label="Contact Number" htmlFor="contact">
-              <Input id="contact" readOnly value={customer?.phone ?? ""} placeholder="+91 98765 43210" className="h-11 bg-muted" />
+              <Input
+                id="contact"
+                readOnly
+                value={customer?.phone ?? ""}
+                placeholder="+91 98765 43210"
+                className="h-11 bg-muted"
+              />
             </Field>
           </div>
           {customer && isCustomerType(customer.customer_type) ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {CUSTOMER_TYPES.map((t) => (
-                <Chip key={t} active={customer.customer_type === t} disabled>{CUSTOMER_TYPE_LABEL[t]}</Chip>
+                <Chip key={t} active={customer.customer_type === t} disabled>
+                  {CUSTOMER_TYPE_LABEL[t]}
+                </Chip>
               ))}
             </div>
           ) : null}
@@ -226,10 +240,12 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-semibold">
-                        {b.product_name} · {b.variant_name} · {b.batch_code} · {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
+                        {b.product_name} · {b.variant_name} · {b.batch_code} ·{" "}
+                        {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {b.available} available · from {b.supplier_name}
+                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {b.available} available · from{" "}
+                        {b.supplier_name}
                       </span>
                     </span>
                     <AgeingBadge band={b.ageing_band} days={b.age_days} />
@@ -243,13 +259,43 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         <Card>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Quantity Sold" htmlFor="quantity" hint={batch ? `${batch.available} available` : undefined}>
-              <Input id="quantity" type="number" inputMode="numeric" min="1" step="1" max={batch?.available ?? undefined} value={quantity} onChange={(e) => setQuantity(e.target.value)} className="h-11" />
+              <Input
+                id="quantity"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                step="1"
+                max={batch?.available ?? undefined}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="h-11"
+              />
             </Field>
             <Field label="Stone Sale Price (₹)" htmlFor="salePrice" hint="Per piece">
-              <Input id="salePrice" type="number" inputMode="decimal" min="0" step="1" placeholder="0" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="h-11" />
+              <Input
+                id="salePrice"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="1"
+                placeholder="0"
+                value={salePrice}
+                onChange={(e) => setSalePrice(e.target.value)}
+                className="h-11"
+              />
             </Field>
             <Field label="Misc Expense (₹)" htmlFor="miscExpense" hint="Not part of margin">
-              <Input id="miscExpense" type="number" inputMode="decimal" min="0" step="1" placeholder="0" value={miscExpense} onChange={(e) => setMiscExpense(e.target.value)} className="h-11" />
+              <Input
+                id="miscExpense"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="1"
+                placeholder="0"
+                value={miscExpense}
+                onChange={(e) => setMiscExpense(e.target.value)}
+                className="h-11"
+              />
             </Field>
           </div>
         </Card>
@@ -257,34 +303,73 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         <Card>
           <div className="flex items-center justify-between">
             <span className="text-[15px] font-bold">Add Stickering / Engraving Service</span>
-            <Switch checked={stickering} onCheckedChange={setStickering} aria-label="Add Stickering / Engraving Service" />
+            <Switch
+              checked={stickering}
+              onCheckedChange={setStickering}
+              aria-label="Add Stickering / Engraving Service"
+            />
           </div>
           {stickering ? (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Stickering Cost (₹)" htmlFor="stickeringCost" hint="Per piece, paid to the engraver">
-                <Input id="stickeringCost" type="number" inputMode="decimal" min="0" step="1" placeholder="0" value={stickeringCost} onChange={(e) => setStickeringCost(e.target.value)} className="h-11" />
+                <Input
+                  id="stickeringCost"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value={stickeringCost}
+                  onChange={(e) => setStickeringCost(e.target.value)}
+                  className="h-11"
+                />
               </Field>
               <Field label="Stickering Price (₹)" htmlFor="stickeringPrice" hint="Per piece, charged to the customer">
-                <Input id="stickeringPrice" type="number" inputMode="decimal" min="0" step="1" placeholder="0" value={stickeringPrice} onChange={(e) => setStickeringPrice(e.target.value)} className="h-11" />
+                <Input
+                  id="stickeringPrice"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value={stickeringPrice}
+                  onChange={(e) => setStickeringPrice(e.target.value)}
+                  className="h-11"
+                />
               </Field>
             </div>
           ) : null}
         </Card>
       </div>
 
-      <aside aria-label="Order summary" className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6" data-testid="order-summary">
+      <aside
+        aria-label="Order summary"
+        className="rounded-card bg-card p-6 shadow-sm lg:sticky lg:top-6"
+        data-testid="order-summary"
+      >
         <h2 className="text-base font-bold">Order Summary</h2>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <Row label="Stone Sale Price" value={formatRupees(figures.stoneTotal)} />
-          <Row label="Landed Cost (auto)" sub="From the batch, freight included" value={batch ? formatRupees(figures.landedTotal) : "Pick a batch"} muted />
+          <Row
+            label="Landed Cost (auto)"
+            sub="From the batch, freight included"
+            value={batch ? formatRupees(figures.landedTotal) : "Pick a batch"}
+            muted
+          />
           <Row label="Base Margin" value={formatRupees(figures.stoneMargin)} />
-          <Row label="Misc Expense" sub="Tracked separately, not part of margin" value={formatRupees(num(miscExpense))} />
+          <Row
+            label="Misc Expense"
+            sub="Tracked separately, not part of margin"
+            value={formatRupees(num(miscExpense))}
+          />
           {stickering ? <Row label="Stickering Margin" value={formatRupees(figures.stickeringMargin)} /> : null}
         </dl>
         <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
           <div>
             <div className="text-sm text-muted-foreground">Total Margin</div>
-            <div className="text-3xl font-bold tabular" data-testid="total-margin">{formatRupees(figures.margin)}</div>
+            <div className="text-3xl font-bold tabular" data-testid="total-margin">
+              {formatRupees(figures.margin)}
+            </div>
           </div>
           <span
             data-testid="margin-pct"
@@ -299,8 +384,16 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             {figures.marginPct === null || !batch ? "0%" : `${figures.marginPct.toFixed(1)}%`}
           </span>
         </div>
-        {error ? <Notice tone="error" icon="alert" className="mt-4">{error}</Notice> : null}
-        <Button type="submit" disabled={pending || !batch || !customer} className="mt-5 h-12 w-full text-base font-semibold">
+        {error ? (
+          <Notice tone="error" icon="alert" className="mt-4">
+            {error}
+          </Notice>
+        ) : null}
+        <Button
+          type="submit"
+          disabled={pending || !batch || !customer}
+          className="mt-5 h-12 w-full text-base font-semibold"
+        >
           {pending ? "Recording..." : "Record Sale"}
         </Button>
       </aside>
@@ -323,7 +416,17 @@ function Card({ children }: { children: React.ReactNode }) {
   return <section className="min-w-0 rounded-card bg-card p-5 shadow-sm">{children}</section>;
 }
 
-function Chip({ active, onClick, disabled, children }: { active: boolean; onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+function Chip({
+  active,
+  onClick,
+  disabled,
+  children,
+}: {
+  active: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"

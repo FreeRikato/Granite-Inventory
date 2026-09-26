@@ -32,8 +32,6 @@ export function YardView() {
   const isAdmin = useMember().role === "ADMIN";
   const hydrated = useHydrated();
   const batches = useQuery(yardBatchesQuery);
-  /* The edit lists are small and readable by every member; fetching them only for admins would
-     put the role check on the critical path for nothing. */
   const products = useQuery(productsQuery);
   const suppliers = useQuery(suppliersQuery);
 
@@ -45,27 +43,29 @@ export function YardView() {
   }
 
   const all: YardBatch[] = batches.data;
-  /* A deep link to a Stock Line (palette, stale panel) lands on that line's own slot. */
   const lineSlot = parsed.line && !raw.slot ? all.find((b) => b.line_key === parsed.line)?.slot : undefined;
   const query = isSlot(lineSlot) ? { ...parsed, slot: lineSlot } : parsed;
-  const editLists: EditLists | null = isAdmin ? { products: products.data ?? [], suppliers: suppliers.data ?? [] } : null;
+  const editLists: EditLists | null = isAdmin
+    ? { products: products.data ?? [], suppliers: suppliers.data ?? [] }
+    : null;
 
   const filtered = all.filter((b) => matchesFilters(b, query));
   const summaries = summariseSlots(filtered);
   const inSlot = filtered.filter((b) => b.slot === query.slot);
   const sizes = sizesIn(inSlot);
   const activeSize = query.size && sizes.includes(query.size) ? query.size : (sizes[0] ?? null);
-  const visible = sortBatches(
-    activeSize ? inSlot.filter((b) => sizeKey(b) === activeSize) : inSlot,
-    query.sort,
-  );
+  const visible = sortBatches(activeSize ? inSlot.filter((b) => sizeKey(b) === activeSize) : inSlot, query.sort);
 
   const productOptions = uniq(all.map((b) => [b.product_id ?? "", b.product_name ?? ""]));
   const variants = uniq(
-    all.filter((b) => !query.product || b.product_id === query.product).map((b) => [b.variant_id ?? "", b.variant_name ?? ""]),
+    all
+      .filter((b) => !query.product || b.product_id === query.product)
+      .map((b) => [b.variant_id ?? "", b.variant_name ?? ""]),
   );
   const supplierOptions = uniq(all.map((b) => [b.supplier_id ?? "", b.supplier_name ?? ""]));
-  const thicknesses = [...new Set(all.map((b) => b.thickness_mm).filter((t): t is number => t !== null))].sort((a, b) => a - b);
+  const thicknesses = [...new Set(all.map((b) => b.thickness_mm).filter((t): t is number => t !== null))].sort(
+    (a, b) => a - b,
+  );
 
   const href = (slot: string) => {
     const sp = new URLSearchParams(params);
@@ -94,7 +94,9 @@ export function YardView() {
               aria-selected={active}
               className={cn(
                 "inline-flex h-9 items-center gap-2 rounded-full border px-4 text-sm font-medium",
-                active ? "border-primary/40 bg-accent text-accent-foreground" : "border-border bg-card text-foreground hover:bg-secondary",
+                active
+                  ? "border-primary/40 bg-accent text-accent-foreground"
+                  : "border-border bg-card text-foreground hover:bg-secondary",
               )}
             >
               {SLOT_LABEL[slot]}
@@ -106,7 +108,13 @@ export function YardView() {
         })}
       </div>
 
-      <YardFilters query={query} products={productOptions} variants={variants} thicknesses={thicknesses} suppliers={supplierOptions} />
+      <YardFilters
+        query={query}
+        products={productOptions}
+        variants={variants}
+        thicknesses={thicknesses}
+        suppliers={supplierOptions}
+      />
 
       <section className="rounded-card bg-card/60 p-4 shadow-sm ring-1 ring-border md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -114,7 +122,8 @@ export function YardView() {
           <span className="flex items-baseline gap-3">
             <DataAge updatedAt={batches.dataUpdatedAt} fetching={batches.isFetching} />
             <span className="text-sm text-muted-foreground tabular">
-              {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} · {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} available
+              {inSlot.length} {inSlot.length === 1 ? "batch" : "batches"} ·{" "}
+              {inSlot.reduce((n, b) => n + (b.available ?? 0), 0)} available
             </span>
           </span>
         </div>
@@ -128,7 +137,9 @@ export function YardView() {
                 href={sizeHref(size)}
                 className={cn(
                   "inline-flex h-7 items-center rounded-full border px-3 text-xs font-medium",
-                  size === activeSize ? "border-primary/40 bg-accent text-accent-foreground" : "border-border bg-card hover:bg-secondary",
+                  size === activeSize
+                    ? "border-primary/40 bg-accent text-accent-foreground"
+                    : "border-border bg-card hover:bg-secondary",
                 )}
               >
                 {size}
@@ -140,7 +151,9 @@ export function YardView() {
         <div className="mt-4 flex flex-col gap-3">
           {visible.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              {all.length === 0 ? "No batches in the yard yet. Log a delivery to get started." : "Nothing matches these filters."}
+              {all.length === 0
+                ? "No batches in the yard yet. Log a delivery to get started."
+                : "Nothing matches these filters."}
             </p>
           ) : (
             visible.map((batch, i) => {
@@ -151,7 +164,10 @@ export function YardView() {
               return (
                 <div key={batch.id ?? batch.batch_code} className="flex flex-col gap-3">
                   {gap !== null ? <Clamp days={gap} /> : null}
-                  <BatchCard batch={batch} actions={editLists ? <BatchActions batch={batch} lists={editLists} /> : undefined} />
+                  <BatchCard
+                    batch={batch}
+                    actions={editLists ? <BatchActions batch={batch} lists={editLists} /> : undefined}
+                  />
                 </div>
               );
             })

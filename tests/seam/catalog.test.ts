@@ -27,9 +27,23 @@ describe("public catalog: v_public_catalog for anon", () => {
     await sql(`update public.settings set catalog_public = true`);
     const { data } = await anon.from("v_public_catalog").select("*");
     expect(data).toHaveLength(1);
-    expect(data?.[0]).toMatchObject({ product_name: "Black Pearl", variant_name: "Grade 1", available: 14, length_ft: 4 });
+    expect(data?.[0]).toMatchObject({
+      product_name: "Black Pearl",
+      variant_name: "Grade 1",
+      available: 14,
+      length_ft: 4,
+    });
     expect(Object.keys(data?.[0] ?? {}).sort()).toEqual(
-      ["available", "breadth_ft", "category", "length_ft", "line_key", "product_name", "thickness_mm", "variant_name"].sort(),
+      [
+        "available",
+        "breadth_ft",
+        "category",
+        "length_ft",
+        "line_key",
+        "product_name",
+        "thickness_mm",
+        "variant_name",
+      ].sort(),
     );
   });
 

@@ -1,8 +1,6 @@
 import type { BatchInput } from "@/lib/schemas/batch";
 import type { SaleInput } from "@/lib/schemas/sale";
 
-/* The create and correct functions take the same arguments; build them once. Omitted size
-   fields are undefined (not null) so PostgREST falls back to the SQL defaults. */
 export function batchRpcArgs(b: BatchInput) {
   return {
     p_product_id: b.productId,

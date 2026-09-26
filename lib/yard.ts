@@ -52,7 +52,6 @@ export function sizeKey(b: Pick<YardBatch, "length_ft" | "breadth_ft">): string 
   return formatDims(b.length_ft, b.breadth_ft);
 }
 
-/* Applies every filter except slot and size, which drive the tabs. */
 export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   if (!q.sold && b.sold_out) return false;
   if (q.product && b.product_id !== q.product) return false;
@@ -69,8 +68,6 @@ export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   return true;
 }
 
-/* Batches of one Stock Line stay together (so the Clamp sits between deliveries of the same
-   stone), lines ordered by their oldest batch, batches within a line by date. */
 export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"]): YardBatch[] {
   const dir = sort === "oldest" ? 1 : -1;
   const byDate = (a: YardBatch, b: YardBatch) => {
@@ -106,4 +103,3 @@ export function sizesIn(list: readonly YardBatch[]): string[] {
   }
   return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
 }
-

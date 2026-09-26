@@ -21,9 +21,6 @@ export { ensureTestUsers, resetDomainData };
 
 const PALETTE_INPUT = "Type a page, stone or customer...";
 
-/* Opens a ConfirmDelete and presses its confirm button. The trigger and the confirmation carry
-   the same label, so a click that lands before hydration leaves the second click hitting the
-   trigger again instead of confirming. */
 export async function confirmDelete(page: Page, trigger: Locator, label = "Delete"): Promise<void> {
   const dialog = page.getByRole("alertdialog");
   await baseExpect(async () => {
@@ -33,8 +30,6 @@ export async function confirmDelete(page: Page, trigger: Locator, label = "Delet
   await dialog.getByRole("button", { name: label, exact: true }).click();
 }
 
-/* Presses the palette shortcut until it opens. Same hydration guard as openDialog: a keypress
-   that lands before the client component hydrates is dropped silently. */
 export async function openPalette(page: Page): Promise<void> {
   await baseExpect(async () => {
     await page.keyboard.press("ControlOrMeta+k");
@@ -42,8 +37,6 @@ export async function openPalette(page: Page): Promise<void> {
   }).toPass({ timeout: 20_000 });
 }
 
-/* Clicks a trigger until its dialog shows. Guards against a click landing before hydration
-   on a cold dev server, which drops the handler silently. */
 export async function openDialog(page: Page, trigger: Locator): Promise<void> {
   await baseExpect(async () => {
     await trigger.click();

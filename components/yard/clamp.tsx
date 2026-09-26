@@ -1,6 +1,5 @@
 import { CalendarClock } from "lucide-react";
 
-/* The virtual yard clamp between two deliveries of the same Stock Line. */
 export function Clamp({ days }: { readonly days: number }) {
   return (
     <div className="flex items-center gap-3 py-1" data-testid="clamp">
