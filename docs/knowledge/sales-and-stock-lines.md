@@ -8,6 +8,8 @@ code:
   - app/(app)/customers/actions.ts
   - app/(app)/sell/sell-view.tsx
   - app/(app)/sell/sell-form.tsx
+  - app/(app)/customers/[id]/page.tsx
+  - tests/e2e/customers.spec.ts
 ---
 # Sales and Stock Lines
 
@@ -29,5 +31,7 @@ Every Batch sharing product, variant and size, seen as one sellable item. The Se
 ## Margin
 
 `v_sales` derives the money. Margin excludes misc expense by design: it is tracked but never part of margin. `lib/margin.ts` mirrors the same math so the Sell form can show margin live before saving. The colour is green above 25 percent, red below 10 and amber between, from the meeting brief.
+
+The customer page shows each sale's Margin % through `formatPercent`, one decimal like Sell Stone and the dashboard.
 
 Related: [[batches]], [[dashboard]].

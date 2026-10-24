@@ -19,12 +19,12 @@ export const saleSchema = z.object({
   customerId: z.string().uuid("Pick a customer"),
   saleDate: isoDate,
   quantity: positiveInteger("Sale quantity must be greater than zero"),
-  salePrice: money,
+  salePrice: money("Stone Sale Price"),
   paymentMode: z.enum(PAYMENT_MODES),
   hasStickering: z.boolean(),
-  stickeringCost: money.default(0),
-  stickeringPrice: money.default(0),
-  miscExpense: money.default(0),
+  stickeringCost: money("Stickering Cost").default(0),
+  stickeringPrice: money("Stickering Price").default(0),
+  miscExpense: money("Misc Expense").default(0),
   notes: z.string().trim().max(500).optional(),
 });
 

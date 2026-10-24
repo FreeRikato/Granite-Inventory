@@ -9,12 +9,13 @@ code:
   - tests/e2e/capture.spec.ts
   - tests/e2e/theme.spec.ts
   - tests/tooling/comments.test.ts
+  - tests/tooling/format.test.ts
 ---
 # Testing
 
 Two suites, both against the local Supabase. [docs/local-dev.md](../local-dev.md) covers setup.
 
-- **Seam (Vitest)** for rules and RLS, the primary seam. Every file talks to the same database, so files run one at a time and the run holds the shared-DB lock ([[worktrees]]). `tests/tooling` holds the pure unit tests for repo tooling and runs in the same suite.
+- **Seam (Vitest)** for rules and RLS, the primary seam. Every file talks to the same database, so files run one at a time and the run holds the shared-DB lock ([[worktrees]]). `tests/tooling` holds the pure unit tests for repo tooling and shared formatters and runs in the same suite.
 - **E2E (Playwright)** holds one thin flow per ticket (wiring, not rules). It runs desktop and mobile projects on this worktree's port, and holds the same lock.
 
 ## Seam harness

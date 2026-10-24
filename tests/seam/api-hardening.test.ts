@@ -40,7 +40,7 @@ describe("API hardening: readable validation and access errors", () => {
     const before = await operator.from("batches").select("id");
     const result = await createBatch(operator, { productId, supplierId, units: 0 });
 
-    expect(expectError(result).message).toMatch(/initial units.*greater than zero/i);
+    expect(expectError(result).message).toMatch(/unit quantity.*greater than zero/i);
     const batches = await operator.from("batches").select("id");
     expect(batches.data).toHaveLength(before.data?.length ?? 0);
   });
