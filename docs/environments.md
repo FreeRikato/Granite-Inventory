@@ -57,5 +57,26 @@ supabase link --project-ref tyiepanibaqwpubajsya
 supabase db reset --linked
 ```
 
-Never run that against production. Free projects also pause after seven days of inactivity,
-so staging usually needs a Restore click in the dashboard before a session.
+Never run that against production.
+
+## Keep-alive
+
+Free projects pause after seven days of inactivity, and a paused project stays down until
+someone clicks Restore in the dashboard. `.github/workflows/supabase-keep-alive.yml` reads one
+row of `v_public_business` from staging every day at 03:17 UTC, so it never goes idle long
+enough to pause. A request that reaches Postgres counts as activity; a ping that stops at the
+API gateway might not, which is why it reads a view instead of a health endpoint.
+
+It needs two repository secrets, the same values Vercel holds for Preview:
+
+```
+SUPABASE_STAGING_URL
+SUPABASE_STAGING_PUBLISHABLE_KEY
+```
+
+Prod joins once staging has proved it: add `PROD` to the job's `project` list and set
+`SUPABASE_PROD_URL` and `SUPABASE_PROD_PUBLISHABLE_KEY`.
+
+GitHub runs scheduled workflows only from the default branch (`main`), and turns them off in a
+public repo after 60 days without a commit. A failed run emails whoever last edited the
+workflow's schedule. Actions, then Supabase keep-alive, **Run workflow** runs it by hand.
