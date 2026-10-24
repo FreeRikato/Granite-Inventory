@@ -46,7 +46,7 @@ Verify: R signs in on the laptop and K approves the prompt.
 - [ ] As `kirthikgranite`: Settings, then Collaborators, **Add people**: `FreeRikato`. R accepts the invite as FreeRikato.
 - [ ] C: `git remote set-url origin git@github.com:kirthikgranite/Granite-Inventory.git`, then `git fetch`.
 
-Verify: `git fetch` works as FreeRikato, and the repo page shows Private.
+Verify: `git fetch` works as FreeRikato, and the repo page shows Private. Actions, then Supabase keep-alive, **Run workflow**: both jobs go green, which proves the four `SUPABASE_*` secrets moved with the repo.
 
 Rollback: `kirthikgranite` transfers the repo back to FreeRikato. GitHub keeps redirecting the old URL in the meantime, so nothing that points at it breaks.
 
@@ -121,7 +121,7 @@ Decided but not part of the call:
 
 Open decisions, to revisit before real daily use:
 
-2. **Supabase Pro ($25/month).** On Free, prod pauses after about a week without traffic, and a paused database means the app is down until someone clicks Restore. Pro never pauses and adds daily backups. The upgrade happens in the shop org's billing and needs no migration.
+2. **Supabase Pro ($25/month).** On Free, prod pauses after about a week without traffic, and a paused database means the app is down until someone clicks Restore. The daily keep-alive in `docs/environments.md` holds that off for free. Pro never pauses without it and adds daily backups. The upgrade happens in the shop org's billing and needs no migration.
 3. **Vercel Pro ($20/month).** Hobby is for non-commercial use under Vercel's terms, and it cannot hold team members. Upgrading the same account to Pro fixes both with no redeploy. Rikato can then join with their own login as Owner (the included seat) and K as Billing (free).
 
 ## What stays in Rikato's name
