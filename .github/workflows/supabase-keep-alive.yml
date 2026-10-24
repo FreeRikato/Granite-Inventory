@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [PROD, STAGING]
+        project: [STAGING]
     steps:
       - name: Read v_public_business
         env:

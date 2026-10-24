@@ -63,16 +63,19 @@ Never run that against production.
 
 Free projects pause after seven days of inactivity, and a paused project stays down until
 someone clicks Restore in the dashboard. `.github/workflows/supabase-keep-alive.yml` reads one
-row of `v_public_business` from prod and staging every day at 03:17 UTC, so neither project
-goes idle long enough to pause. A request that reaches Postgres counts as activity; a ping that
-stops at the API gateway might not, which is why it reads a view instead of a health endpoint.
+row of `v_public_business` from staging every day at 03:17 UTC, so it never goes idle long
+enough to pause. A request that reaches Postgres counts as activity; a ping that stops at the
+API gateway might not, which is why it reads a view instead of a health endpoint.
 
-It needs four repository secrets, the same values Vercel holds:
+It needs two repository secrets, the same values Vercel holds for Preview:
 
 ```
-SUPABASE_PROD_URL                  SUPABASE_STAGING_URL
-SUPABASE_PROD_PUBLISHABLE_KEY      SUPABASE_STAGING_PUBLISHABLE_KEY
+SUPABASE_STAGING_URL
+SUPABASE_STAGING_PUBLISHABLE_KEY
 ```
+
+Prod joins once staging has proved it: add `PROD` to the job's `project` list and set
+`SUPABASE_PROD_URL` and `SUPABASE_PROD_PUBLISHABLE_KEY`.
 
 GitHub runs scheduled workflows only from the default branch (`main`), and turns them off in a
 public repo after 60 days without a commit. A failed run emails whoever last edited the
