@@ -137,5 +137,8 @@ test("admin deletes an unreferenced supplier from the admin list", async ({ page
   await expect(row).toHaveCount(0);
 
   await page.reload();
+  await expect(
+    page.getByTestId("suppliers-row").filter({ hasText: "Madurai Quarry" }).locator("visible=true"),
+  ).toBeVisible();
   await expect(page.getByTestId("suppliers-row").filter({ hasText: "Unused Quarry" })).toHaveCount(0);
 });

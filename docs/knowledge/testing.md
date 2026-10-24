@@ -8,6 +8,7 @@ code:
   - tests/e2e/fixtures.ts
   - tests/e2e/capture.spec.ts
   - tests/e2e/theme.spec.ts
+  - tests/e2e/settings.spec.ts
   - tests/tooling/comments.test.ts
 ---
 # Testing
@@ -35,6 +36,8 @@ On a cold dev server, a click or keypress that lands before a client component h
 - `openPalette` presses the shortcut until the palette opens.
 - The theme spec clicks the toggle until the `html` class flips, since a single click is not enough to assert on.
 - `confirmDelete` needs the most care: the trigger and the confirmation carry the same label, so a click that lands before hydration leaves the second click hitting the trigger again instead of confirming.
+
+Right after a navigation or reload to a route with a `loading.tsx`, React streams the finished page into a hidden `<div hidden id="S:0">` before it swaps it in, so for about 150 ms every row exists twice, once hidden. A strict locator that matches one row then fails with a duplicate-match error in roughly a quarter of runs. Filter such locators with `.locator("visible=true")`, as the settings admin list and theme specs do.
 
 ## Not a test
 
