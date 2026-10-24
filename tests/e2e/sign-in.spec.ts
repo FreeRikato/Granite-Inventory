@@ -29,3 +29,14 @@ test("a team member lands on Overview inside the shell", async ({ page, signIn }
       .or(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Inward" })),
   ).toBeVisible();
 });
+
+test("Sign out in Settings ends the session and lands on the login page", async ({ page, signIn }) => {
+  await signIn("admin");
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/login$/);
+});

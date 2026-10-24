@@ -1,4 +1,4 @@
-import { expect, test, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, confirmDelete, openDialog, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -52,4 +52,42 @@ test("an existing phone selects that customer instead of creating a duplicate", 
   await page.getByRole("button", { name: "Add customer" }).click();
   await expect(page.getByText(/Murugan Constructions already has that phone number/)).toBeVisible();
   await expect(page.getByTestId("customer-row")).toHaveCount(2);
+});
+
+test("admin edits a customer from the detail page and the change persists", async ({ page, signIn }) => {
+  await signIn("admin");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan Constructions" }).click();
+  await expect(page.getByRole("heading", { name: "Murugan Constructions" })).toBeVisible();
+
+  await openDialog(page, page.getByRole("button", { name: "Edit", exact: true }));
+  await page.getByLabel("Name").fill("Murugan Builders");
+  await page.getByRole("radio", { name: "Trust" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Customer updated")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Murugan Builders" })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Murugan Builders" })).toBeVisible();
+  const [row] = await sql<{ name: string; customer_type: string }>(
+    `select name, customer_type from public.customers where name = 'Murugan Builders'`,
+  );
+  expect(row?.customer_type).toBe("TRUST");
+});
+
+test("admin deletes a customer with no sales and returns to the list", async ({ page, signIn }) => {
+  const [customer] = await sql<{ readonly id: string }>(
+    `insert into public.customers (name, customer_type) values ('Throwaway Customer', 'REGULAR') returning id`,
+  );
+  if (!customer) throw new Error("customer seed did not return an id");
+
+  await signIn("admin");
+  await page.goto(`/customers/${customer.id}`);
+  await expect(page.getByRole("heading", { name: "Throwaway Customer" })).toBeVisible();
+  await confirmDelete(page, page.getByRole("button", { name: "Delete" }));
+
+  await expect(page.getByText("Customer deleted")).toBeVisible();
+  await expect(page).toHaveURL(/\/customers$/);
+  await expect(page.getByTestId("customer-row").filter({ hasText: "Throwaway Customer" })).toHaveCount(0);
+  await expect(page.getByTestId("customer-row").filter({ hasText: "Murugan Constructions" })).toBeVisible();
 });

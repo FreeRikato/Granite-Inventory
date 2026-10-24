@@ -49,6 +49,23 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("₹1,450");
 });
 
+test("operator adds a new supplier inline and it is selected and saved", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/inward");
+
+  const supplier = page.getByRole("combobox", { name: "Supplier" });
+  await supplier.click();
+  await page.getByPlaceholder("Search suppliers...").fill("Salem Quarry");
+  await page.getByRole("option", { name: 'Add supplier "Salem Quarry"' }).click();
+  await expect(supplier).toHaveText("Salem Quarry");
+
+  const rows = await sql<{ name: string }>(`select name from public.suppliers where name = 'Salem Quarry'`);
+  expect(rows).toHaveLength(1);
+
+  await supplier.click();
+  await expect(page.getByRole("option", { name: "Salem Quarry" })).toBeVisible();
+});
+
 test("Save Batch waits for a positive size on granite and the click still refuses a zero", async ({ page, signIn }) => {
   await sql(`insert into public.products (name, abbreviation, category) values ('Jet Black', 'JB', 'GRANITE')`);
   await signIn("operator");
