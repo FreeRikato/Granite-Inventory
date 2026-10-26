@@ -30,7 +30,7 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
       if (category && l.category !== category) return false;
       if (!q) return true;
       const size = formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
-      return `${l.product_name} ${l.variant_name} ${size} ${l.thickness_mm ?? ""}mm`.toLowerCase().includes(q);
+      return `${l.product_name} ${size} ${l.thickness_mm ?? ""}mm`.toLowerCase().includes(q);
     });
   }, [lines, query, category]);
 
@@ -104,7 +104,7 @@ export function CatalogView({ businessName, tagline, whatsappNumber, lines }: Pr
                   : formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm });
               const link = whatsappLink(
                 whatsappNumber,
-                `Hi ${businessName}, is ${l.product_name} ${l.variant_name} (${size}) available? I saw ${l.available} in stock.`,
+                `Hi ${businessName}, is ${l.product_name} (${size}) available? I saw ${l.available} in stock.`,
               );
               return (
                 <div key={l.line_key} className="flex flex-col gap-2">

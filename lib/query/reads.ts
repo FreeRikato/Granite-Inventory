@@ -39,14 +39,6 @@ export const productsQuery = queryOptions({
     ),
 });
 
-export const variantsQuery = queryOptions({
-  queryKey: ["variants"],
-  queryFn: () =>
-    rows<Pick<Tables<"variants">, "id" | "product_id" | "name">>(
-      createClient().from("variants").select("id, product_id, name").order("name"),
-    ),
-});
-
 export const suppliersQuery = queryOptions({
   queryKey: ["suppliers"],
   queryFn: () =>

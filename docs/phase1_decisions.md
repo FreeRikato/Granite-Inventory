@@ -16,8 +16,8 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 ## Stock model
 
-- Product > Variant > Batch. Variant carries grade or finish only; Size (L ft, B ft, T mm) lives on the Batch.
-- Size is required for Granite and Tiles, null for Memorial. Grouping treats null Size as one group per Variant.
+- Product > Variant > Batch in storage, but Variant is hidden from every screen. New Batches get the Product's "Standard" Variant; older Variants stay stored. Stock Lines, Clamps and the Public Catalog group by Product and Size only, so stock that differs only by Variant reads as one line. Size (L ft, B ft, T mm) lives on the Batch.
+- Size is required for Granite and Tiles, null for Memorial. Grouping treats null Size as one group per Product.
 - Slot is a stored enum (4FT, 5FT, DOOM, CUSTOM), defaulted by rule and overridable in the inward form:
   - Memorial → DOOM
   - 4 ≤ length < 5 → 4FT
@@ -26,7 +26,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Batch Code format `{PRODUCT_ABBR}-{DDMON}{YY}-{seq}` (e.g. `BP-07SEP26-01`). Abbreviation stored on Product, unique, auto-suggested from initials and editable. Sequence resets per product per day. Generated inside the insert function. Purchase dates before 2000-01-01 are refused so the two-digit year remains unambiguous for the supported history.
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.
-- Products, Variants, Suppliers and Customers are created inline from the inward and sell forms. A minimal admin list allows rename; delete only when nothing references the row (FK restrict). No merge tool.
+- Products, Suppliers and Customers are created from the inward and sell forms, through the Add button beside each select or the select's inline Add row. A minimal admin list of Products and Suppliers allows rename; delete only when no Batch references the row (FK restrict). Deleting a Product removes its unused Variants with it. No merge tool.
 - Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone. The Walk-in Customer flag is immutable for every role.
 
 ## Selling
@@ -76,13 +76,13 @@ This is the first iteration after one rough call with the client. Expect heavy c
 | MTD Margin | SUM(margin) for the month; % = margin / MTD Revenue |
 | vs last month | Active stock now vs Active stock at the last day of the previous month, computed as bought-before minus sold-before that date |
 | Stock status donut | All-time: SUM(available) vs SUM(units sold) |
-| Fast vs slow moving | Units sold in the last 90 days grouped by L × B (thickness ignored), top 5 descending. Memorial shown as one bar per Variant. |
+| Fast vs slow moving | Units sold in the last 90 days grouped by L × B (thickness ignored), top 5 descending. Memorial shown as one bar per Product. |
 | Stale stock panel | Batches in the Stale band with Available > 0, oldest first, top 4, link to Yard filtered by Stale |
 
 ## Yard view
 
 - Tabs per Slot; inside a Slot, sub-tabs per L × B; Batches oldest first (Newest first as the only alternative sort).
-- Filters: search text, Product, Variant, Thickness, Supplier, Age.
+- Filters: search text, Product, Thickness, Supplier, Age.
 - Sold Out Batches hidden by default, "Show sold out" toggle.
 - Within a size group, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
 - `/yard?line=<line_key>` deep-links to one Stock Line and lands on its slot; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.

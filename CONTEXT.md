@@ -11,15 +11,15 @@ A stone material, such as Black Pearl, Jet Black, G20 or Doom Stone. Belongs to 
 _Avoid_: Material, stone type, item
 
 **Variant**:
-A grade, finish or quality of a Product, such as Grade 1 or Mirror Polish. A Variant has no dimensions; dimensions belong to the Batch.
+A grade, finish or quality of a Product, such as Grade 1 or Mirror Polish. A Variant has no dimensions; dimensions belong to the Batch. Hidden from every screen: new Batches get the Product's "Standard" Variant, and older Variants stay stored but are never shown or used for grouping.
 _Avoid_: Quality, SKU, grade (as a noun)
 
 **Batch**:
-A single purchase of one Variant in one size, received on one date from one Supplier. Batches are never merged, even when product, variant and size match an existing Batch.
+A single purchase of one Product in one size, received on one date from one Supplier. Batches are never merged, even when product and size match an existing Batch.
 _Avoid_: Lot, stock line, purchase
 
 **Stock Line**:
-All Batches sharing one Product, Variant and Size, seen as a single sellable item. What the Sell form searches and what the Public Catalog lists. Not stored; derived from Batches.
+All Batches sharing one Product and Size, seen as a single sellable item. What the Sell form searches and what the Public Catalog lists. Not stored; derived from Batches.
 _Avoid_: SKU, item, product line
 
 **Batch Code**:
@@ -103,7 +103,7 @@ _Avoid_: Seller, vendor
 ### Public
 
 **Public Catalog**:
-The unauthenticated page listing every Stock Line with Available above zero: product, variant, size and exact count. Never shows prices, costs, suppliers, batches or dates. Can be switched off by the Admin.
+The unauthenticated page listing every Stock Line with Available above zero: product, size and exact count. Never shows prices, costs, suppliers, batches or dates. Can be switched off by the Admin.
 _Avoid_: Public view, stock view, storefront
 
 **Inquiry**:
@@ -124,7 +124,7 @@ Per Sale: (Sale Price − Landed Cost) × quantity, plus (Stickering Price − S
 _Avoid_: Profit, markup
 
 **Size**:
-Length and breadth in feet plus thickness in millimetres of every piece in a Batch. Required for Granite and Tiles; absent for Memorial, whose Variant name already carries the shape.
+Length and breadth in feet plus thickness in millimetres of every piece in a Batch. Required for Granite and Tiles; absent for Memorial, which is tracked by unit count.
 _Avoid_: Dimension (alone), spec
 
 **Slot**:

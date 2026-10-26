@@ -2,7 +2,6 @@ import { formatSize, pluralUnits } from "@/lib/format";
 
 type Line = {
   readonly product_name: string | null;
-  readonly variant_name: string | null;
   readonly category: string | null;
   readonly length_ft: number | null;
   readonly breadth_ft: number | null;
@@ -21,7 +20,7 @@ function swatch(name: string): string {
 }
 
 export function StoneTile({ line, compact }: { readonly line: Line; readonly compact?: boolean }) {
-  const name = `${line.product_name ?? ""}${line.variant_name ? ` · ${line.variant_name}` : ""}`;
+  const name = line.product_name ?? "";
   return (
     <article className="rounded-card border border-border bg-card p-3 shadow-sm" data-testid="catalog-tile">
       <div

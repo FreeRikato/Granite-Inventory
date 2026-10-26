@@ -136,9 +136,7 @@ export function OverviewView() {
                     {b.product_abbreviation}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm font-semibold">
-                      {b.product_name} · {b.variant_name}
-                    </span>
+                    <span className="truncate text-sm font-semibold">{b.product_name}</span>
                     <span className="text-xs text-muted-foreground">
                       {b.batch_code} ·{" "}
                       {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })} ·{" "}

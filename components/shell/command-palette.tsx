@@ -12,15 +12,7 @@ import type { Tables } from "@/lib/database.types";
 
 type Line = Pick<
   Tables<"v_stock_lines">,
-  | "line_key"
-  | "product_name"
-  | "variant_name"
-  | "variant_id"
-  | "length_ft"
-  | "breadth_ft"
-  | "thickness_mm"
-  | "available"
-  | "category"
+  "line_key" | "product_name" | "length_ft" | "breadth_ft" | "thickness_mm" | "available" | "category"
 >;
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone">;
 
@@ -44,9 +36,7 @@ export function CommandPalette() {
       void Promise.all([
         supabase
           .from("v_stock_lines")
-          .select(
-            "line_key, product_name, variant_name, variant_id, length_ft, breadth_ft, thickness_mm, available, category",
-          )
+          .select("line_key, product_name, length_ft, breadth_ft, thickness_mm, available, category")
           .gt("available", 0)
           .order("product_name"),
         supabase.from("customers").select("id, name, phone").order("name"),
@@ -125,15 +115,9 @@ export function CommandPalette() {
                   });
                   const href = `/yard?line=${encodeURIComponent(l.line_key ?? "")}`;
                   return (
-                    <CommandItem
-                      key={l.line_key}
-                      value={`stone ${l.product_name} ${l.variant_name} ${size}`}
-                      onSelect={() => go(href)}
-                    >
+                    <CommandItem key={l.line_key} value={`stone ${l.product_name} ${size}`} onSelect={() => go(href)}>
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate">
-                          {l.product_name} · {l.variant_name}
-                        </span>
+                        <span className="truncate">{l.product_name}</span>
                         <span className="text-xs text-muted-foreground">
                           {size} · {l.available} available
                         </span>

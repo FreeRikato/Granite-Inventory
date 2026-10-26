@@ -20,7 +20,7 @@ Admin-only edits and deletes of Batches and Sales that keep Available consistent
 - Editing a sale locks both batches (old and new) in a fixed order, so two corrections cannot deadlock. It gives the old pieces back first, then takes the new quantity from the possibly same batch.
 - A sale keeps the landed-cost snapshot it was recorded at. The snapshot moves only when the sale moves to another batch.
 - A Batch cannot be deleted while it has sales; the database refuses, so the yard card simply hides Delete in that case.
-- Products, Variants and Suppliers (the three lists that grow from the Inward form) can be renamed in Settings. Deleting one is refused by the database while Batches reference it.
+- Products and Suppliers (the lists that grow from the Inward form) can be renamed in Settings. Deleting one is refused by the database while Batches reference it. Variants are hidden ([[batches]]), so they have no list.
 
 ## Validation order
 

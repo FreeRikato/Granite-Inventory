@@ -57,7 +57,6 @@ export function YardView() {
   const filtering = Boolean(
     query.q ||
     query.product ||
-    query.variant ||
     query.thickness !== null ||
     query.supplier ||
     query.age !== null ||
@@ -67,11 +66,6 @@ export function YardView() {
   const visible = sortBatches(activeSize ? inSlot.filter((b) => sizeKey(b) === activeSize) : inSlot, query.sort);
 
   const productOptions = uniq(all.map((b) => [b.product_id ?? "", b.product_name ?? ""]));
-  const variants = uniq(
-    all
-      .filter((b) => !query.product || b.product_id === query.product)
-      .map((b) => [b.variant_id ?? "", b.variant_name ?? ""]),
-  );
   const supplierOptions = uniq(all.map((b) => [b.supplier_id ?? "", b.supplier_name ?? ""]));
   const thicknesses = [...new Set(all.map((b) => b.thickness_mm).filter((t): t is number => t !== null))].sort(
     (a, b) => a - b,
@@ -118,13 +112,7 @@ export function YardView() {
         })}
       </div>
 
-      <YardFilters
-        query={query}
-        products={productOptions}
-        variants={variants}
-        thicknesses={thicknesses}
-        suppliers={supplierOptions}
-      />
+      <YardFilters query={query} products={productOptions} thicknesses={thicknesses} suppliers={supplierOptions} />
 
       <section className="rounded-card bg-card/60 p-4 shadow-sm ring-1 ring-border md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

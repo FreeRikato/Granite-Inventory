@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,10 @@ import { createClient } from "@/lib/supabase/client";
 import { createProductAction, createSupplierAction, saveBatchAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
-type Variant = { id: string; product_id: string; name: string };
 type Supplier = { id: string; name: string };
 
 type Props = {
   readonly products: readonly Product[];
-  readonly variants: readonly Variant[];
   readonly suppliers: readonly Supplier[];
 };
 
@@ -41,7 +39,6 @@ type FormState = {
   purchaseDate: string;
   supplierId: string | null;
   productId: string | null;
-  variantName: string;
   lengthFt: string;
   breadthFt: string;
   thicknessMm: string;
@@ -55,7 +52,6 @@ const EMPTY: FormState = {
   purchaseDate: todayIso(),
   supplierId: null,
   productId: null,
-  variantName: "",
   lengthFt: "",
   breadthFt: "",
   thicknessMm: "16",
@@ -65,18 +61,13 @@ const EMPTY: FormState = {
   freightCost: "",
 };
 
-export function InwardForm({
-  products: initialProducts,
-  variants: initialVariants,
-  suppliers: initialSuppliers,
-}: Props) {
+export function InwardForm({ products: initialProducts, suppliers: initialSuppliers }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
   const { error, refuse, clear } = useRefusal(form);
   const [products, setProducts] = useState(initialProducts);
   const [suppliers, setSuppliers] = useState(initialSuppliers);
-  const [variants] = useState(initialVariants);
   const [newProduct, setNewProduct] = useState<{ name: string; abbreviation: string; category: Category } | null>(null);
   const [newSupplier, setNewSupplier] = useState<{ name: string; phone: string } | null>(null);
   const [codePreview, setCodePreview] = useState<string | null>(null);
@@ -88,18 +79,6 @@ export function InwardForm({
   const suggested = category ? suggestSlot(category, Number.isFinite(lengthNumber) ? lengthNumber : null) : null;
   const slot = form.slot ?? suggested;
   const hasSize = memorial || (lengthNumber > 0 && Number.parseFloat(form.breadthFt) > 0);
-
-  const existingVariantOptions = useMemo(() => {
-    return variants.filter((v) => v.product_id === form.productId).map((v) => ({ value: v.name, label: v.name }));
-  }, [form.productId, variants]);
-  const typedVariantName = form.variantName.trim();
-  const variantExists =
-    Boolean(typedVariantName) &&
-    existingVariantOptions.some((option) => option.value.toLowerCase() === typedVariantName.toLowerCase());
-  const variantOptions = useMemo(() => {
-    if (!typedVariantName || variantExists) return existingVariantOptions;
-    return [...existingVariantOptions, { value: typedVariantName, label: typedVariantName }];
-  }, [existingVariantOptions, typedVariantName, variantExists]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -123,7 +102,6 @@ export function InwardForm({
     startTransition(async () => {
       const result = await saveBatchAction({
         productId: form.productId,
-        variantName: form.variantName,
         supplierId: form.supplierId,
         purchaseDate: form.purchaseDate,
         slot,
@@ -219,7 +197,6 @@ export function InwardForm({
               onChange={(v) => {
                 set("productId", v);
                 set("slot", null);
-                set("variantName", "");
               }}
               placeholder="Select or add product"
               searchPlaceholder="Search products..."
@@ -233,27 +210,7 @@ export function InwardForm({
             />
           </div>
         </Field>
-        <Field label="Variant Name" htmlFor="variantName">
-          <SearchSelect
-            id="variantName"
-            options={variantOptions}
-            value={form.variantName || null}
-            onChange={(v) => set("variantName", v)}
-            placeholder={form.productId ? "Select or add variant" : "Pick a product first"}
-            searchPlaceholder="Search variants..."
-            emptyText="No existing variant matches."
-            onCreate={(name) => set("variantName", name)}
-            createLabel={(name) => `Add variant "${name}"`}
-            disabled={!form.productId}
-          />
-        </Field>
       </div>
-
-      {variantExists ? (
-        <Notice tone="accent" icon="alert" className="mt-4">
-          Existing variant found. This purchase becomes a new batch, never merged with existing stock.
-        </Notice>
-      ) : null}
 
       {memorial ? (
         <Notice tone="accent" className="mt-4">

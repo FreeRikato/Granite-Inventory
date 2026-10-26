@@ -28,7 +28,6 @@ type BatchOption = Pick<
   | "available"
   | "purchase_date"
   | "product_name"
-  | "variant_name"
   | "length_ft"
   | "breadth_ft"
   | "thickness_mm"
@@ -190,7 +189,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
             className="h-9"
             options={options.map((b) => ({
               value: b.id ?? "",
-              label: `${b.batch_code} · ${b.product_name} ${b.variant_name}`,
+              label: `${b.batch_code} · ${b.product_name}`,
               hint: `${formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })} · bought ${b.purchase_date ? formatDate(b.purchase_date) : ""} · ${b.available} available`,
             }))}
             value={form.batchId}

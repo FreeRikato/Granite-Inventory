@@ -138,13 +138,6 @@ export type Database = {
             foreignKeyName: "batches_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
-            referencedRelation: "v_stock_lines"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "batches_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
             referencedRelation: "v_yard_batches"
             referencedColumns: ["variant_id"]
           },
@@ -588,7 +581,6 @@ export type Database = {
           line_key: string | null
           product_name: string | null
           thickness_mm: number | null
-          variant_name: string | null
         }
         Relationships: []
       }
@@ -650,8 +642,6 @@ export type Database = {
           product_id: string | null
           product_name: string | null
           thickness_mm: number | null
-          variant_id: string | null
-          variant_name: string | null
         }
         Relationships: []
       }

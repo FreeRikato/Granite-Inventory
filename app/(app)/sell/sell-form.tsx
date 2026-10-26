@@ -216,12 +216,12 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         </Card>
 
         <Card>
-          <Field label="Product / Variant" htmlFor="line">
+          <Field label="Product" htmlFor="line">
             <SearchSelect
               id="line"
               options={lines.map((l) => ({
                 value: l.line_key ?? "",
-                label: `${l.product_name} · ${l.variant_name} · ${formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm })}`,
+                label: `${l.product_name} · ${formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm })}`,
                 hint: `${l.available} available in ${l.batches_with_stock} ${l.batches_with_stock === 1 ? "batch" : "batches"}`,
                 keywords: [l.product_abbreviation ?? "", `${l.length_ft ?? ""}x${l.breadth_ft ?? ""}`],
               }))}
@@ -231,7 +231,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 setBatchId(batches.find((b) => b.line_key === v)?.id ?? null);
               }}
               placeholder="Search product, e.g. Black Pearl 4×2 ft"
-              searchPlaceholder="Product, variant or size..."
+              searchPlaceholder="Product or size..."
               emptyText="Nothing in stock matches."
             />
           </Field>
@@ -261,7 +261,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-semibold">
-                        {b.product_name} · {b.variant_name} · {b.batch_code} ·{" "}
+                        {b.product_name} · {b.batch_code} ·{" "}
                         {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                       </span>
                       <span className="text-xs text-muted-foreground">

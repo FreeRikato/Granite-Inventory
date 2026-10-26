@@ -2,6 +2,8 @@
 code:
   - supabase/migrations/20260911100000_stock.sql
   - supabase/migrations/20260926165731_api_observations.sql
+  - supabase/migrations/20261026184634_stock_line_without_variant.sql
+  - lib/schemas/batch.ts
   - lib/domain.ts
   - lib/rpc-args.ts
   - app/(app)/inward/inward-form.tsx
@@ -10,7 +12,7 @@ code:
 ---
 # Batches
 
-Products, Variants, Suppliers and Batches arrive through the Inward form and `create_batch`. Categorical columns are text with check constraints, not enums, so values can change cheaply; `lib/domain.ts` holds the same vocabulary as TypeScript and its values must match those constraints.
+Products, Suppliers and Batches arrive through the Inward form and `create_batch`. Categorical columns are text with check constraints, not enums, so values can change cheaply; `lib/domain.ts` holds the same vocabulary as TypeScript and its values must match those constraints.
 
 ## Batch Code
 
@@ -26,9 +28,11 @@ The code is written on the physical stack, so [[corrections]] never change it.
 - The Inward form keeps Save Batch disabled for Granite until length and breadth are filled, the same way it waits for a supplier. A zero thickness deliberately keeps the button enabled, so the click shows which field is wrong.
 - `suggest_slot()` picks the yard slot from category and length: Memorial goes to DOOM, 4 to 5 ft to 4FT, 5 to 6 ft to 5FT, anything else to CUSTOM. `lib/domain.ts` mirrors it so the form can preview the slot before saving.
 
-## Variants on the fly
+## Hidden Variants
 
-`create_batch` finds or creates the Variant by name. Two operators typing the same new name at once both land on the single row, thanks to the conflict clause on the case-insensitive index.
+Variant is hidden from every screen but still stored, so the RPCs keep their `p_variant_name` argument. `lib/schemas/batch.ts` defaults it to `DEFAULT_VARIANT` ("Standard"), so a new Batch lands on its Product's Standard Variant. `create_batch` finds or creates the Variant by name; two saves creating the same name at once both land on the single row, thanks to the conflict clause on the case-insensitive index. The Edit dialog sends the Batch's own Variant back while the Product is unchanged, so a correction never moves old stock off "Grade 1"; moving a Batch to another Product puts it on that Product's Standard Variant.
+
+The views group by Product and Size, never by Variant, so old and new stock of one size read as one Stock Line (`20261026184634_stock_line_without_variant.sql`). The same migration makes `variants.product_id` cascade, so deleting a Product with no Batches also removes Variants nobody can see any more.
 
 ## RPC arguments
 

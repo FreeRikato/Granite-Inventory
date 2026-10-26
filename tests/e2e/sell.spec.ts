@@ -32,9 +32,9 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await page.getByRole("option", { name: /Murugan Constructions/ }).click();
   await expect(page.getByLabel("Contact Number")).toHaveValue("+91 98765 43210");
 
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByPlaceholder("Product, variant or size...").fill("black pearl");
-  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByPlaceholder("Product or size...").fill("black pearl");
+  await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
 
   const fifo = page.getByTestId("fifo-batch");
   await expect(fifo).toHaveCount(2);
@@ -68,8 +68,8 @@ test("choosing a stock line selects its oldest batch and enables Record Sale", a
 
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByRole("option", { name: /Walk-in Customer/ }).click();
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
 
   const fifo = page.getByTestId("fifo-batch");
   await expect(fifo.nth(0)).toHaveAttribute("aria-checked", "true");
@@ -81,13 +81,13 @@ test("switching stock lines moves the default to the new line's oldest batch", a
   await signIn("operator");
   await page.goto("/sell");
 
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
   await expect(page.getByTestId("fifo-batch").nth(0)).toHaveAttribute("aria-checked", "true");
 
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByPlaceholder("Product, variant or size...").fill("Jet Black");
-  await page.getByRole("option", { name: /Jet Black · Premium · 5×3 ft, 20mm/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByPlaceholder("Product or size...").fill("Jet Black");
+  await page.getByRole("option", { name: /Jet Black · 5×3 ft, 20mm/ }).click();
 
   const fifo = page.getByTestId("fifo-batch");
   await expect(fifo).toHaveCount(1);
@@ -114,8 +114,8 @@ test("selling more than available is refused by the database", async ({ page, si
   await page.goto("/sell");
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByRole("option", { name: /Walk-in Customer/ }).click();
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByRole("option", { name: /Jet Black · Premium/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: /Jet Black · 5×3 ft/ }).click();
   await page.getByTestId("fifo-batch").first().click();
   await page.getByLabel("Quantity Sold").fill("7");
   await page.getByLabel("Stone Sale Price (₹)").fill("2600");
@@ -172,8 +172,8 @@ test("a refusal clears as soon as the quantity is fixed", async ({ page, signIn 
   await page.goto("/sell");
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByRole("option", { name: /Walk-in Customer/ }).click();
-  await page.getByRole("combobox", { name: "Product / Variant" }).click();
-  await page.getByRole("option", { name: /Black Pearl · Grade 1/ }).click();
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: /Black Pearl · 4×2 ft/ }).click();
   await page.getByTestId("fifo-batch").first().click();
   await page.getByLabel("Stone Sale Price (₹)").fill("1650");
 

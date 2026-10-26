@@ -36,9 +36,7 @@ export function RecentBatches({ batches, editLists }: Props) {
               {batches.map((b) => (
                 <tr key={b.id ?? b.batch_code} className="group border-t border-border" data-testid="batch-row">
                   <td className="py-2.5 pr-4 font-mono text-xs">{b.batch_code}</td>
-                  <td className="py-2.5 pr-4 font-medium">
-                    {b.product_name} · {b.variant_name}
-                  </td>
+                  <td className="py-2.5 pr-4 font-medium">{b.product_name}</td>
                   <td className="py-2.5 pr-4">
                     {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                   </td>

@@ -45,22 +45,13 @@ test("showing sold-out batches exposes a Sold out marker", async ({ page, signIn
   await expect(card.getByText("Sold out", { exact: true })).toBeVisible();
 });
 
-test("yard filter controls keep product, variant, thickness, supplier, age band, and sort wired", async ({
-  page,
-  signIn,
-}) => {
+test("yard filter controls keep product, thickness, supplier, age band, and sort wired", async ({ page, signIn }) => {
   await signIn("operator");
   const cards = page.getByTestId("yard-batch");
 
   await page.goto("/yard?slot=5FT");
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: "Jet Black", exact: true }).click();
-  await expect(cards).toHaveCount(1);
-  await expect(cards).toHaveAttribute("data-batch-code", "JB-FIVE-01");
-
-  await page.goto("/yard?slot=5FT");
-  await page.getByRole("combobox", { name: "Variant" }).click();
-  await page.getByRole("option", { name: "Premium", exact: true }).click();
   await expect(cards).toHaveCount(1);
   await expect(cards).toHaveAttribute("data-batch-code", "JB-FIVE-01");
 

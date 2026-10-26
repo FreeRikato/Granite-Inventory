@@ -48,7 +48,7 @@ test.describe("client reads", () => {
 
     await page.getByRole("link", { name: "Sell Stone" }).click();
     await expect(page.getByRole("heading", { name: "Sell Stone" })).toBeVisible();
-    await page.getByRole("combobox", { name: "Product / Variant" }).click();
+    await page.getByRole("combobox", { name: "Product" }).click();
     await expect(page.getByRole("option", { name: /Black Pearl/ }).first()).toBeVisible();
 
     expect(await net.serverPayloads()).not.toContain("BP-OLD-01");
@@ -69,9 +69,9 @@ test.describe("client reads", () => {
     await page.getByRole("combobox", { name: "Customer" }).click();
     await page.getByPlaceholder("Name or phone...").fill("98765");
     await page.getByRole("option", { name: /Murugan Constructions/ }).click();
-    await page.getByRole("combobox", { name: "Product / Variant" }).click();
-    await page.getByPlaceholder("Product, variant or size...").fill("black pearl");
-    await page.getByRole("option", { name: /Black Pearl · Grade 1 · 4×2 ft, 16mm/ }).click();
+    await page.getByRole("combobox", { name: "Product" }).click();
+    await page.getByPlaceholder("Product or size...").fill("black pearl");
+    await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
     await page.getByTestId("fifo-batch").nth(0).click();
     await page.getByLabel("Quantity Sold").fill("1");
     await page.getByLabel("Stone Sale Price (₹)").fill("1650");

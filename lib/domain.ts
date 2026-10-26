@@ -1,3 +1,5 @@
+export const DEFAULT_VARIANT = "Standard";
+
 export const CATEGORIES = ["GRANITE", "MEMORIAL", "TILES"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export const CATEGORY_LABEL: Record<Category, string> = {

@@ -9,7 +9,6 @@ export type YardQuery = {
   readonly size: string | null;
   readonly q: string;
   readonly product: string | null;
-  readonly variant: string | null;
   readonly thickness: number | null;
   readonly supplier: string | null;
   readonly age: AgeFilter | null;
@@ -37,7 +36,6 @@ export function parseYardQuery(raw: Raw): YardQuery {
     size: one(raw, "size"),
     q: one(raw, "q") ?? "",
     product: one(raw, "product"),
-    variant: one(raw, "variant"),
     thickness: thickness ? Number.parseInt(thickness, 10) : null,
     supplier: one(raw, "supplier"),
     age: ageNumber !== null && isAgeFilter(ageNumber) ? ageNumber : null,
@@ -55,14 +53,13 @@ export function sizeKey(b: Pick<YardBatch, "length_ft" | "breadth_ft">): string 
 export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   if (!q.sold && b.sold_out) return false;
   if (q.product && b.product_id !== q.product) return false;
-  if (q.variant && b.variant_id !== q.variant) return false;
   if (q.thickness !== null && b.thickness_mm !== q.thickness) return false;
   if (q.supplier && b.supplier_id !== q.supplier) return false;
   if (q.age !== null && (b.age_days ?? 0) <= q.age) return false;
   if (q.band && b.ageing_band !== q.band) return false;
   if (q.line && b.line_key !== q.line) return false;
   if (q.q) {
-    const hay = `${b.product_name} ${b.variant_name} ${b.supplier_name} ${b.batch_code}`.toLowerCase();
+    const hay = `${b.product_name} ${b.supplier_name} ${b.batch_code}`.toLowerCase();
     if (!hay.includes(q.q.toLowerCase())) return false;
   }
   return true;

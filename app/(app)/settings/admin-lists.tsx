@@ -13,31 +13,28 @@ import {
   referencesForTable,
   type AdminListTable,
   type BatchReference,
-  type VariantReference,
 } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
 import { deleteRowAction, renameRowAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
-type Variant = VariantReference;
 type Supplier = { id: string; name: string };
 
 type Props = {
   readonly products: readonly Product[];
-  readonly variants: readonly Variant[];
   readonly suppliers: readonly Supplier[];
   readonly batchReferences: readonly BatchReference[];
 };
 
-export function AdminLists({ products, variants, suppliers, batchReferences }: Props) {
+export function AdminLists({ products, suppliers, batchReferences }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
-      <h2 className="text-base font-bold">Products, variants and suppliers</h2>
+      <h2 className="text-base font-bold">Products and suppliers</h2>
       <p className="text-sm text-muted-foreground">
         Rename typos here; it updates every batch. Rows still used by batches cannot be deleted.
       </p>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-3">
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <ListBlock title="Products">
           {products.map((p) => (
             <EditableRow
@@ -47,19 +44,6 @@ export function AdminLists({ products, variants, suppliers, batchReferences }: P
               name={p.name}
               meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}`}
               extra={{ abbreviation: p.abbreviation, category: p.category }}
-              batchReferences={batchReferences}
-              variantReferences={variants.filter((v) => v.product_id === p.id)}
-            />
-          ))}
-        </ListBlock>
-        <ListBlock title="Variants">
-          {variants.map((v) => (
-            <EditableRow
-              key={v.id}
-              table="variants"
-              id={v.id}
-              name={v.name}
-              meta={products.find((p) => p.id === v.product_id)?.name ?? ""}
               batchReferences={batchReferences}
             />
           ))}
@@ -94,7 +78,6 @@ function EditableRow({
   meta,
   extra,
   batchReferences,
-  variantReferences,
 }: {
   table: AdminListTable;
   id: string;
@@ -102,7 +85,6 @@ function EditableRow({
   meta?: string;
   extra?: { abbreviation: string; category: string };
   batchReferences: readonly BatchReference[];
-  variantReferences?: readonly VariantReference[];
 }) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
@@ -113,7 +95,6 @@ function EditableRow({
     category: extra?.category ?? "",
   });
   const blockingBatches = referencesForTable(table, id, batchReferences);
-  const blockingVariants = table === "products" ? (variantReferences ?? []) : [];
 
   function save() {
     startTransition(async () => {
@@ -200,7 +181,7 @@ function EditableRow({
       </Button>
       <ConfirmDelete
         title={`Delete ${name}?`}
-        description={deleteBlockedMessage(table, blockingBatches, blockingVariants, name)}
+        description={deleteBlockedMessage(table, blockingBatches, name)}
         onConfirm={remove}
         disabled={pending}
       />

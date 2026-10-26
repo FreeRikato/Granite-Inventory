@@ -30,7 +30,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
             await supabase
               .from("v_yard_batches")
               .select(
-                "id, batch_code, line_key, available, purchase_date, product_name, variant_name, length_ft, breadth_ft, thickness_mm",
+                "id, batch_code, line_key, available, purchase_date, product_name, length_ft, breadth_ft, thickness_mm",
               )
               .order("purchase_date")
           ).data ?? [],
@@ -110,7 +110,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                     </td>
                     <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
                       <MobileLabel className="mr-2">Stone</MobileLabel>
-                      {s.product_name} · {s.variant_name}
+                      {s.product_name}
                       <span className="block text-xs font-normal text-muted-foreground">
                         {formatSize({ length_ft: s.length_ft, breadth_ft: s.breadth_ft, thickness_mm: s.thickness_mm })}
                         {s.has_stickering ? " · with stickering" : ""}

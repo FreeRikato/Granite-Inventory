@@ -23,7 +23,7 @@ test("palette jumps to a stock line in the yard and to a customer; sell deep lin
   await page.goto("/");
   await openPalette(page);
   await page.getByPlaceholder("Type a page, stone or customer...").fill("jet black");
-  await page.getByRole("option", { name: /Jet Black · Premium/ }).click();
+  await page.getByRole("option", { name: /Jet Black.*5×3 ft/ }).click();
   await expect(page).toHaveURL(/\/yard\?line=/);
   await expect(page.getByTestId("yard-batch")).toHaveCount(1);
   await expect(page.getByTestId("yard-batch")).toHaveAttribute("data-batch-code", "JB-FIVE-01");
@@ -36,7 +36,7 @@ test("palette jumps to a stock line in the yard and to a customer; sell deep lin
   await page.goto("/yard?slot=4FT");
   await page.locator('[data-batch-code="BP-OLD-01"]').getByRole("link", { name: "Sell from this Batch" }).click();
   await expect(page).toHaveURL(/\/sell\?batch=/);
-  await expect(page.getByRole("combobox", { name: "Product / Variant" })).toContainText("Black Pearl · Grade 1");
+  await expect(page.getByRole("combobox", { name: "Product" })).toContainText("Black Pearl · 4×2 ft");
   await expect(page.getByTestId("fifo-batch").filter({ hasText: "BP-OLD-01" })).toHaveAttribute("aria-checked", "true");
 });
 

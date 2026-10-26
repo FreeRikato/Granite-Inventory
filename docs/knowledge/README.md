@@ -20,7 +20,7 @@ Code in this repo carries no comments. Everything a comment would say (why a rul
 Data and rules (Postgres)
 - [[ist-calendar]]: every date rule is "today in India"
 - [[access-model]]: Team Members, RLS, security definer functions, the last Admin
-- [[batches]]: Batch Code, slot suggestion, size rule, Variants on the fly
+- [[batches]]: Batch Code, slot suggestion, size rule, hidden Variants
 - [[sales-and-stock-lines]]: record_sale, phone identity, Stock Lines, margin
 - [[corrections]]: Admin edits and deletes that keep Available consistent
 - [[readable-refusals]]: every refusal reads as a business rule, never raw Postgres

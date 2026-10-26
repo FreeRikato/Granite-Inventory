@@ -120,7 +120,6 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     productId: batch.product_id ?? "",
-    variantName: batch.variant_name ?? "",
     supplierId: batch.supplier_id ?? "",
     purchaseDate: batch.purchase_date ?? todayIso(),
     lengthFt: batch.length_ft?.toString() ?? "",
@@ -140,7 +139,12 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await correctBatchAction({ ...form, batchId: batch.id, memorial });
+      const result = await correctBatchAction({
+        ...form,
+        batchId: batch.id,
+        memorial,
+        variantName: form.productId === batch.product_id ? (batch.variant_name ?? undefined) : undefined,
+      });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -181,9 +185,6 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             placeholder="Product"
             className="h-9"
           />
-        </Field>
-        <Field label="Variant Name" htmlFor="eb-variant">
-          <Input id="eb-variant" value={form.variantName} onChange={(e) => set("variantName", e.target.value)} />
         </Field>
       </div>
       {!memorial ? (
