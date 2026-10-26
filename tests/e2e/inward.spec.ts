@@ -1,4 +1,5 @@
-import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, confirmDelete, ensureTestUsers, openDialog, resetDomainData } from "./fixtures";
+import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
 test.beforeAll(async () => {
@@ -139,4 +140,30 @@ test("inward suggests an existing variant for the chosen product and accepts a n
   await page.getByPlaceholder("Search variants...").fill("New Finish");
   await page.getByRole("option", { name: 'Add variant "New Finish"' }).click();
   await expect(variant).toHaveText("New Finish");
+});
+
+test("an admin edits and deletes a batch from Recent batches and an operator sees neither", async ({
+  page,
+  signIn,
+}) => {
+  await seedYard();
+  await signIn("admin");
+  await page.goto("/inward");
+  const row = page.getByTestId("batch-row").filter({ hasText: "JB-FIVE-01" });
+  await openDialog(page, row.getByRole("button", { name: "Edit JB-FIVE-01" }));
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Unit Quantity").fill("8");
+  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Batch JB-FIVE-01 updated")).toBeVisible();
+  await expect(row).toContainText("/ 8");
+
+  await confirmDelete(page, row.getByRole("button", { name: "Delete JB-FIVE-01" }));
+  await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
+  await expect(row).toHaveCount(0);
+
+  await page.request.post("/auth/signout");
+  await signIn("operator");
+  await page.goto("/inward");
+  await expect(page.getByTestId("batch-row").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Edit / })).toHaveCount(0);
 });

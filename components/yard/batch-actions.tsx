@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { SLOTS, SLOT_LABEL, isCategory, isSlot } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
-import type { YardBatch } from "@/lib/yard";
+import type { Tables } from "@/lib/database.types";
 import { correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
 
 export type EditLists = {
@@ -23,9 +23,11 @@ export type EditLists = {
   readonly suppliers: readonly { id: string; name: string }[];
 };
 
-type Props = { readonly batch: YardBatch; readonly lists: EditLists };
+type EditableBatch = Tables<"v_batches">;
 
-export function BatchActions({ batch, lists }: Props) {
+type Props = { readonly batch: EditableBatch; readonly lists: EditLists; readonly iconOnly?: boolean };
+
+export function BatchActions({ batch, lists, iconOnly }: Props) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
   const [pending, startTransition] = useTransition();
@@ -48,13 +50,14 @@ export function BatchActions({ batch, lists }: Props) {
     <>
       <Button
         ref={triggerRef}
-        variant="outline"
-        size="sm"
-        className="h-9 bg-card"
+        variant={iconOnly ? "ghost" : "outline"}
+        size={iconOnly ? "icon" : "sm"}
+        className={iconOnly ? "size-8" : "h-9 bg-card"}
         onClick={() => setOpen(true)}
         aria-label={`Edit ${batch.batch_code}`}
       >
-        <Pencil className="size-4" /> Edit
+        <Pencil className="size-4" />
+        {iconOnly ? null : " Edit"}
       </Button>
       {(batch.units_sold ?? 0) === 0 ? (
         <ConfirmDelete
@@ -62,6 +65,7 @@ export function BatchActions({ batch, lists }: Props) {
           description="This batch has no sales. It will be removed from the yard for good."
           onConfirm={remove}
           disabled={pending}
+          iconLabel={iconOnly ? `Delete ${batch.batch_code}` : undefined}
         />
       ) : null}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -111,7 +115,7 @@ export function BatchActions({ batch, lists }: Props) {
   );
 }
 
-function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: EditLists; onDone: () => void }) {
+function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: EditLists; onDone: () => void }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({

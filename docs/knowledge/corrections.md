@@ -5,6 +5,8 @@ code:
   - app/(app)/settings/actions.ts
   - app/(app)/settings/admin-lists.tsx
   - components/yard/batch-actions.tsx
+  - components/confirm-delete.tsx
+  - app/(app)/inward/recent-batches.tsx
   - app/(app)/customers/[id]/sale-actions.tsx
   - tests/seam/corrections.test.ts
 ---
@@ -26,6 +28,6 @@ The correction functions share the readable validation path of new writes ([[rea
 
 ## UI
 
-The Admin edit and delete live on the yard card (`batch-actions.tsx`) and the customer detail page (`sale-actions.tsx`). Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view. The Sale edit dialog offers the current batch plus any with stock, so a sale can move to the right pile.
+The Admin edit and delete live on the yard card (`batch-actions.tsx`), the Recent batches table on Inward and the customer detail page (`sale-actions.tsx`). On Recent batches the same actions render as pencil and trash icons at the row's right edge; on desktop they appear on hover or keyboard focus, on mobile (no hover) they are always shown. Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view. The Sale edit dialog offers the current batch plus any with stock, so a sale can move to the right pile.
 
 Related: [[sales-and-stock-lines]], [[yard]].

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
 import { Notice } from "@/components/notice";
+import { useMember } from "@/components/shell/member-provider";
 import { ViewError, ViewSkeleton } from "@/components/view-state";
 import { useHydrated } from "@/lib/query/provider";
 import { productsQuery, recentBatchesQuery, suppliersQuery, variantsQuery } from "@/lib/query/reads";
@@ -10,6 +11,7 @@ import { InwardForm } from "./inward-form";
 import { RecentBatches } from "./recent-batches";
 
 export function InwardView() {
+  const isAdmin = useMember().role === "ADMIN";
   const hydrated = useHydrated();
   const products = useQuery(productsQuery);
   const variants = useQuery(variantsQuery);
@@ -42,7 +44,10 @@ export function InwardView() {
           size as existing stock.
         </Notice>
       </div>
-      <RecentBatches batches={recent.data} />
+      <RecentBatches
+        batches={recent.data}
+        editLists={isAdmin ? { products: products.data, suppliers: suppliers.data } : null}
+      />
     </>
   );
 }
