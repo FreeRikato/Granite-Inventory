@@ -20,6 +20,7 @@ import {
 } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
+import { useRefusal } from "@/lib/use-refusal";
 import { computeMargin, marginHealth } from "@/lib/margin";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -75,7 +76,19 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [stickeringCost, setStickeringCost] = useState("");
   const [stickeringPrice, setStickeringPrice] = useState("");
   const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { error, refuse, clear } = useRefusal([
+    saleDate,
+    paymentMode,
+    customerId,
+    lineKey,
+    batchId,
+    quantity,
+    salePrice,
+    miscExpense,
+    stickering,
+    stickeringCost,
+    stickeringPrice,
+  ]);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
   const lineBatches = useMemo(() => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []), [batches, lineKey]);
@@ -92,7 +105,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
+    clear();
     startTransition(async () => {
       const result = await recordSaleAction({
         batchId,
@@ -107,7 +120,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         miscExpense: miscExpense || 0,
       });
       if (!result.ok) {
-        setError(result.error);
+        refuse(result.error);
         return;
       }
       toast.success(`Sale recorded: ${result.data.quantity} from ${batch?.batch_code ?? "batch"}`);

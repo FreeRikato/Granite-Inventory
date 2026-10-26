@@ -1,13 +1,15 @@
 const inr = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
 export function formatRupees(value: number): string {
-  return `₹${inr.format(Math.round(value))}`;
+  const rounded = Math.round(value);
+  return `${rounded < 0 ? "-" : ""}₹${inr.format(Math.abs(rounded))}`;
 }
 
 export function formatRupeesCompact(value: number): string {
   const abs = Math.abs(value);
-  if (abs >= 1e7) return `₹${(value / 1e7).toFixed(1)}Cr`;
-  if (abs >= 1e5) return `₹${(value / 1e5).toFixed(1)}L`;
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1e7) return `${sign}₹${(abs / 1e7).toFixed(1)}Cr`;
+  if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(1)}L`;
   return formatRupees(value);
 }
 

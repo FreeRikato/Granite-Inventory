@@ -84,3 +84,15 @@ test("yard filter controls keep product, variant, thickness, supplier, age band,
   await page.goto("/yard?slot=4FT&sort=newest");
   await expect(cards.first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
 });
+
+test("an empty Slot says so, and the filter message appears only when a filter is active", async ({ page, signIn }) => {
+  await sql(`update public.batches set slot = 'CUSTOM' where slot = '4FT'`);
+  await signIn("operator");
+  await page.goto("/yard");
+  await expect(page.getByRole("heading", { name: "4 ft Slot" })).toBeVisible();
+  await expect(page.getByText("No batches in the 4 ft Slot right now.")).toBeVisible();
+  await expect(page.getByText("Nothing matches these filters.")).toHaveCount(0);
+
+  await page.goto("/yard?slot=CUSTOM&q=nomatch");
+  await expect(page.getByText("Nothing matches these filters.")).toBeVisible();
+});

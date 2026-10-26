@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge";
 import { getSession } from "@/lib/auth";
-import { formatDate, formatRupees, formatSize, relativeDays } from "@/lib/format";
+import { formatDate, formatPercent, formatRupees, formatSize, relativeDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -132,7 +132,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                       <MobileLabel className="mr-2 font-sans">Margin</MobileLabel>
                       {formatRupees(s.margin ?? 0)}
                       {s.margin_pct !== null ? (
-                        <span className="ml-1 text-xs text-muted-foreground">({s.margin_pct}%)</span>
+                        <span className="ml-1 text-xs text-muted-foreground">({formatPercent(s.margin_pct)})</span>
                       ) : null}
                     </td>
                     {editLists ? (

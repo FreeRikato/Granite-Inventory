@@ -54,6 +54,16 @@ export function YardView() {
   const inSlot = filtered.filter((b) => b.slot === query.slot);
   const sizes = sizesIn(inSlot);
   const activeSize = query.size && sizes.includes(query.size) ? query.size : (sizes[0] ?? null);
+  const filtering = Boolean(
+    query.q ||
+    query.product ||
+    query.variant ||
+    query.thickness !== null ||
+    query.supplier ||
+    query.age !== null ||
+    query.band ||
+    query.line,
+  );
   const visible = sortBatches(activeSize ? inSlot.filter((b) => sizeKey(b) === activeSize) : inSlot, query.sort);
 
   const productOptions = uniq(all.map((b) => [b.product_id ?? "", b.product_name ?? ""]));
@@ -153,7 +163,9 @@ export function YardView() {
             <p className="py-8 text-center text-sm text-muted-foreground">
               {all.length === 0
                 ? "No batches in the yard yet. Log a delivery to get started."
-                : "Nothing matches these filters."}
+                : filtering
+                  ? "Nothing matches these filters."
+                  : `No batches in the ${SLOT_LABEL[query.slot]} right now.`}
             </p>
           ) : (
             visible.map((batch, i) => {

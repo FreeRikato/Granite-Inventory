@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatSize, todayIso } from "@/lib/format";
+import { useRefusal } from "@/lib/use-refusal";
 import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
 
 type Sale = Tables<"v_sales">;
@@ -108,7 +109,6 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
 
 function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditLists; onDone: () => void }) {
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     batchId: sale.batch_id ?? "",
     customerId: sale.customer_id ?? "",
@@ -121,6 +121,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
     stickeringPrice: sale.stickering_price?.toString() ?? "0",
     miscExpense: sale.misc_expense?.toString() ?? "0",
   });
+  const { error, refuse, clear } = useRefusal(form);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const current = lists.batches.find((b) => b.id === sale.batch_id);
@@ -130,11 +131,11 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    clear();
     startTransition(async () => {
       const result = await correctSaleAction({ ...form, saleId: sale.id });
       if (!result.ok) {
-        setError(result.error);
+        refuse(result.error);
         return;
       }
       toast.success("Sale updated");

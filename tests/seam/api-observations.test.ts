@@ -95,10 +95,24 @@ describe("API observations: readable refusals", () => {
     const quantity = saleSchema.safeParse({ quantity: 0 });
 
     expect(units.error?.issues.find((i) => i.path[0] === "initialUnits")?.message).toBe(
-      "Initial units must be greater than zero",
+      "Unit Quantity must be greater than zero",
     );
     expect(quantity.error?.issues.find((i) => i.path[0] === "quantity")?.message).toBe(
       "Sale quantity must be greater than zero",
     );
+  });
+
+  it("every negative amount is refused by the field's label", () => {
+    const batch = batchSchema.safeParse({ unitPurchasePrice: -1, freightCost: -1 });
+    const sale = saleSchema.safeParse({ salePrice: -1, stickeringCost: -1, stickeringPrice: -1, miscExpense: -1 });
+    const messages = (error: { issues: { path: PropertyKey[]; message: string }[] } | undefined, key: string) =>
+      error?.issues.find((i) => i.path[0] === key)?.message;
+
+    expect(messages(batch.error, "unitPurchasePrice")).toBe("Unit Purchase Price cannot be negative");
+    expect(messages(batch.error, "freightCost")).toBe("Freight Cost cannot be negative");
+    expect(messages(sale.error, "salePrice")).toBe("Stone Sale Price cannot be negative");
+    expect(messages(sale.error, "stickeringCost")).toBe("Stickering Cost cannot be negative");
+    expect(messages(sale.error, "stickeringPrice")).toBe("Stickering Price cannot be negative");
+    expect(messages(sale.error, "miscExpense")).toBe("Misc Expense cannot be negative");
   });
 });

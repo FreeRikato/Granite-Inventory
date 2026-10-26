@@ -62,3 +62,17 @@ test("a batch with sales cannot be deleted and an operator sees no correction co
   await page.goto("/yard?slot=4FT");
   await expect(page.getByRole("button", { name: /^Edit/ })).toHaveCount(0);
 });
+
+test("the Edit sale refusal clears as soon as the quantity is fixed", async ({ page, signIn }) => {
+  await signIn("admin");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-OLD-01" }));
+  await page.getByLabel("Quantity").fill("99");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  const refusal = page.getByText(/Only \d+ available in batch BP-OLD-01/);
+  await expect(refusal).toBeVisible();
+
+  await page.getByLabel("Quantity").fill("3");
+  await expect(refusal).toHaveCount(0);
+});
