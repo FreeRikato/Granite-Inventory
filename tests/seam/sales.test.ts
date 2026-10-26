@@ -85,8 +85,14 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     expect(data).toEqual({ landed_cost: 1450, margin: 200 });
   });
 
-  it("stock lines group batches by product, variant and size, oldest first for FIFO", async () => {
-    await createBatch(operator, { productId, supplierId, units: 10, purchaseDate: daysAgo(30) });
+  it("stock lines group batches by product and size whatever their variant, oldest first for FIFO", async () => {
+    await createBatch(operator, {
+      productId,
+      supplierId,
+      units: 10,
+      purchaseDate: daysAgo(30),
+      variantName: "Standard",
+    });
     await createBatch(operator, { productId, supplierId, units: 6, length: 5, breadth: 3, thickness: 20 });
     const { data } = await operator.from("v_stock_lines").select("*").order("length_ft");
     expect(data?.map((l) => [l.length_ft, l.available, l.batch_count])).toEqual([
@@ -97,7 +103,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     const fifo = await operator
       .from("v_yard_batches")
       .select("purchase_date, available")
-      .eq("variant_id", data?.[0]?.variant_id ?? "")
+      .eq("product_id", data?.[0]?.product_id ?? "")
       .eq("length_ft", 4)
       .gt("available", 0)
       .order("purchase_date");

@@ -1,10 +1,13 @@
 import { formatDate, formatRupees, formatSize } from "@/lib/format";
-import { SLOT_LABEL, isSlot } from "@/lib/domain";
+import { SLOT_LABEL, isSlot, stackLabel } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
+import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 
 type Row = Tables<"v_batches">;
 
-export function RecentBatches({ batches }: { readonly batches: readonly Row[] }) {
+type Props = { readonly batches: readonly Row[]; readonly editLists: EditLists | null };
+
+export function RecentBatches({ batches, editLists }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
       <h2 className="text-base font-semibold">Recent batches</h2>
@@ -15,31 +18,47 @@ export function RecentBatches({ batches }: { readonly batches: readonly Row[] })
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
               <tr>
-                <th className="py-2 pr-4 font-medium">Batch</th>
+                <th className="py-2 pr-4 font-medium">Purchase code</th>
                 <th className="py-2 pr-4 font-medium">Product</th>
                 <th className="py-2 pr-4 font-medium">Size</th>
                 <th className="py-2 pr-4 font-medium">Slot</th>
                 <th className="py-2 pr-4 font-medium">Bought</th>
                 <th className="py-2 pr-4 text-right font-medium">Pieces</th>
                 <th className="py-2 text-right font-medium">Landed cost</th>
+                {editLists ? (
+                  <th className="relative w-20 py-2">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
               {batches.map((b) => (
-                <tr key={b.id ?? b.batch_code} className="border-t border-border" data-testid="batch-row">
+                <tr key={b.id ?? b.batch_code} className="group border-t border-border" data-testid="batch-row">
                   <td className="py-2.5 pr-4 font-mono text-xs">{b.batch_code}</td>
-                  <td className="py-2.5 pr-4 font-medium">
-                    {b.product_name} · {b.variant_name}
-                  </td>
+                  <td className="py-2.5 pr-4 font-medium">{b.product_name}</td>
                   <td className="py-2.5 pr-4">
                     {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                   </td>
-                  <td className="py-2.5 pr-4">{isSlot(b.slot) ? SLOT_LABEL[b.slot] : b.slot}</td>
+                  <td className="py-2.5 pr-4">
+                    {isSlot(b.slot)
+                      ? b.stack_number
+                        ? stackLabel(b.slot, b.stack_number)
+                        : SLOT_LABEL[b.slot]
+                      : b.slot}
+                  </td>
                   <td className="py-2.5 pr-4">{b.purchase_date ? formatDate(b.purchase_date) : ""}</td>
                   <td className="py-2.5 pr-4 text-right tabular">
                     {b.available} / {b.initial_units}
                   </td>
                   <td className="py-2.5 text-right tabular">{formatRupees(b.landed_cost ?? 0)}</td>
+                  {editLists ? (
+                    <td className="py-1 pl-2">
+                      <div className="flex justify-end gap-1 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+                        <BatchActions batch={b} lists={editLists} iconOnly />
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

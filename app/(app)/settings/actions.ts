@@ -80,7 +80,7 @@ export async function removeMemberAction(id: string): Promise<ActionResult<null>
 }
 
 const renameSchema = z.object({
-  table: z.enum(["products", "variants", "suppliers"]),
+  table: z.enum(["products", "suppliers"]),
   id: z.string().uuid(),
   name: z.string().trim().min(1, "Name is required").max(80),
   abbreviation: z
@@ -100,9 +100,7 @@ export async function renameRowAction(input: unknown): Promise<ActionResult<null
   const query =
     table === "products"
       ? supabase.from("products").update({ name, ...(abbreviation && { abbreviation }), ...(category && { category }) })
-      : table === "variants"
-        ? supabase.from("variants").update({ name })
-        : supabase.from("suppliers").update({ name });
+      : supabase.from("suppliers").update({ name });
   const { data, error } = await query.eq("id", id).select("id");
   if (error) return fail(messageOf(error));
   if (!data || data.length === 0) return fail("Only an Admin can rename");
@@ -114,18 +112,16 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
   const supabase = await createClient();
   const references = await findDeleteReferences(supabase, table, id);
   if (!references.ok) return references;
-  if (hasDeleteReferences(table, references.data)) {
-    return fail(
-      deleteBlockedMessage(table, references.data.batches, references.data.variants, references.data.rowName),
-    );
+  if (hasDeleteReferences(references.data)) {
+    return fail(deleteBlockedMessage(table, references.data.batches, references.data.rowName));
   }
 
   const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
   if (error) {
     if (error.code === "23503") {
       const latest = await findDeleteReferences(supabase, table, id);
-      if (latest.ok && hasDeleteReferences(table, latest.data)) {
-        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.variants, latest.data.rowName));
+      if (latest.ok && hasDeleteReferences(latest.data)) {
+        return fail(deleteBlockedMessage(table, latest.data.batches, latest.data.rowName));
       }
     }
     return fail(messageOf(error));
@@ -142,17 +138,11 @@ async function findDeleteReferences(
 ): Promise<ActionResult<DeleteReferences>> {
   const { data, error } = await supabase
     .from("v_batches")
-    .select("batch_code, product_id, variant_id, supplier_id")
+    .select("batch_code, product_id, supplier_id")
     .eq(batchReferenceColumn[table], id);
   if (error) return fail(messageOf(error));
   const row = await supabase.from(table).select("name").eq("id", id).maybeSingle();
   if (row.error) return fail(messageOf(row.error));
   const rowName = row.data?.name ?? tableLabel[table];
-  if (table !== "products") {
-    return ok({ rowName, batches: data ?? [], variants: [] });
-  }
-
-  const variants = await supabase.from("variants").select("id, name, product_id").eq("product_id", id);
-  if (variants.error) return fail(messageOf(variants.error));
-  return ok({ rowName, batches: data ?? [], variants: variants.data ?? [] });
+  return ok({ rowName, batches: data ?? [] });
 }

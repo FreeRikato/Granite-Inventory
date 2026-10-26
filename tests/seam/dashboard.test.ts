@@ -95,7 +95,7 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
     expect(none).toEqual([]);
   });
 
-  it("memorial sales are grouped by variant and an empty yard reads as zeros", async () => {
+  it("memorial sales are grouped by product and an empty yard reads as zeros", async () => {
     const { data: empty } = await operator
       .from("v_dashboard_kpis")
       .select("active_stock, inventory_value, mtd_revenue, mtd_margin_pct")
@@ -114,6 +114,6 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
     });
     await recordSale(operator, { batchId: batch.data?.id ?? "", customerId, quantity: 4 });
     const { data: fast } = await operator.rpc("fast_moving", {});
-    expect(fast).toEqual([{ label: "Std Cross", units: 4 }]);
+    expect(fast).toEqual([{ label: "Doom Stone", units: 4 }]);
   });
 });

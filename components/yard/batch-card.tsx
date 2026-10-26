@@ -33,9 +33,7 @@ export function BatchCard({ batch, actions }: Props) {
         <AgeingBanner band={batch.ageing_band} days={batch.age_days} />
       </div>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h3 className="text-[15px] font-bold">
-          {batch.product_name} · {batch.variant_name}
-        </h3>
+        <h3 className="text-[15px] font-bold">{batch.product_name}</h3>
         <span className="font-mono text-xs text-muted-foreground">{batch.batch_code}</span>
       </div>
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

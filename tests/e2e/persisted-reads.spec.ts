@@ -17,7 +17,7 @@ test("yard paints last known rows from disk before Supabase answers, then refres
   testInfo.skip(testInfo.project.name !== "desktop", "Persistence is covered on desktop only");
   await signIn("admin");
   await page.goto("/yard");
-  await expect(page.getByTestId("yard-batch")).toHaveCount(2);
+  await expect(page.getByTestId("yard-batch")).toHaveCount(4);
   await expect(page.getByText(/updated just now/i)).toBeVisible();
   await page.waitForTimeout(1_500);
 
@@ -31,7 +31,7 @@ test("yard paints last known rows from disk before Supabase answers, then refres
   });
 
   await page.reload();
-  await expect(page.getByTestId("yard-batch")).toHaveCount(2);
+  await expect(page.getByTestId("yard-batch")).toHaveCount(4);
   await expect(page.getByText(/refreshing/i)).toBeVisible();
 
   release();

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CATEGORIES, SLOTS } from "@/lib/domain";
+import { CATEGORIES, DEFAULT_VARIANT, SLOTS } from "@/lib/domain";
 import { isoDate, money, positiveInteger, positiveNumber } from "./common";
 
 export const productSchema = z.object({
@@ -31,7 +31,7 @@ const unsizedBatch = z.object({
 export const batchSchema = z
   .object({
     productId: z.string({ error: "Pick a product" }).uuid("Pick a product"),
-    variantName: z.string().trim().min(1, "Variant is required").max(80),
+    variantName: z.string().trim().min(1).max(80).default(DEFAULT_VARIANT),
     supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
     slot: z.enum(SLOTS),
@@ -39,6 +39,7 @@ export const batchSchema = z
     unitPurchasePrice: money("Unit Purchase Price"),
     freightCost: money("Freight Cost").default(0),
     notes: z.string().trim().max(500).optional(),
+    stackNumber: z.string().trim().max(20, "Batch number must be 20 characters or fewer").optional(),
   })
   .and(z.discriminatedUnion("memorial", [sizedBatch, unsizedBatch]));
 

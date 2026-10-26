@@ -31,19 +31,23 @@ export const customersQuery = queryOptions({
     ),
 });
 
+export const recentStacksQuery = queryOptions({
+  queryKey: ["recent-stacks"],
+  queryFn: () =>
+    rows<Pick<Tables<"v_recent_stacks">, "slot" | "stack_number">>(
+      createClient()
+        .from("v_recent_stacks")
+        .select("slot, stack_number")
+        .order("last_used_at", { ascending: false })
+        .limit(20),
+    ),
+});
+
 export const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () =>
     rows<Pick<Tables<"products">, "id" | "name" | "abbreviation" | "category">>(
       createClient().from("products").select("id, name, abbreviation, category").order("name"),
-    ),
-});
-
-export const variantsQuery = queryOptions({
-  queryKey: ["variants"],
-  queryFn: () =>
-    rows<Pick<Tables<"variants">, "id" | "product_id" | "name">>(
-      createClient().from("variants").select("id, product_id, name").order("name"),
     ),
 });
 

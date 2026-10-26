@@ -5,6 +5,8 @@ code:
   - app/(app)/settings/actions.ts
   - app/(app)/settings/admin-lists.tsx
   - components/yard/batch-actions.tsx
+  - components/confirm-delete.tsx
+  - app/(app)/inward/recent-batches.tsx
   - app/(app)/customers/[id]/sale-actions.tsx
   - tests/seam/corrections.test.ts
 ---
@@ -18,7 +20,7 @@ Admin-only edits and deletes of Batches and Sales that keep Available consistent
 - Editing a sale locks both batches (old and new) in a fixed order, so two corrections cannot deadlock. It gives the old pieces back first, then takes the new quantity from the possibly same batch.
 - A sale keeps the landed-cost snapshot it was recorded at. The snapshot moves only when the sale moves to another batch.
 - A Batch cannot be deleted while it has sales; the database refuses, so the yard card simply hides Delete in that case.
-- Products, Variants and Suppliers (the three lists that grow from the Inward form) can be renamed in Settings. Deleting one is refused by the database while Batches reference it.
+- Products and Suppliers (the lists that grow from the Inward form) can be renamed in Settings. Deleting one is refused by the database while Batches reference it. Variants are hidden ([[batches]]), so they have no list.
 
 ## Validation order
 
@@ -26,6 +28,6 @@ The correction functions share the readable validation path of new writes ([[rea
 
 ## UI
 
-The Admin edit and delete live on the yard card (`batch-actions.tsx`) and the customer detail page (`sale-actions.tsx`). Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view. The Sale edit dialog offers the current batch plus any with stock, so a sale can move to the right pile.
+The Admin edit and delete live on the yard card (`batch-actions.tsx`), the Recent batches table on Inward and the customer detail page (`sale-actions.tsx`). On Recent batches the same actions render as pencil and trash icons at the row's right edge; on desktop they appear on hover or keyboard focus, on mobile (no hover) they are always shown. The actions header cell is `relative` so its screen-reader-only label stays inside the table's horizontal scroll area; without it the absolutely positioned label widens the whole page on mobile. Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view. The Sale edit dialog offers the current batch plus any with stock, so a sale can move to the right pile.
 
 Related: [[sales-and-stock-lines]], [[yard]].

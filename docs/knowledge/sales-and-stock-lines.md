@@ -17,7 +17,7 @@ A Sale takes pieces from exactly one Batch ([ADR 0002](../adr/0002-sale-is-one-b
 
 ## Stock Lines
 
-Every Batch sharing product, variant and size, seen as one sellable item. The Sell form picks a Stock Line and is offered its sellable Batches oldest first. Overview, Yard and Sell share one batches query that carries every Batch; the Sell view narrows it to sellable ones itself ([[browser-reads]]).
+Every Batch sharing product and size (Variant is ignored, [[batches]]), seen as one sellable item. The Sell form picks a Stock Line and is offered its sellable Batches oldest first. Overview, Yard and Sell share one batches query that carries every Batch; the Sell view narrows it to sellable ones itself ([[browser-reads]]).
 
 ## Customers
 

@@ -1,3 +1,9 @@
+export function stackLabel(slot: Slot, stackNumber: string): string {
+  return `${SLOT_LABEL[slot]} · ${stackNumber}`;
+}
+
+export const DEFAULT_VARIANT = "Standard";
+
 export const CATEGORIES = ["GRANITE", "MEMORIAL", "TILES"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export const CATEGORY_LABEL: Record<Category, string> = {

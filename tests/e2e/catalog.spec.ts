@@ -35,7 +35,7 @@ test("catalog is hidden while off, then a logged-out visitor sees stock without 
   await expect(anon.getByRole("heading", { name: /Kirthik Granite/ })).toBeVisible();
   const tiles = anon.getByTestId("catalog-tile");
   await expect(tiles).toHaveCount(3);
-  const bp = tiles.filter({ hasText: "Black Pearl · Grade 1" });
+  const bp = tiles.filter({ hasText: "Black Pearl" });
   await expect(bp).toContainText("4×2 ft, 16mm");
   await expect(bp).toContainText("14 slabs in stock");
   await expect(tiles.filter({ hasText: "Doom Stone" })).toContainText("9 units in stock");

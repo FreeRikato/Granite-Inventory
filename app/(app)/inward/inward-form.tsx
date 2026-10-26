@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AddButton } from "@/components/add-button";
 import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
 import { SearchSelect } from "@/components/search-select";
@@ -16,6 +17,8 @@ import {
   SLOTS,
   SLOT_LABEL,
   isCategory,
+  isSlot,
+  stackLabel,
   suggestAbbreviation,
   suggestSlot,
   type Category,
@@ -27,24 +30,25 @@ import { createClient } from "@/lib/supabase/client";
 import { createProductAction, createSupplierAction, saveBatchAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
-type Variant = { id: string; product_id: string; name: string };
 type Supplier = { id: string; name: string };
+type RecentStack = { slot: string | null; stack_number: string | null };
+type StackDraft = { slot: Slot; stackNumber: string };
 
 type Props = {
   readonly products: readonly Product[];
-  readonly variants: readonly Variant[];
   readonly suppliers: readonly Supplier[];
+  readonly recentStacks: readonly RecentStack[];
 };
 
 type FormState = {
   purchaseDate: string;
   supplierId: string | null;
   productId: string | null;
-  variantName: string;
   lengthFt: string;
   breadthFt: string;
   thicknessMm: string;
   slot: Slot | null;
+  stackNumber: string;
   initialUnits: string;
   unitPurchasePrice: string;
   freightCost: string;
@@ -54,29 +58,26 @@ const EMPTY: FormState = {
   purchaseDate: todayIso(),
   supplierId: null,
   productId: null,
-  variantName: "",
   lengthFt: "",
   breadthFt: "",
   thicknessMm: "16",
   slot: null,
+  stackNumber: "",
   initialUnits: "",
   unitPurchasePrice: "",
   freightCost: "",
 };
 
-export function InwardForm({
-  products: initialProducts,
-  variants: initialVariants,
-  suppliers: initialSuppliers,
-}: Props) {
+export function InwardForm({ products: initialProducts, suppliers: initialSuppliers, recentStacks }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
   const { error, refuse, clear } = useRefusal(form);
   const [products, setProducts] = useState(initialProducts);
   const [suppliers, setSuppliers] = useState(initialSuppliers);
-  const [variants] = useState(initialVariants);
   const [newProduct, setNewProduct] = useState<{ name: string; abbreviation: string; category: Category } | null>(null);
+  const [newSupplier, setNewSupplier] = useState<{ name: string; phone: string } | null>(null);
+  const [newStack, setNewStack] = useState<StackDraft | null>(null);
   const [codePreview, setCodePreview] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === form.productId) ?? null;
@@ -87,17 +88,20 @@ export function InwardForm({
   const slot = form.slot ?? suggested;
   const hasSize = memorial || (lengthNumber > 0 && Number.parseFloat(form.breadthFt) > 0);
 
-  const existingVariantOptions = useMemo(() => {
-    return variants.filter((v) => v.product_id === form.productId).map((v) => ({ value: v.name, label: v.name }));
-  }, [form.productId, variants]);
-  const typedVariantName = form.variantName.trim();
-  const variantExists =
-    Boolean(typedVariantName) &&
-    existingVariantOptions.some((option) => option.value.toLowerCase() === typedVariantName.toLowerCase());
-  const variantOptions = useMemo(() => {
-    if (!typedVariantName || variantExists) return existingVariantOptions;
-    return [...existingVariantOptions, { value: typedVariantName, label: typedVariantName }];
-  }, [existingVariantOptions, typedVariantName, variantExists]);
+  const stackOptions = useMemo(() => {
+    const pairs: StackDraft[] = recentStacks.flatMap((s) =>
+      isSlot(s.slot) && s.stack_number ? [{ slot: s.slot, stackNumber: s.stack_number }] : [],
+    );
+    if (
+      form.slot &&
+      form.stackNumber &&
+      !pairs.some((p) => p.slot === form.slot && p.stackNumber === form.stackNumber)
+    ) {
+      pairs.unshift({ slot: form.slot, stackNumber: form.stackNumber });
+    }
+    return pairs.map((p) => ({ value: `${p.slot}|${p.stackNumber}`, label: stackLabel(p.slot, p.stackNumber) }));
+  }, [recentStacks, form.slot, form.stackNumber]);
+  const stackValue = form.slot && form.stackNumber ? `${form.slot}|${form.stackNumber}` : null;
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -121,10 +125,10 @@ export function InwardForm({
     startTransition(async () => {
       const result = await saveBatchAction({
         productId: form.productId,
-        variantName: form.variantName,
         supplierId: form.supplierId,
         purchaseDate: form.purchaseDate,
         slot,
+        stackNumber: form.stackNumber,
         initialUnits: form.initialUnits,
         unitPurchasePrice: form.unitPurchasePrice,
         freightCost: form.freightCost === "" ? 0 : form.freightCost,
@@ -143,15 +147,17 @@ export function InwardForm({
     });
   }
 
-  function addSupplier(name: string) {
+  function saveSupplier() {
+    if (!newSupplier) return;
     startTransition(async () => {
-      const result = await createSupplierAction({ name });
+      const result = await createSupplierAction(newSupplier);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
       setSuppliers((prev) => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)));
       set("supplierId", result.data.id);
+      setNewSupplier(null);
     });
   }
 
@@ -186,59 +192,48 @@ export function InwardForm({
           />
         </Field>
         <Field label="Supplier" htmlFor="supplier">
-          <SearchSelect
-            id="supplier"
-            options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
-            value={form.supplierId}
-            onChange={(v) => set("supplierId", v)}
-            placeholder="Select or add supplier"
-            searchPlaceholder="Search suppliers..."
-            onCreate={addSupplier}
-            createLabel={(q) => `Add supplier "${q}"`}
-          />
+          <div className="flex gap-2">
+            <SearchSelect
+              id="supplier"
+              options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
+              value={form.supplierId}
+              onChange={(v) => set("supplierId", v)}
+              placeholder="Select or add supplier"
+              searchPlaceholder="Search suppliers..."
+              onCreate={(name) => setNewSupplier({ name, phone: "" })}
+              createLabel={(q) => `Add supplier "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton label="Add new supplier" onClick={() => setNewSupplier({ name: "", phone: "" })} />
+          </div>
         </Field>
         <Field label="Product" htmlFor="product">
-          <SearchSelect
-            id="product"
-            options={products.map((p) => ({
-              value: p.id,
-              label: p.name,
-              hint: isCategory(p.category) ? CATEGORY_LABEL[p.category] : undefined,
-              keywords: [p.abbreviation],
-            }))}
-            value={form.productId}
-            onChange={(v) => {
-              set("productId", v);
-              set("slot", null);
-              set("variantName", "");
-            }}
-            placeholder="Select or add product"
-            searchPlaceholder="Search products..."
-            onCreate={(name) => setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })}
-            createLabel={(q) => `Add product "${q}"`}
-          />
-        </Field>
-        <Field label="Variant Name" htmlFor="variantName">
-          <SearchSelect
-            id="variantName"
-            options={variantOptions}
-            value={form.variantName || null}
-            onChange={(v) => set("variantName", v)}
-            placeholder={form.productId ? "Select or add variant" : "Pick a product first"}
-            searchPlaceholder="Search variants..."
-            emptyText="No existing variant matches."
-            onCreate={(name) => set("variantName", name)}
-            createLabel={(name) => `Add variant "${name}"`}
-            disabled={!form.productId}
-          />
+          <div className="flex gap-2">
+            <SearchSelect
+              id="product"
+              options={products.map((p) => ({
+                value: p.id,
+                label: p.name,
+                hint: isCategory(p.category) ? CATEGORY_LABEL[p.category] : undefined,
+                keywords: [p.abbreviation],
+              }))}
+              value={form.productId}
+              onChange={(v) => {
+                set("productId", v);
+              }}
+              placeholder="Select or add product"
+              searchPlaceholder="Search products..."
+              onCreate={(name) => setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })}
+              createLabel={(q) => `Add product "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton
+              label="Add new product"
+              onClick={() => setNewProduct({ name: "", abbreviation: "", category: "GRANITE" })}
+            />
+          </div>
         </Field>
       </div>
-
-      {variantExists ? (
-        <Notice tone="accent" icon="alert" className="mt-4">
-          Existing variant found. This purchase becomes a new batch, never merged with existing stock.
-        </Notice>
-      ) : null}
 
       {memorial ? (
         <Notice tone="accent" className="mt-4">
@@ -257,7 +252,6 @@ export function InwardForm({
               value={form.lengthFt}
               onChange={(e) => {
                 set("lengthFt", e.target.value);
-                set("slot", null);
               }}
               className="h-11"
             />
@@ -338,26 +332,32 @@ export function InwardForm({
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Yard slot"
-          htmlFor="slot"
-          hint={suggested && slot === suggested ? "Suggested from size" : undefined}
-        >
-          <Select value={slot ?? ""} onValueChange={(v) => set("slot", SLOTS.includes(v as Slot) ? (v as Slot) : null)}>
-            <SelectTrigger id="slot" className="h-11 w-full">
-              <SelectValue placeholder="Pick a product first" />
-            </SelectTrigger>
-            <SelectContent>
-              {SLOTS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {SLOT_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Field label="Yard slot and batch number" htmlFor="stack">
+          <div className="flex gap-2">
+            <SearchSelect
+              id="stack"
+              options={stackOptions}
+              value={stackValue}
+              onChange={(v) => {
+                const [pickedSlot, ...rest] = v.split("|");
+                if (!isSlot(pickedSlot)) return;
+                setForm((prev) => ({ ...prev, slot: pickedSlot, stackNumber: rest.join("|") }));
+              }}
+              placeholder="Pick or add a batch number"
+              searchPlaceholder="Search batch numbers..."
+              emptyText="No recent batch number matches."
+              onCreate={(stackNumber) => setNewStack({ slot: slot ?? "4FT", stackNumber })}
+              createLabel={(q) => `Add batch number "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton
+              label="Add new batch number"
+              onClick={() => setNewStack({ slot: slot ?? "4FT", stackNumber: "" })}
+            />
+          </div>
         </Field>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] text-muted-foreground">Auto-generated batch ID</span>
+          <span className="text-[13px] text-muted-foreground">Purchase code</span>
           <span className="flex h-11 items-center font-mono text-sm font-semibold" data-testid="batch-code-preview">
             {showPreview ?? "Pick a product and date"}
           </span>
@@ -373,7 +373,7 @@ export function InwardForm({
       <div className="mt-6 flex justify-end">
         <Button
           type="submit"
-          disabled={pending || !form.productId || !form.supplierId || !hasSize}
+          disabled={pending || !form.productId || !form.supplierId || !hasSize || !form.stackNumber}
           className="h-11 px-6 font-semibold"
         >
           {pending ? "Saving..." : "Save Batch"}
@@ -439,6 +439,111 @@ export function InwardForm({
                 </Button>
                 <Button type="button" onClick={saveProduct} disabled={pending}>
                   Add product
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={newSupplier !== null}
+        onOpenChange={(open) => {
+          if (!open) setNewSupplier(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New supplier</DialogTitle>
+          </DialogHeader>
+          {newSupplier ? (
+            <div className="flex flex-col gap-4">
+              <Field label="Name" htmlFor="ns-name">
+                <Input
+                  id="ns-name"
+                  value={newSupplier.name}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                  autoFocus={!newSupplier.name}
+                />
+              </Field>
+              <Field label="Phone" htmlFor="ns-phone" hint="Optional">
+                <Input
+                  id="ns-phone"
+                  inputMode="tel"
+                  value={newSupplier.phone}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                />
+              </Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setNewSupplier(null)}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={saveSupplier} disabled={pending || !newSupplier.name.trim()}>
+                  Add supplier
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={newStack !== null}
+        onOpenChange={(open) => {
+          if (!open) setNewStack(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New batch number</DialogTitle>
+          </DialogHeader>
+          {newStack ? (
+            <div className="flex flex-col gap-4">
+              <Field
+                label="Yard slot"
+                htmlFor="nk-slot"
+                hint={suggested && newStack.slot === suggested ? "Suggested from size" : undefined}
+              >
+                <Select
+                  value={newStack.slot}
+                  onValueChange={(v) => {
+                    if (isSlot(v)) setNewStack({ ...newStack, slot: v });
+                  }}
+                >
+                  <SelectTrigger id="nk-slot" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SLOTS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {SLOT_LABEL[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Batch number" htmlFor="nk-number" hint="As written on the pile in the yard">
+                <Input
+                  id="nk-number"
+                  maxLength={20}
+                  value={newStack.stackNumber}
+                  onChange={(e) => setNewStack({ ...newStack, stackNumber: e.target.value })}
+                  autoFocus
+                />
+              </Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setNewStack(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!newStack.stackNumber.trim()}
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, slot: newStack.slot, stackNumber: newStack.stackNumber.trim() }));
+                    setNewStack(null);
+                  }}
+                >
+                  Use batch number
                 </Button>
               </div>
             </div>

@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { SLOTS, SLOT_LABEL, isCategory, isSlot } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
-import type { YardBatch } from "@/lib/yard";
+import type { Tables } from "@/lib/database.types";
 import { correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
 
 export type EditLists = {
@@ -23,9 +23,11 @@ export type EditLists = {
   readonly suppliers: readonly { id: string; name: string }[];
 };
 
-type Props = { readonly batch: YardBatch; readonly lists: EditLists };
+type EditableBatch = Tables<"v_batches">;
 
-export function BatchActions({ batch, lists }: Props) {
+type Props = { readonly batch: EditableBatch; readonly lists: EditLists; readonly iconOnly?: boolean };
+
+export function BatchActions({ batch, lists, iconOnly }: Props) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
   const [pending, startTransition] = useTransition();
@@ -48,13 +50,14 @@ export function BatchActions({ batch, lists }: Props) {
     <>
       <Button
         ref={triggerRef}
-        variant="outline"
-        size="sm"
-        className="h-9 bg-card"
+        variant={iconOnly ? "ghost" : "outline"}
+        size={iconOnly ? "icon" : "sm"}
+        className={iconOnly ? "size-8" : "h-9 bg-card"}
         onClick={() => setOpen(true)}
         aria-label={`Edit ${batch.batch_code}`}
       >
-        <Pencil className="size-4" /> Edit
+        <Pencil className="size-4" />
+        {iconOnly ? null : " Edit"}
       </Button>
       {(batch.units_sold ?? 0) === 0 ? (
         <ConfirmDelete
@@ -62,6 +65,7 @@ export function BatchActions({ batch, lists }: Props) {
           description="This batch has no sales. It will be removed from the yard for good."
           onConfirm={remove}
           disabled={pending}
+          iconLabel={iconOnly ? `Delete ${batch.batch_code}` : undefined}
         />
       ) : null}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -111,18 +115,18 @@ export function BatchActions({ batch, lists }: Props) {
   );
 }
 
-function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: EditLists; onDone: () => void }) {
+function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: EditLists; onDone: () => void }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     productId: batch.product_id ?? "",
-    variantName: batch.variant_name ?? "",
     supplierId: batch.supplier_id ?? "",
     purchaseDate: batch.purchase_date ?? todayIso(),
     lengthFt: batch.length_ft?.toString() ?? "",
     breadthFt: batch.breadth_ft?.toString() ?? "",
     thicknessMm: batch.thickness_mm?.toString() ?? "",
     slot: isSlot(batch.slot) ? batch.slot : "CUSTOM",
+    stackNumber: batch.stack_number ?? "",
     initialUnits: batch.initial_units?.toString() ?? "",
     unitPurchasePrice: batch.unit_purchase_price?.toString() ?? "",
     freightCost: batch.freight_cost?.toString() ?? "0",
@@ -136,7 +140,12 @@ function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: Edit
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await correctBatchAction({ ...form, batchId: batch.id, memorial });
+      const result = await correctBatchAction({
+        ...form,
+        batchId: batch.id,
+        memorial,
+        variantName: form.productId === batch.product_id ? (batch.variant_name ?? undefined) : undefined,
+      });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -177,9 +186,6 @@ function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: Edit
             placeholder="Product"
             className="h-9"
           />
-        </Field>
-        <Field label="Variant Name" htmlFor="eb-variant">
-          <Input id="eb-variant" value={form.variantName} onChange={(e) => set("variantName", e.target.value)} />
         </Field>
       </div>
       {!memorial ? (
@@ -268,10 +274,18 @@ function BatchEditForm({ batch, lists, onDone }: { batch: YardBatch; lists: Edit
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Notes" htmlFor="eb-notes">
-          <Textarea id="eb-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+        <Field label="Batch number" htmlFor="eb-stack">
+          <Input
+            id="eb-stack"
+            maxLength={20}
+            value={form.stackNumber}
+            onChange={(e) => set("stackNumber", e.target.value)}
+          />
         </Field>
       </div>
+      <Field label="Notes" htmlFor="eb-notes">
+        <Textarea id="eb-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+      </Field>
       <Notice tone="accent" className="text-xs">
         Sales already recorded keep the landed cost they were sold at. The batch code stays as written on the stack.
       </Notice>

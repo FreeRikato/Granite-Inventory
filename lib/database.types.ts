@@ -48,6 +48,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number
@@ -69,6 +70,7 @@ export type Database = {
           notes?: string | null
           purchase_date: string
           slot: string
+          stack_number?: string | null
           supplier_id: string
           thickness_mm?: number | null
           unit_purchase_price: number
@@ -90,6 +92,7 @@ export type Database = {
           notes?: string | null
           purchase_date?: string
           slot?: string
+          stack_number?: string | null
           supplier_id?: string
           thickness_mm?: number | null
           unit_purchase_price?: number
@@ -132,13 +135,6 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "v_sales"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "batches_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "v_stock_lines"
             referencedColumns: ["variant_id"]
           },
           {
@@ -490,6 +486,7 @@ export type Database = {
           product_name: string | null
           purchase_date: string | null
           slot: string | null
+          stack_number: string | null
           supplier_id: string | null
           supplier_name: string | null
           thickness_mm: number | null
@@ -588,7 +585,14 @@ export type Database = {
           line_key: string | null
           product_name: string | null
           thickness_mm: number | null
-          variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_recent_stacks: {
+        Row: {
+          last_used_at: string | null
+          slot: string | null
+          stack_number: string | null
         }
         Relationships: []
       }
@@ -650,8 +654,6 @@ export type Database = {
           product_id: string | null
           product_name: string | null
           thickness_mm: number | null
-          variant_id: string | null
-          variant_name: string | null
         }
         Relationships: []
       }
@@ -680,6 +682,7 @@ export type Database = {
           purchase_date: string | null
           slot: string | null
           sold_out: boolean | null
+          stack_number: string | null
           supplier_id: string | null
           supplier_name: string | null
           thickness_mm: number | null
@@ -706,6 +709,7 @@ export type Database = {
           p_product_id: string
           p_purchase_date: string
           p_slot?: string
+          p_stack_number?: string
           p_supplier_id: string
           p_thickness_mm?: number
           p_unit_purchase_price?: number
@@ -724,6 +728,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number
@@ -790,6 +795,7 @@ export type Database = {
           p_product_id: string
           p_purchase_date: string
           p_slot?: string
+          p_stack_number?: string
           p_supplier_id: string
           p_thickness_mm?: number
           p_unit_purchase_price?: number
@@ -808,6 +814,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number

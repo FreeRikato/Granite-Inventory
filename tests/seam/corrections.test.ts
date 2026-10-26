@@ -26,7 +26,12 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     b = (await createBatch(operator, { productId, supplierId, units: 10, unitPrice: 2000 })).data?.id ?? "";
   });
 
-  function correctBatch(db: Db, id: string, units: number, extra: Partial<{ price: number; variant: string }> = {}) {
+  function correctBatch(
+    db: Db,
+    id: string,
+    units: number,
+    extra: Partial<{ price: number; variant: string; stackNumber: string }> = {},
+  ) {
     return db.rpc("correct_batch", {
       p_batch_id: id,
       p_product_id: productId,
@@ -39,8 +44,15 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
       p_initial_units: units,
       p_unit_purchase_price: extra.price ?? 1000,
       p_freight_cost: 0,
+      p_stack_number: extra.stackNumber,
     });
   }
+
+  it("a correction keeps the batch number unless a new one is given", async () => {
+    const admin = await signedInClient("admin");
+    expect((await correctBatch(admin, a, 15)).data?.stack_number).toBe("1");
+    expect((await correctBatch(admin, a, 15, { stackNumber: "B4" })).data?.stack_number).toBe("B4");
+  });
 
   it("operators cannot correct or delete anything", async () => {
     expect(expectError(await correctBatch(operator, a, 20)).message).toMatch(/Only an Admin/);

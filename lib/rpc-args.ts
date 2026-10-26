@@ -15,6 +15,7 @@ export function batchRpcArgs(b: BatchInput) {
     p_unit_purchase_price: b.unitPurchasePrice,
     p_freight_cost: b.freightCost,
     p_notes: b.notes,
+    p_stack_number: b.stackNumber || undefined,
   };
 }
 

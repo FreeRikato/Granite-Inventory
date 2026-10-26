@@ -31,6 +31,27 @@ describe("batches: create_batch", () => {
     expect(data?.created_by).toBe("operator@test.local");
   });
 
+  it("requires a batch number, stores it trimmed and lists recent slot and batch number pairs newest first", async () => {
+    const missing = await createBatch(operator, { productId, supplierId, stackNumber: "  " });
+    expect(expectError(missing).message).toBe("Batch number is required");
+    const tooLong = await createBatch(operator, { productId, supplierId, stackNumber: "x".repeat(21) });
+    expect(expectError(tooLong).message).toBe("Batch number must be 20 characters or fewer");
+
+    const first = await createBatch(operator, { productId, supplierId, stackNumber: " 12 " });
+    expect(first.data?.stack_number).toBe("12");
+    await createBatch(operator, { productId, supplierId, stackNumber: "7", length: 5, breadth: 3 });
+    await createBatch(operator, { productId, supplierId, stackNumber: "12" });
+
+    const { data } = await operator
+      .from("v_recent_stacks")
+      .select("slot, stack_number")
+      .order("last_used_at", { ascending: false });
+    expect(data).toEqual([
+      { slot: "4FT", stack_number: "12" },
+      { slot: "5FT", stack_number: "7" },
+    ]);
+  });
+
   it("spreads freight over the pieces into landed cost, rounded to paise", async () => {
     const { data } = await createBatch(operator, { productId, supplierId, units: 16, unitPrice: 1400, freight: 750 });
     expect(data?.landed_cost).toBe(1446.88);

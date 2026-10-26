@@ -8,11 +8,7 @@ export default async function CatalogPage() {
   const supabase = await createClient();
   const { data: business } = await supabase.from("v_public_business").select("*").maybeSingle();
   if (!business?.catalog_public) notFound();
-  const { data: lines } = await supabase
-    .from("v_public_catalog")
-    .select("*")
-    .order("product_name")
-    .order("variant_name");
+  const { data: lines } = await supabase.from("v_public_catalog").select("*").order("product_name").order("length_ft");
 
   return (
     <CatalogView

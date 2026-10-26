@@ -1,15 +1,12 @@
 import type { Tables } from "@/lib/database.types";
-import { formatDims } from "@/lib/format";
 import { SLOTS, isAgeFilter, isSlot, type AgeFilter, type Slot } from "@/lib/domain";
 
 export type YardBatch = Tables<"v_yard_batches">;
 
 export type YardQuery = {
-  readonly slot: Slot;
-  readonly size: string | null;
+  readonly slot: Slot | null;
   readonly q: string;
   readonly product: string | null;
-  readonly variant: string | null;
   readonly thickness: number | null;
   readonly supplier: string | null;
   readonly age: AgeFilter | null;
@@ -33,11 +30,9 @@ export function parseYardQuery(raw: Raw): YardQuery {
   const ageNumber = age && /^\d+$/.test(age) ? Number(age) : null;
   const thickness = one(raw, "thickness");
   return {
-    slot: isSlot(slot) ? slot : "4FT",
-    size: one(raw, "size"),
+    slot: isSlot(slot) ? slot : null,
     q: one(raw, "q") ?? "",
     product: one(raw, "product"),
-    variant: one(raw, "variant"),
     thickness: thickness ? Number.parseInt(thickness, 10) : null,
     supplier: one(raw, "supplier"),
     age: ageNumber !== null && isAgeFilter(ageNumber) ? ageNumber : null,
@@ -48,21 +43,17 @@ export function parseYardQuery(raw: Raw): YardQuery {
   };
 }
 
-export function sizeKey(b: Pick<YardBatch, "length_ft" | "breadth_ft">): string {
-  return formatDims(b.length_ft, b.breadth_ft);
-}
-
 export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   if (!q.sold && b.sold_out) return false;
+  if (q.slot && b.slot !== q.slot) return false;
   if (q.product && b.product_id !== q.product) return false;
-  if (q.variant && b.variant_id !== q.variant) return false;
   if (q.thickness !== null && b.thickness_mm !== q.thickness) return false;
   if (q.supplier && b.supplier_id !== q.supplier) return false;
   if (q.age !== null && (b.age_days ?? 0) <= q.age) return false;
   if (q.band && b.ageing_band !== q.band) return false;
   if (q.line && b.line_key !== q.line) return false;
   if (q.q) {
-    const hay = `${b.product_name} ${b.variant_name} ${b.supplier_name} ${b.batch_code}`.toLowerCase();
+    const hay = `${b.product_name} ${b.supplier_name} ${b.batch_code} ${b.stack_number ?? ""}`.toLowerCase();
     if (!hay.includes(q.q.toLowerCase())) return false;
   }
   return true;
@@ -86,20 +77,38 @@ export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"])
   });
 }
 
-export type SlotSummary = { readonly slot: Slot; readonly batches: number; readonly available: number };
+export type StackGroup = {
+  readonly key: string;
+  readonly slot: Slot | null;
+  readonly stackNumber: string | null;
+  readonly batches: readonly YardBatch[];
+  readonly available: number;
+};
 
-export function summariseSlots(list: readonly YardBatch[]): SlotSummary[] {
-  return SLOTS.map((slot) => {
-    const rows = list.filter((b) => b.slot === slot);
-    return { slot, batches: rows.length, available: rows.reduce((n, b) => n + (b.available ?? 0), 0) };
-  });
-}
-
-export function sizesIn(list: readonly YardBatch[]): string[] {
-  const seen = new Map<string, number>();
+export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
+  const groups = new Map<string, YardBatch[]>();
   for (const b of list) {
-    const key = sizeKey(b);
-    seen.set(key, (b.length_ft ?? 0) * 100 + (b.breadth_ft ?? 0));
+    const key = b.stack_number ? `${b.slot}|${b.stack_number}` : "none";
+    groups.set(key, [...(groups.get(key) ?? []), b]);
   }
-  return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
+  const rank = (slot: Slot | null) => (slot ? SLOTS.indexOf(slot) : SLOTS.length);
+  return [...groups.entries()]
+    .map(([key, batches]) => {
+      const first = batches[0];
+      const slot = key !== "none" && isSlot(first?.slot) ? first.slot : null;
+      return {
+        key,
+        slot,
+        stackNumber: key === "none" ? null : (first?.stack_number ?? null),
+        batches,
+        available: batches.reduce((n, b) => n + (b.available ?? 0), 0),
+      };
+    })
+    .sort((a, b) => {
+      if (a.key === "none" || b.key === "none") return a.key === "none" ? 1 : -1;
+      return (
+        rank(a.slot) - rank(b.slot) ||
+        (a.stackNumber ?? "").localeCompare(b.stackNumber ?? "", undefined, { numeric: true })
+      );
+    });
 }
