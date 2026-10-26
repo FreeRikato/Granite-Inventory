@@ -26,7 +26,7 @@ export function RecentBatches({ batches, editLists }: Props) {
                 <th className="py-2 pr-4 text-right font-medium">Pieces</th>
                 <th className="py-2 text-right font-medium">Landed cost</th>
                 {editLists ? (
-                  <th className="w-20 py-2">
+                  <th className="relative w-20 py-2">
                     <span className="sr-only">Actions</span>
                   </th>
                 ) : null}
