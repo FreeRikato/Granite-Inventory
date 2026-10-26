@@ -34,7 +34,12 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await page.getByLabel("Unit Purchase Price (₹)").fill("1400");
   await page.getByLabel("Freight Cost (₹)").fill("750");
 
-  await expect(page.getByRole("combobox", { name: "Yard slot" })).toHaveText("4 ft Slot");
+  await page.getByRole("button", { name: "Add new batch number" }).click();
+  const stackDialog = page.getByRole("dialog", { name: "New batch number" });
+  await expect(stackDialog.getByRole("combobox", { name: "Yard slot" })).toHaveText("4 ft Slot");
+  await stackDialog.getByLabel("Batch number").fill("12");
+  await stackDialog.getByRole("button", { name: "Use batch number" }).click();
+  await expect(page.getByRole("combobox", { name: "Yard slot and batch number" })).toHaveText("4 ft Slot · 12");
   await expect(page.getByTestId("batch-code-preview")).toHaveText(/^BP-\d{2}[A-Z]{3}\d{2}-01$/);
 
   await page.getByRole("button", { name: "Save Batch" }).click();
@@ -45,6 +50,11 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("4×2 ft, 16mm");
   await expect(row).toContainText("15 / 15");
   await expect(row).toContainText("₹1,450");
+  await expect(row).toContainText("4 ft Slot · 12");
+
+  await page.getByRole("combobox", { name: "Yard slot and batch number" }).click();
+  await page.getByRole("option", { name: "4 ft Slot · 12" }).click();
+  await expect(page.getByRole("combobox", { name: "Yard slot and batch number" })).toHaveText("4 ft Slot · 12");
 });
 
 test("the Add buttons open the supplier and product dialogs and select what they save", async ({ page, signIn }) => {
@@ -97,6 +107,10 @@ test("Save Batch waits for a positive size on granite and the click still refuse
   await page.getByRole("option", { name: "Jet Black" }).click();
   await page.getByLabel("Unit Quantity").fill("5");
   await page.getByLabel("Unit Purchase Price (₹)").fill("1000");
+  await page.getByRole("combobox", { name: "Yard slot and batch number" }).click();
+  await page.getByPlaceholder("Search batch numbers...").fill("3");
+  await page.getByRole("option", { name: 'Add batch number "3"' }).click();
+  await page.getByRole("button", { name: "Use batch number" }).click();
 
   const saveBatch = page.getByRole("button", { name: "Save Batch" });
   await expect(saveBatch).toBeDisabled();

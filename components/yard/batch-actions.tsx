@@ -126,6 +126,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
     breadthFt: batch.breadth_ft?.toString() ?? "",
     thicknessMm: batch.thickness_mm?.toString() ?? "",
     slot: isSlot(batch.slot) ? batch.slot : "CUSTOM",
+    stackNumber: batch.stack_number ?? "",
     initialUnits: batch.initial_units?.toString() ?? "",
     unitPurchasePrice: batch.unit_purchase_price?.toString() ?? "",
     freightCost: batch.freight_cost?.toString() ?? "0",
@@ -273,10 +274,18 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Notes" htmlFor="eb-notes">
-          <Textarea id="eb-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+        <Field label="Batch number" htmlFor="eb-stack">
+          <Input
+            id="eb-stack"
+            maxLength={20}
+            value={form.stackNumber}
+            onChange={(e) => set("stackNumber", e.target.value)}
+          />
         </Field>
       </div>
+      <Field label="Notes" htmlFor="eb-notes">
+        <Textarea id="eb-notes" rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+      </Field>
       <Notice tone="accent" className="text-xs">
         Sales already recorded keep the landed cost they were sold at. The batch code stays as written on the stack.
       </Notice>

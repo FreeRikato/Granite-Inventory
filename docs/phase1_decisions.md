@@ -23,6 +23,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
   - 4 ≤ length < 5 → 4FT
   - 5 ≤ length < 6 → 5FT
   - anything else → CUSTOM
+- Every new Batch records its Stack: a Slot plus a typed Batch number (shown to users as "Batch number", up to 20 characters, trimmed). `create_batch` refuses a Batch without one; a Correction keeps the existing number unless a new one is given. The inward form offers recently used Slot and Batch number pairs (`v_recent_stacks`) and an Add dialog for a new pair. Batches from before this rule have no Stack.
 - Batch Code format `{PRODUCT_ABBR}-{DDMON}{YY}-{seq}` (e.g. `BP-07SEP26-01`). Abbreviation stored on Product, unique, auto-suggested from initials and editable. Sequence resets per product per day. Generated inside the insert function. Purchase dates before 2000-01-01 are refused so the two-digit year remains unambiguous for the supported history.
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.

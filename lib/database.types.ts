@@ -48,6 +48,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number
@@ -69,6 +70,7 @@ export type Database = {
           notes?: string | null
           purchase_date: string
           slot: string
+          stack_number?: string | null
           supplier_id: string
           thickness_mm?: number | null
           unit_purchase_price: number
@@ -90,6 +92,7 @@ export type Database = {
           notes?: string | null
           purchase_date?: string
           slot?: string
+          stack_number?: string | null
           supplier_id?: string
           thickness_mm?: number | null
           unit_purchase_price?: number
@@ -483,6 +486,7 @@ export type Database = {
           product_name: string | null
           purchase_date: string | null
           slot: string | null
+          stack_number: string | null
           supplier_id: string | null
           supplier_name: string | null
           thickness_mm: number | null
@@ -584,6 +588,14 @@ export type Database = {
         }
         Relationships: []
       }
+      v_recent_stacks: {
+        Row: {
+          last_used_at: string | null
+          slot: string | null
+          stack_number: string | null
+        }
+        Relationships: []
+      }
       v_sales: {
         Row: {
           batch_code: string | null
@@ -670,6 +682,7 @@ export type Database = {
           purchase_date: string | null
           slot: string | null
           sold_out: boolean | null
+          stack_number: string | null
           supplier_id: string | null
           supplier_name: string | null
           thickness_mm: number | null
@@ -696,6 +709,7 @@ export type Database = {
           p_product_id: string
           p_purchase_date: string
           p_slot?: string
+          p_stack_number?: string
           p_supplier_id: string
           p_thickness_mm?: number
           p_unit_purchase_price?: number
@@ -714,6 +728,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number
@@ -780,6 +795,7 @@ export type Database = {
           p_product_id: string
           p_purchase_date: string
           p_slot?: string
+          p_stack_number?: string
           p_supplier_id: string
           p_thickness_mm?: number
           p_unit_purchase_price?: number
@@ -798,6 +814,7 @@ export type Database = {
           notes: string | null
           purchase_date: string
           slot: string
+          stack_number: string | null
           supplier_id: string
           thickness_mm: number | null
           unit_purchase_price: number

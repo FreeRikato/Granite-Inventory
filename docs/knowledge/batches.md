@@ -4,6 +4,7 @@ code:
   - supabase/migrations/20260926165731_api_observations.sql
   - supabase/migrations/20261026184634_stock_line_without_variant.sql
   - lib/schemas/batch.ts
+  - supabase/migrations/20261026190835_batch_stack_number.sql
   - lib/domain.ts
   - lib/rpc-args.ts
   - app/(app)/inward/inward-form.tsx
@@ -27,6 +28,15 @@ The code is written on the physical stack, so [[corrections]] never change it.
 - Size (length and breadth) is required for Granite and Tiles and forbidden for Memorial. The rule needs the Product's category, so it lives in a trigger rather than a check constraint.
 - The Inward form keeps Save Batch disabled for Granite until length and breadth are filled, the same way it waits for a supplier. A zero thickness deliberately keeps the button enabled, so the click shows which field is wrong.
 - `suggest_slot()` picks the yard slot from category and length: Memorial goes to DOOM, 4 to 5 ft to 4FT, 5 to 6 ft to 5FT, anything else to CUSTOM. `lib/domain.ts` mirrors it so the form can preview the slot before saving.
+
+## Stack (Batch number)
+
+A Stack is the pile a Batch is put on, named by a Slot plus a typed number; screens call the number "Batch number" because that is the client's word, and call the Batch Code "Purchase code" so the two never read alike (`CONTEXT.md`). It is a raw column on `batches` rather than its own table: a pile has no facts of its own beyond its slot and number, so `v_recent_stacks` derives the recently used pairs for the inward picker.
+
+- `create_batch` and `correct_batch` take `p_stack_number` last with a null default, so the PostgREST argument matching still works for callers that omit it. Adding the argument meant dropping and recreating both functions; a second overload would make calls without it ambiguous.
+- `private.normalize_stack_number` trims and refuses more than 20 characters with readable copy before the `batches_stack_number_shape` check can fire ([[readable-refusals]]). `create_batch` refuses a blank number; `correct_batch` treats a blank as "keep the current one", so editing an older Batch never forces one in.
+- `v_yard_batches` selects `b.*` from `v_batches`, so adding `stack_number` to `v_batches` meant dropping and recreating it; `create or replace` cannot insert a column ahead of the ones it adds.
+- In the inward form the slot comes from the chosen pair. The size-based suggestion now only seeds the slot in the Add dialog.
 
 ## Hidden Variants
 

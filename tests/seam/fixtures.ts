@@ -23,6 +23,7 @@ export type BatchInput = {
   productId: string;
   supplierId: string;
   variantName?: string;
+  stackNumber?: string;
   purchaseDate?: string;
   length?: number | null;
   breadth?: number | null;
@@ -47,6 +48,7 @@ export function createBatch(db: Db, input: BatchInput) {
     p_initial_units: input.units ?? 10,
     p_unit_purchase_price: input.unitPrice ?? 1400,
     p_freight_cost: input.freight ?? 0,
+    p_stack_number: input.stackNumber ?? "1",
   });
 }
 

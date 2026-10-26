@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
   SLOTS,
   SLOT_LABEL,
   isCategory,
+  isSlot,
+  stackLabel,
   suggestAbbreviation,
   suggestSlot,
   type Category,
@@ -29,10 +31,13 @@ import { createProductAction, createSupplierAction, saveBatchAction } from "./ac
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
 type Supplier = { id: string; name: string };
+type RecentStack = { slot: string | null; stack_number: string | null };
+type StackDraft = { slot: Slot; stackNumber: string };
 
 type Props = {
   readonly products: readonly Product[];
   readonly suppliers: readonly Supplier[];
+  readonly recentStacks: readonly RecentStack[];
 };
 
 type FormState = {
@@ -43,6 +48,7 @@ type FormState = {
   breadthFt: string;
   thicknessMm: string;
   slot: Slot | null;
+  stackNumber: string;
   initialUnits: string;
   unitPurchasePrice: string;
   freightCost: string;
@@ -56,12 +62,13 @@ const EMPTY: FormState = {
   breadthFt: "",
   thicknessMm: "16",
   slot: null,
+  stackNumber: "",
   initialUnits: "",
   unitPurchasePrice: "",
   freightCost: "",
 };
 
-export function InwardForm({ products: initialProducts, suppliers: initialSuppliers }: Props) {
+export function InwardForm({ products: initialProducts, suppliers: initialSuppliers, recentStacks }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -70,6 +77,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
   const [suppliers, setSuppliers] = useState(initialSuppliers);
   const [newProduct, setNewProduct] = useState<{ name: string; abbreviation: string; category: Category } | null>(null);
   const [newSupplier, setNewSupplier] = useState<{ name: string; phone: string } | null>(null);
+  const [newStack, setNewStack] = useState<StackDraft | null>(null);
   const [codePreview, setCodePreview] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === form.productId) ?? null;
@@ -79,6 +87,21 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
   const suggested = category ? suggestSlot(category, Number.isFinite(lengthNumber) ? lengthNumber : null) : null;
   const slot = form.slot ?? suggested;
   const hasSize = memorial || (lengthNumber > 0 && Number.parseFloat(form.breadthFt) > 0);
+
+  const stackOptions = useMemo(() => {
+    const pairs: StackDraft[] = recentStacks.flatMap((s) =>
+      isSlot(s.slot) && s.stack_number ? [{ slot: s.slot, stackNumber: s.stack_number }] : [],
+    );
+    if (
+      form.slot &&
+      form.stackNumber &&
+      !pairs.some((p) => p.slot === form.slot && p.stackNumber === form.stackNumber)
+    ) {
+      pairs.unshift({ slot: form.slot, stackNumber: form.stackNumber });
+    }
+    return pairs.map((p) => ({ value: `${p.slot}|${p.stackNumber}`, label: stackLabel(p.slot, p.stackNumber) }));
+  }, [recentStacks, form.slot, form.stackNumber]);
+  const stackValue = form.slot && form.stackNumber ? `${form.slot}|${form.stackNumber}` : null;
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -105,6 +128,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         supplierId: form.supplierId,
         purchaseDate: form.purchaseDate,
         slot,
+        stackNumber: form.stackNumber,
         initialUnits: form.initialUnits,
         unitPurchasePrice: form.unitPurchasePrice,
         freightCost: form.freightCost === "" ? 0 : form.freightCost,
@@ -196,7 +220,6 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               value={form.productId}
               onChange={(v) => {
                 set("productId", v);
-                set("slot", null);
               }}
               placeholder="Select or add product"
               searchPlaceholder="Search products..."
@@ -229,7 +252,6 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               value={form.lengthFt}
               onChange={(e) => {
                 set("lengthFt", e.target.value);
-                set("slot", null);
               }}
               className="h-11"
             />
@@ -310,26 +332,32 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Yard slot"
-          htmlFor="slot"
-          hint={suggested && slot === suggested ? "Suggested from size" : undefined}
-        >
-          <Select value={slot ?? ""} onValueChange={(v) => set("slot", SLOTS.includes(v as Slot) ? (v as Slot) : null)}>
-            <SelectTrigger id="slot" className="h-11 w-full">
-              <SelectValue placeholder="Pick a product first" />
-            </SelectTrigger>
-            <SelectContent>
-              {SLOTS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {SLOT_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Field label="Yard slot and batch number" htmlFor="stack">
+          <div className="flex gap-2">
+            <SearchSelect
+              id="stack"
+              options={stackOptions}
+              value={stackValue}
+              onChange={(v) => {
+                const [pickedSlot, ...rest] = v.split("|");
+                if (!isSlot(pickedSlot)) return;
+                setForm((prev) => ({ ...prev, slot: pickedSlot, stackNumber: rest.join("|") }));
+              }}
+              placeholder="Pick or add a batch number"
+              searchPlaceholder="Search batch numbers..."
+              emptyText="No recent batch number matches."
+              onCreate={(stackNumber) => setNewStack({ slot: slot ?? "4FT", stackNumber })}
+              createLabel={(q) => `Add batch number "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton
+              label="Add new batch number"
+              onClick={() => setNewStack({ slot: slot ?? "4FT", stackNumber: "" })}
+            />
+          </div>
         </Field>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] text-muted-foreground">Auto-generated batch ID</span>
+          <span className="text-[13px] text-muted-foreground">Purchase code</span>
           <span className="flex h-11 items-center font-mono text-sm font-semibold" data-testid="batch-code-preview">
             {showPreview ?? "Pick a product and date"}
           </span>
@@ -345,7 +373,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       <div className="mt-6 flex justify-end">
         <Button
           type="submit"
-          disabled={pending || !form.productId || !form.supplierId || !hasSize}
+          disabled={pending || !form.productId || !form.supplierId || !hasSize || !form.stackNumber}
           className="h-11 px-6 font-semibold"
         >
           {pending ? "Saving..." : "Save Batch"}
@@ -452,6 +480,70 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
                 </Button>
                 <Button type="button" onClick={saveSupplier} disabled={pending || !newSupplier.name.trim()}>
                   Add supplier
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={newStack !== null}
+        onOpenChange={(open) => {
+          if (!open) setNewStack(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New batch number</DialogTitle>
+          </DialogHeader>
+          {newStack ? (
+            <div className="flex flex-col gap-4">
+              <Field
+                label="Yard slot"
+                htmlFor="nk-slot"
+                hint={suggested && newStack.slot === suggested ? "Suggested from size" : undefined}
+              >
+                <Select
+                  value={newStack.slot}
+                  onValueChange={(v) => {
+                    if (isSlot(v)) setNewStack({ ...newStack, slot: v });
+                  }}
+                >
+                  <SelectTrigger id="nk-slot" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SLOTS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {SLOT_LABEL[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Batch number" htmlFor="nk-number" hint="As written on the pile in the yard">
+                <Input
+                  id="nk-number"
+                  maxLength={20}
+                  value={newStack.stackNumber}
+                  onChange={(e) => setNewStack({ ...newStack, stackNumber: e.target.value })}
+                  autoFocus
+                />
+              </Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setNewStack(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!newStack.stackNumber.trim()}
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, slot: newStack.slot, stackNumber: newStack.stackNumber.trim() }));
+                    setNewStack(null);
+                  }}
+                >
+                  Use batch number
                 </Button>
               </div>
             </div>

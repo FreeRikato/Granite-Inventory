@@ -42,6 +42,9 @@ test("Inward explains a missing Supplier and disables Save Batch until both sele
   await page.getByRole("option", { name: /^Missing Supplier Product/ }).click();
   await page.getByLabel("Length (ft)").fill("4");
   await page.getByLabel("Breadth (ft)").fill("2");
+  await page.getByRole("button", { name: "Add new batch number" }).click();
+  await page.getByRole("textbox", { name: "Batch number" }).fill("5");
+  await page.getByRole("button", { name: "Use batch number" }).click();
   await expect(saveBatch).toBeDisabled();
 
   await page
