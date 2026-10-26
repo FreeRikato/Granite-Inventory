@@ -6,6 +6,7 @@ code:
   - .githooks/pre-commit
   - package.json
   - tsconfig.json
+  - next.config.ts
 ---
 # Tooling
 
@@ -36,6 +37,10 @@ It uses the default style (double quotes, semicolons, trailing commas) with a 12
 ## The comment check
 
 `scripts/comments.ts` finds comments with a real parser for TS and JS (`oxc-parser`), so `"http://"` in a string or `/\/\//` in a regex never counts. SQL, CSS and shell use small quote-aware scanners: SQL handles nested block comments and scans inside function bodies, and shell skips the shebang, heredoc bodies and `${#var}`. It runs under Node's native type stripping; the `MODULE_TYPELESS_PACKAGE_JSON` warning is silenced because `package.json` has no `"type"` field. The rule itself is in the [README](README.md).
+
+## Dev server origin
+
+`pnpm dev` starts Next on its default hostname, `localhost`, and Next 16 blocks dev-only assets and the HMR socket for any other origin. Without `allowedDevOrigins: ["127.0.0.1"]` in `next.config.ts`, the README's `http://127.0.0.1:3000` serves HTML that never hydrates: no client component works and HMR never connects. Playwright is unaffected because it starts the server with `--hostname 127.0.0.1`.
 
 The tsconfig and the linter both exclude `.claude`, `.agents` and `.scratch`: agent skills and run output share the repo root with the app but are not app code.
 
