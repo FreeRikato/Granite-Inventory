@@ -45,14 +45,18 @@
     "zod": "^4.6.1"
   },
   "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.87",
     "@axe-core/playwright": "^4.13.0",
+    "@e2e-dev/web": "^0.15.3",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "ai": "^7.0.152",
     "dotenv": "^17.4.2",
+    "e2e": "^0.21.3",
     "oxc-parser": "^0.151.0",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
