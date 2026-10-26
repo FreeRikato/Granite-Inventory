@@ -82,11 +82,11 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 ## Yard view
 
-- Tabs per Slot; inside a Slot, sub-tabs per L × B; Batches oldest first (Newest first as the only alternative sort).
-- Filters: search text, Product, Thickness, Supplier, Age.
+- One section per Stack (Slot plus Batch number), ordered by Slot then Batch number, with Batches oldest first inside (Newest first as the only alternative sort). Batches without a Batch number share a final "No batch number" section. No slot tabs or size sub-tabs.
+- Filters: search text (also matches the Batch number), Slot, Product, Thickness, Supplier, Age.
 - Sold Out Batches hidden by default, "Show sold out" toggle.
-- Within a size group, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
-- `/yard?line=<line_key>` deep-links to one Stock Line and lands on its slot; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.
+- Within a Stack, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
+- `/yard?line=<line_key>` deep-links to one Stock Line, showing every Stack that holds it; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.
 
 ## Navigation
 

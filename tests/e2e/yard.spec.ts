@@ -11,20 +11,32 @@ test.beforeEach(async () => {
   await seedYard();
 });
 
-test("yard shows batches per slot with ageing, a clamp, and filters", async ({ page, signIn }) => {
+test("yard groups purchases by yard slot and batch number, with ageing, a clamp and filters", async ({
+  page,
+  signIn,
+}) => {
   await signIn("operator");
   await page.goto("/yard");
   await expect(page.getByRole("heading", { name: "Yard Slots" })).toBeVisible();
 
-  const cards = page.getByTestId("yard-batch");
+  const stacks = page.getByTestId("yard-stack");
+  await expect(stacks.getByRole("heading", { level: 2 })).toHaveText([
+    "4 ft Slot · 12",
+    "5 ft Slot · 3",
+    "No batch number",
+  ]);
+  await expect(stacks.nth(0)).toContainText("2 purchases · 14 available");
+
+  const cards = stacks.nth(0).getByTestId("yard-batch");
   await expect(cards).toHaveCount(2);
   await expect(cards.nth(0)).toHaveAttribute("data-batch-code", "BP-OLD-01");
   await expect(cards.nth(0)).toContainText(/Stale stock · 232 days in the yard/i);
   await expect(cards.nth(1)).toContainText("New stock");
-  await expect(page.getByTestId("clamp")).toContainText("New batch arrived 229 days later");
+  await expect(stacks.nth(0).getByTestId("clamp")).toContainText("New batch arrived 229 days later");
 
-  await page.getByRole("tab", { name: /Doom Stones/ }).click();
-  await expect(page.getByTestId("yard-batch")).toHaveCount(1);
+  await page.getByRole("combobox", { name: "Slot" }).click();
+  await page.getByRole("option", { name: "Doom Stones", exact: true }).click();
+  await expect(stacks.getByRole("heading", { level: 2 })).toHaveText(["No batch number"]);
   await expect(page.getByTestId("yard-batch")).toContainText("Fixed size");
 
   await page.goto("/yard?slot=4FT&age=180");
@@ -33,6 +45,9 @@ test("yard shows batches per slot with ageing, a clamp, and filters", async ({ p
 
   await page.goto("/yard?slot=4FT&sort=newest");
   await expect(page.getByTestId("yard-batch").first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
+
+  await page.goto("/yard?q=12");
+  await expect(stacks.getByRole("heading", { level: 2 })).toHaveText(["4 ft Slot · 12"]);
 });
 
 test("showing sold-out batches exposes a Sold out marker", async ({ page, signIn }) => {
@@ -76,14 +91,13 @@ test("yard filter controls keep product, thickness, supplier, age band, and sort
   await expect(cards.first()).toHaveAttribute("data-batch-code", "BP-NEW-01");
 });
 
-test("an empty Slot says so, and the filter message appears only when a filter is active", async ({ page, signIn }) => {
-  await sql(`update public.batches set slot = 'CUSTOM' where slot = '4FT'`);
+test("an empty yard says so, and the filter message appears only when a filter is active", async ({ page, signIn }) => {
   await signIn("operator");
-  await page.goto("/yard");
-  await expect(page.getByRole("heading", { name: "4 ft Slot" })).toBeVisible();
-  await expect(page.getByText("No batches in the 4 ft Slot right now.")).toBeVisible();
-  await expect(page.getByText("Nothing matches these filters.")).toHaveCount(0);
-
-  await page.goto("/yard?slot=CUSTOM&q=nomatch");
+  await page.goto("/yard?q=nomatch");
   await expect(page.getByText("Nothing matches these filters.")).toBeVisible();
+
+  await sql(`delete from public.batches`);
+  await page.goto("/yard");
+  await expect(page.getByText("No batches in the yard yet. Log a delivery to get started.")).toBeVisible();
+  await expect(page.getByText("Nothing matches these filters.")).toHaveCount(0);
 });

@@ -14,6 +14,7 @@ type Option = { readonly value: string; readonly label: string };
 
 type Props = {
   readonly query: YardQuery;
+  readonly slots: readonly Option[];
   readonly products: readonly Option[];
   readonly thicknesses: readonly number[];
   readonly suppliers: readonly Option[];
@@ -21,7 +22,7 @@ type Props = {
 
 const ALL = "__all__";
 
-export function YardFilters({ query, products, thicknesses, suppliers }: Props) {
+export function YardFilters({ query, slots, products, thicknesses, suppliers }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -53,7 +54,7 @@ export function YardFilters({ query, products, thicknesses, suppliers }: Props) 
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Search product or supplier..."
+            placeholder="Search product, supplier or batch number..."
             className="h-10 rounded-full bg-card pl-9"
             aria-label="Search batches"
           />
@@ -69,6 +70,7 @@ export function YardFilters({ query, products, thicknesses, suppliers }: Props) 
             <X className="size-3.5" /> Clear stock line
           </Button>
         ) : null}
+        <FilterSelect label="Slot" value={query.slot} options={slots} onChange={(v) => update({ slot: v })} />
         <FilterSelect
           label="Product"
           value={query.product}

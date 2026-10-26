@@ -43,7 +43,7 @@ test.describe("client reads", () => {
     const net = watch(page);
 
     await page.getByRole("link", { name: "Yard Slots" }).click();
-    await expect(page.getByTestId("yard-batch")).toHaveCount(2);
+    await expect(page.getByTestId("yard-batch")).toHaveCount(4);
     expect(net.restReads()).toBeGreaterThan(0);
 
     await page.getByRole("link", { name: "Sell Stone" }).click();

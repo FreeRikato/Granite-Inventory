@@ -31,7 +31,7 @@ test("every yard filter select shows a value as soon as the row renders", async 
   await expect(page.getByRole("combobox", { name: "Sort" })).toBeVisible();
 
   const selectValues = await page.locator('[data-slot="select-value"]').allInnerTexts();
-  expect(selectValues).toHaveLength(5);
+  expect(selectValues).toHaveLength(6);
   expect(selectValues.map((value) => value.trim()).filter((value) => value === "")).toHaveLength(0);
 });
 
