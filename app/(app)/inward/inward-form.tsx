@@ -22,6 +22,7 @@ import {
   type Slot,
 } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
+import { useRefusal } from "@/lib/use-refusal";
 import { createClient } from "@/lib/supabase/client";
 import { createProductAction, createSupplierAction, saveBatchAction } from "./actions";
 
@@ -71,12 +72,12 @@ export function InwardForm({
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
+  const { error, refuse, clear } = useRefusal(form);
   const [products, setProducts] = useState(initialProducts);
   const [suppliers, setSuppliers] = useState(initialSuppliers);
   const [variants] = useState(initialVariants);
   const [newProduct, setNewProduct] = useState<{ name: string; abbreviation: string; category: Category } | null>(null);
   const [codePreview, setCodePreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === form.productId) ?? null;
   const category: Category | null = product && isCategory(product.category) ? product.category : null;
@@ -116,7 +117,7 @@ export function InwardForm({
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
+    clear();
     startTransition(async () => {
       const result = await saveBatchAction({
         productId: form.productId,
@@ -133,7 +134,7 @@ export function InwardForm({
         thicknessMm: form.thicknessMm,
       });
       if (!result.ok) {
-        setError(result.error);
+        refuse(result.error);
         return;
       }
       toast.success(`Batch ${result.data.batch_code} saved`);

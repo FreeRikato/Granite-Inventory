@@ -166,3 +166,22 @@ test("the Add customer row is hidden when the typed digits belong to a customer"
 
   await expect(page.getByRole("option", { name: /Add customer/ })).toHaveCount(0);
 });
+
+test("a refusal clears as soon as the quantity is fixed", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Customer" }).click();
+  await page.getByRole("option", { name: /Walk-in Customer/ }).click();
+  await page.getByRole("combobox", { name: "Product / Variant" }).click();
+  await page.getByRole("option", { name: /Black Pearl · Grade 1/ }).click();
+  await page.getByTestId("fifo-batch").first().click();
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+
+  await page.getByLabel("Quantity Sold").fill("99");
+  await page.getByRole("button", { name: "Record Sale" }).click();
+  const refusal = page.getByText(/Only \d+ available in batch BP-OLD-01/);
+  await expect(refusal).toBeVisible();
+
+  await page.getByLabel("Quantity Sold").fill("1");
+  await expect(refusal).toHaveCount(0);
+});

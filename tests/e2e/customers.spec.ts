@@ -54,6 +54,15 @@ test("an existing phone selects that customer instead of creating a duplicate", 
   await expect(page.getByTestId("customer-row")).toHaveCount(2);
 });
 
+test("the customer page shows Margin % to one decimal like the other screens", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+  const row = page.getByTestId("sale-row");
+  await expect(row).toContainText("(12.1%)");
+  await expect(row).not.toContainText("12.12%");
+});
+
 test("admin edits a customer from the detail page and the change persists", async ({ page, signIn }) => {
   await signIn("admin");
   await page.goto("/customers");

@@ -91,6 +91,9 @@ test("Save Batch waits for a positive size on granite and the click still refuse
   await saveBatch.click();
   await expect(page.getByText(/Must be more than 0/)).toBeVisible();
   await expect(page.getByTestId("batch-row")).toHaveCount(0);
+
+  await page.getByLabel("Thickness (mm)").fill("16");
+  await expect(page.getByText(/Must be more than 0/)).toHaveCount(0);
 });
 
 test("inward suggests an existing variant for the chosen product and accepts a new name", async ({ page, signIn }) => {

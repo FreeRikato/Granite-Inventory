@@ -24,6 +24,10 @@ Batches of one Stock Line stay together, so the Clamp (the virtual divider betwe
 
 Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) lands on that line's own slot.
 
+## Empty states
+
+Three messages, by cause: no Batches anywhere ("log a delivery"), a filter or search that matches nothing in the open Slot, and an open Slot with no Batches and no filter active. Slot and size do not count as filters, because they drive the tabs.
+
 ## Cards
 
 A card shows one Batch: the ageing banner (a warning for stale, a tag for fresh and ageing), names, numbers and the sell action. Elsewhere the ageing badge is a small chip ("232 days") coloured by band. Admins also get edit and delete ([[corrections]]). The edit lists are small and readable by every member, so they are fetched for everyone; fetching them only for Admins would put the role check on the critical path for nothing.

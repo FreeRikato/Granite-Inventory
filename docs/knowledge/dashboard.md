@@ -7,6 +7,7 @@ code:
   - components/dashboard/stock-donut.tsx
   - lib/format.ts
   - tests/seam/dashboard.test.ts
+  - tests/tooling/format.test.ts
 ---
 # Dashboard
 
@@ -15,7 +16,7 @@ Every figure on Overview is derived from batches and sales; nothing is stored. "
 - Moving sizes: units sold in the last N days per length x breadth, thickness ignored. Memorial has no size, so it shows as one row per Variant. The chart is ranked bars with one series, so one hue and direct labels.
 - Stock donut: part-to-whole of what is still in the yard versus what has been sold, all time.
 - The stale panel is a slice of the shared batches query: the oldest stale batches that still have stock ([[browser-reads]]).
-- KPI tiles use compact rupees: ₹5.2L, ₹1.2Cr.
+- KPI tiles use compact rupees: ₹5.2L, ₹1.2Cr. A negative amount puts the sign before the symbol (-₹5,050, -₹2.5L); `tests/tooling/format.test.ts` guards it.
 
 The page is a static shell like Yard and Sell; the numbers come from the browser cache.
 

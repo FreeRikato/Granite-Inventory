@@ -35,9 +35,9 @@ export const batchSchema = z
     supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
     slot: z.enum(SLOTS),
-    initialUnits: positiveInteger("Initial units must be greater than zero"),
-    unitPurchasePrice: money,
-    freightCost: money.default(0),
+    initialUnits: positiveInteger("Unit Quantity must be greater than zero"),
+    unitPurchasePrice: money("Unit Purchase Price"),
+    freightCost: money("Freight Cost").default(0),
     notes: z.string().trim().max(500).optional(),
   })
   .and(z.discriminatedUnion("memorial", [sizedBatch, unsizedBatch]));
