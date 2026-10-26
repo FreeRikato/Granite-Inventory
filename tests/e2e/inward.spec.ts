@@ -49,6 +49,25 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("₹1,450");
 });
 
+test("the Add buttons open the supplier and product dialogs and select what they save", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/inward");
+
+  await page.getByRole("button", { name: "Add new supplier" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Erode Granites");
+  await page.getByLabel("Phone").fill("9876500000");
+  await page.getByRole("button", { name: "Add supplier" }).click();
+  await expect(page.getByRole("combobox", { name: "Supplier" })).toHaveText("Erode Granites");
+  const suppliers = await sql<{ phone: string }>(`select phone from public.suppliers where name = 'Erode Granites'`);
+  expect(suppliers).toEqual([{ phone: "9876500000" }]);
+
+  await page.getByRole("button", { name: "Add new product" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Jet Black");
+  await expect(page.getByLabel("Abbreviation")).toHaveValue("JB");
+  await page.getByRole("button", { name: "Add product" }).click();
+  await expect(page.getByRole("combobox", { name: "Product" })).toHaveText("Jet Black");
+});
+
 test("operator adds a new supplier inline and it is selected and saved", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/inward");
@@ -57,6 +76,10 @@ test("operator adds a new supplier inline and it is selected and saved", async (
   await supplier.click();
   await page.getByPlaceholder("Search suppliers...").fill("Salem Quarry");
   await page.getByRole("option", { name: 'Add supplier "Salem Quarry"' }).click();
+  await expect(page.getByRole("dialog", { name: "New supplier" })).toBeVisible();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Salem Quarry");
+  await page.getByRole("button", { name: "Add supplier" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
   await expect(supplier).toHaveText("Salem Quarry");
 
   const rows = await sql<{ name: string }>(`select name from public.suppliers where name = 'Salem Quarry'`);

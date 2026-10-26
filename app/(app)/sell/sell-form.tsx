@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
+import { AddButton } from "@/components/add-button";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
@@ -170,21 +171,28 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         <Card>
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
             <Field label="Customer" htmlFor="customer">
-              <SearchSelect
-                id="customer"
-                options={customers.map((c) => ({
-                  value: c.id,
-                  label: c.name,
-                  hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
-                  phone: c.phone,
-                }))}
-                value={customerId}
-                onChange={setCustomerId}
-                placeholder="Search or add customer"
-                searchPlaceholder="Name or phone..."
-                onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
-                createLabel={(q) => `Add customer "${q}"`}
-              />
+              <div className="flex gap-2">
+                <SearchSelect
+                  id="customer"
+                  options={customers.map((c) => ({
+                    value: c.id,
+                    label: c.name,
+                    hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
+                    phone: c.phone,
+                  }))}
+                  value={customerId}
+                  onChange={setCustomerId}
+                  placeholder="Search or add customer"
+                  searchPlaceholder="Name or phone..."
+                  onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
+                  createLabel={(q) => `Add customer "${q}"`}
+                  className="min-w-0 flex-1"
+                />
+                <AddButton
+                  label="Add new customer"
+                  onClick={() => setNewCustomer({ name: "", phone: "", customerType: "REGULAR" })}
+                />
+              </div>
             </Field>
             <Field label="Contact Number" htmlFor="contact">
               <Input

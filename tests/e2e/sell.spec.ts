@@ -185,3 +185,15 @@ test("a refusal clears as soon as the quantity is fixed", async ({ page, signIn 
   await page.getByLabel("Quantity Sold").fill("1");
   await expect(refusal).toHaveCount(0);
 });
+
+test("the Add button opens a blank customer dialog and selects the saved customer", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("button", { name: "Add new customer" }).click();
+  await expect(page.getByRole("dialog", { name: "New customer" })).toBeVisible();
+  await page.getByLabel("Name").fill("Button Customer");
+  await page.getByLabel("Phone").fill("9123456780");
+  await page.getByRole("button", { name: "Add customer" }).click();
+  await expect(page.getByRole("combobox", { name: "Customer" })).toHaveText("Button Customer");
+  await expect(page.getByLabel("Contact Number")).toHaveValue("9123456780");
+});

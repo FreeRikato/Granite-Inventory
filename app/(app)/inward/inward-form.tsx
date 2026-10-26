@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AddButton } from "@/components/add-button";
 import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
 import { SearchSelect } from "@/components/search-select";
@@ -77,6 +78,7 @@ export function InwardForm({
   const [suppliers, setSuppliers] = useState(initialSuppliers);
   const [variants] = useState(initialVariants);
   const [newProduct, setNewProduct] = useState<{ name: string; abbreviation: string; category: Category } | null>(null);
+  const [newSupplier, setNewSupplier] = useState<{ name: string; phone: string } | null>(null);
   const [codePreview, setCodePreview] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === form.productId) ?? null;
@@ -143,15 +145,17 @@ export function InwardForm({
     });
   }
 
-  function addSupplier(name: string) {
+  function saveSupplier() {
+    if (!newSupplier) return;
     startTransition(async () => {
-      const result = await createSupplierAction({ name });
+      const result = await createSupplierAction(newSupplier);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
       setSuppliers((prev) => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)));
       set("supplierId", result.data.id);
+      setNewSupplier(null);
     });
   }
 
@@ -186,37 +190,48 @@ export function InwardForm({
           />
         </Field>
         <Field label="Supplier" htmlFor="supplier">
-          <SearchSelect
-            id="supplier"
-            options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
-            value={form.supplierId}
-            onChange={(v) => set("supplierId", v)}
-            placeholder="Select or add supplier"
-            searchPlaceholder="Search suppliers..."
-            onCreate={addSupplier}
-            createLabel={(q) => `Add supplier "${q}"`}
-          />
+          <div className="flex gap-2">
+            <SearchSelect
+              id="supplier"
+              options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
+              value={form.supplierId}
+              onChange={(v) => set("supplierId", v)}
+              placeholder="Select or add supplier"
+              searchPlaceholder="Search suppliers..."
+              onCreate={(name) => setNewSupplier({ name, phone: "" })}
+              createLabel={(q) => `Add supplier "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton label="Add new supplier" onClick={() => setNewSupplier({ name: "", phone: "" })} />
+          </div>
         </Field>
         <Field label="Product" htmlFor="product">
-          <SearchSelect
-            id="product"
-            options={products.map((p) => ({
-              value: p.id,
-              label: p.name,
-              hint: isCategory(p.category) ? CATEGORY_LABEL[p.category] : undefined,
-              keywords: [p.abbreviation],
-            }))}
-            value={form.productId}
-            onChange={(v) => {
-              set("productId", v);
-              set("slot", null);
-              set("variantName", "");
-            }}
-            placeholder="Select or add product"
-            searchPlaceholder="Search products..."
-            onCreate={(name) => setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })}
-            createLabel={(q) => `Add product "${q}"`}
-          />
+          <div className="flex gap-2">
+            <SearchSelect
+              id="product"
+              options={products.map((p) => ({
+                value: p.id,
+                label: p.name,
+                hint: isCategory(p.category) ? CATEGORY_LABEL[p.category] : undefined,
+                keywords: [p.abbreviation],
+              }))}
+              value={form.productId}
+              onChange={(v) => {
+                set("productId", v);
+                set("slot", null);
+                set("variantName", "");
+              }}
+              placeholder="Select or add product"
+              searchPlaceholder="Search products..."
+              onCreate={(name) => setNewProduct({ name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })}
+              createLabel={(q) => `Add product "${q}"`}
+              className="min-w-0 flex-1"
+            />
+            <AddButton
+              label="Add new product"
+              onClick={() => setNewProduct({ name: "", abbreviation: "", category: "GRANITE" })}
+            />
+          </div>
         </Field>
         <Field label="Variant Name" htmlFor="variantName">
           <SearchSelect
@@ -439,6 +454,47 @@ export function InwardForm({
                 </Button>
                 <Button type="button" onClick={saveProduct} disabled={pending}>
                   Add product
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={newSupplier !== null}
+        onOpenChange={(open) => {
+          if (!open) setNewSupplier(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New supplier</DialogTitle>
+          </DialogHeader>
+          {newSupplier ? (
+            <div className="flex flex-col gap-4">
+              <Field label="Name" htmlFor="ns-name">
+                <Input
+                  id="ns-name"
+                  value={newSupplier.name}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                  autoFocus={!newSupplier.name}
+                />
+              </Field>
+              <Field label="Phone" htmlFor="ns-phone" hint="Optional">
+                <Input
+                  id="ns-phone"
+                  inputMode="tel"
+                  value={newSupplier.phone}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                />
+              </Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setNewSupplier(null)}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={saveSupplier} disabled={pending || !newSupplier.name.trim()}>
+                  Add supplier
                 </Button>
               </div>
             </div>
