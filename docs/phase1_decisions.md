@@ -18,16 +18,16 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - Product > Variant > Batch in storage, but Variant is hidden from every screen. New Batches get the Product's "Standard" Variant; older Variants stay stored. Stock Lines, Clamps and the Public Catalog group by Product and Size only, so stock that differs only by Variant reads as one line. Size (L ft, B ft, T mm) lives on the Batch.
 - Size is required for Granite and Tiles, null for Memorial. Grouping treats null Size as one group per Product.
-- Slot is a stored enum (4FT, 5FT, DOOM, CUSTOM), defaulted by rule and overridable in the inward form:
+- Slot is stored text: one of the built-in 4FT, 5FT, DOOM, CUSTOM or a name the operator types (trimmed, up to 20 characters). It is defaulted by rule and overridable in the inward form and the Edit dialog:
   - Memorial → DOOM
   - 4 ≤ length < 5 → 4FT
   - 5 ≤ length < 6 → 5FT
   - anything else → CUSTOM
-- Every new Batch records its Stack: a Slot plus a typed Batch number (shown to users as "Batch number", up to 20 characters, trimmed). `create_batch` refuses a Batch without one; a Correction keeps the existing number unless a new one is given. The inward form offers recently used Slot and Batch number pairs (`v_recent_stacks`) and an Add dialog for a new pair. Batches from before this rule have no Stack.
+- Every new Batch records its Stack: a Slot plus a typed Batch number (shown to users as "Batch number", up to 20 characters, trimmed). `create_batch` refuses a Batch without one; a Correction keeps the existing number unless a new one is given. The inward form offers recently used Slot and Batch number pairs (`v_recent_stacks`) and an Add dialog for a new pair, whose slot picker lists the built-in slots plus every typed slot already used and can add a new one. Batches from before this rule have no Stack.
 - Batch Code format `{PRODUCT_ABBR}-{DDMON}{YY}-{seq}` (e.g. `BP-07SEP26-01`). Abbreviation stored on Product, unique, auto-suggested from initials and editable. Sequence resets per product per day. Generated inside the insert function. Purchase dates before 2000-01-01 are refused so the two-digit year remains unambiguous for the supported history.
 - Landed Cost = unit_purchase_price + freight_cost / initial_units, stored as a generated column. Sales snapshot the Landed Cost at time of sale.
 - Money is `numeric(12,2)`; percentages `numeric(5,2)`. UI formats as whole rupees.
-- Products, Suppliers and Customers are created from the inward and sell forms, through the Add button beside each select or the select's inline Add row. A minimal admin list of Products and Suppliers allows rename; delete only when no Batch references the row (FK restrict). Deleting a Product removes its unused Variants with it. No merge tool.
+- Products, Suppliers and Customers are created from the inward and sell forms, through the Add button beside each select or the select's inline Add row. Admins can edit, archive or delete a Product or Supplier straight from its picker on Inward, and in the Settings list, which also shows archived rows and unarchives them. Delete only when no Batch references the row (FK restrict); the refusal suggests archiving instead. Deleting a Product removes its unused Variants with it. An archived Product or Supplier leaves the Inward pickers and `create_batch` refuses it; a Correction may keep a Batch on its current archived one but cannot move a Batch onto one. No merge tool.
 - Customer phone is unique when present (compared on the last ten digits); adding a customer with a phone already on file selects that customer instead. Walk-in Customer is a seeded row with no phone. The Walk-in Customer flag is immutable for every role.
 
 ## Selling
@@ -43,6 +43,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - Admin only. Edit and delete on Batch and Sale via SQL functions that re-balance Available and re-snapshot Landed Cost where a Sale's Batch changes.
 - Refused if the result would make any Batch's Available negative.
+- Archive (`archive_batch`) works on any Batch, sold from or not, and is undone by Unarchive. An archived Batch is left out of Sell, Stock Lines, the Public Catalog, the stale panel, Recent batches on Inward, Active stock, inventory value and the "vs last month" figure. Its Sales and their margins stay, and so do units sold in the donut and fast movers. `record_sale` refuses an archived Batch, and `correct_sale` refuses moving a Sale onto one but still edits a Sale already on it. Delete stays limited to Batches with no Sales.
 - A Batch purchase date cannot be moved later than its earliest Sale; the refusal names that date.
 - `updated_at` and `updated_by` on Batch and Sale. No audit log in Phase 1.
 - Available on mobile as well as desktop.
@@ -71,8 +72,8 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 | KPI | Definition |
 |---|---|
-| Active stock | SUM(available) over all Batches |
-| Total inventory value | SUM(available × landed_cost) |
+| Active stock | SUM(available) over Batches that are not archived |
+| Total inventory value | SUM(available × landed_cost) over Batches that are not archived |
 | MTD Revenue | SUM(qty × sale_price + qty × stickering_price) for Sales in the current calendar month (IST). Misc Expense excluded. |
 | MTD Margin | SUM(margin) for the month; % = margin / MTD Revenue |
 | vs last month | Active stock now vs Active stock at the last day of the previous month, computed as bought-before minus sold-before that date |
@@ -84,7 +85,8 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - One section per Stack (Slot plus Batch number), ordered by Slot then Batch number, with Batches oldest first inside (Newest first as the only alternative sort). Batches without a Batch number share a final "No batch number" section. No slot tabs or size sub-tabs.
 - Filters: search text (also matches the Batch number), Slot, Product, Thickness, Supplier, Age.
-- Sold Out Batches hidden by default, "Show sold out" toggle.
+- Sold Out Batches hidden by default, "Show sold out" toggle. Archived Batches hidden by default, "Show archived" toggle; their Available is left out of the Stack's count.
+- The Slot filter lists the built-in slots, then typed slots alphabetically, which is also the Stack section order.
 - Within a Stack, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
 - `/yard?line=<line_key>` deep-links to one Stock Line, showing every Stack that holds it; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.
 

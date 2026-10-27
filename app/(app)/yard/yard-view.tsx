@@ -8,7 +8,7 @@ import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 import { BatchCard } from "@/components/yard/batch-card";
 import { Clamp } from "@/components/yard/clamp";
 import { YardFilters } from "@/components/yard/yard-filters";
-import { SLOTS, SLOT_LABEL, stackLabel } from "@/lib/domain";
+import { slotChoices, slotLabel, stackLabel } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
 import { ViewError, ViewSkeleton } from "@/components/view-state";
@@ -32,8 +32,9 @@ export function YardView() {
   }
 
   const all: YardBatch[] = batches.data;
+  const slots = slotChoices(all.map((b) => b.slot));
   const editLists: EditLists | null = isAdmin
-    ? { products: products.data ?? [], suppliers: suppliers.data ?? [] }
+    ? { products: products.data ?? [], suppliers: suppliers.data ?? [], slots }
     : null;
 
   const filtered = all.filter((b) => matchesFilters(b, query));
@@ -51,7 +52,7 @@ export function YardView() {
 
   const productOptions = uniq(all.map((b) => [b.product_id ?? "", b.product_name ?? ""]));
   const supplierOptions = uniq(all.map((b) => [b.supplier_id ?? "", b.supplier_name ?? ""]));
-  const slotOptions = SLOTS.map((slot) => ({ value: slot, label: SLOT_LABEL[slot] }));
+  const slotOptions = slots.map((slot) => ({ value: slot, label: slotLabel(slot) }));
   const thicknesses = [...new Set(all.map((b) => b.thickness_mm).filter((t): t is number => t !== null))].sort(
     (a, b) => a - b,
   );

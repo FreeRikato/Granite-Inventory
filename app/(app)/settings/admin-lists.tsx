@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
-import { Check, Pencil, X } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,10 @@ import {
   type BatchReference,
 } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
-import { deleteRowAction, renameRowAction } from "./actions";
+import { archiveRowAction, deleteRowAction, renameRowAction } from "./actions";
 
-type Product = { id: string; name: string; abbreviation: string; category: string };
-type Supplier = { id: string; name: string };
+type Product = { id: string; name: string; abbreviation: string; category: string; archived_at: string | null };
+type Supplier = { id: string; name: string; archived_at: string | null };
 
 type Props = {
   readonly products: readonly Product[];
@@ -31,7 +31,8 @@ export function AdminLists({ products, suppliers, batchReferences }: Props) {
     <section className="rounded-card bg-card p-6 shadow-sm">
       <h2 className="text-base font-bold">Products and suppliers</h2>
       <p className="text-sm text-muted-foreground">
-        Rename typos here; it updates every batch. Rows still used by batches cannot be deleted.
+        Rename typos here; it updates every batch. Archived rows leave the Inward pickers. Rows still used by batches
+        cannot be deleted; archive them instead.
       </p>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-2">
@@ -42,7 +43,8 @@ export function AdminLists({ products, suppliers, batchReferences }: Props) {
               table="products"
               id={p.id}
               name={p.name}
-              meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}`}
+              meta={`${p.abbreviation} · ${isCategory(p.category) ? CATEGORY_LABEL[p.category] : p.category}${p.archived_at ? " · Archived" : ""}`}
+              archived={Boolean(p.archived_at)}
               extra={{ abbreviation: p.abbreviation, category: p.category }}
               batchReferences={batchReferences}
             />
@@ -50,7 +52,15 @@ export function AdminLists({ products, suppliers, batchReferences }: Props) {
         </ListBlock>
         <ListBlock title="Suppliers">
           {suppliers.map((s) => (
-            <EditableRow key={s.id} table="suppliers" id={s.id} name={s.name} batchReferences={batchReferences} />
+            <EditableRow
+              key={s.id}
+              table="suppliers"
+              id={s.id}
+              name={s.name}
+              meta={s.archived_at ? "Archived" : undefined}
+              archived={Boolean(s.archived_at)}
+              batchReferences={batchReferences}
+            />
           ))}
         </ListBlock>
       </div>
@@ -76,6 +86,7 @@ function EditableRow({
   id,
   name,
   meta,
+  archived,
   extra,
   batchReferences,
 }: {
@@ -83,6 +94,7 @@ function EditableRow({
   id: string;
   name: string;
   meta?: string;
+  archived: boolean;
   extra?: { abbreviation: string; category: string };
   batchReferences: readonly BatchReference[];
 }) {
@@ -110,6 +122,18 @@ function EditableRow({
       }
       toast.success("Saved");
       setEditing(false);
+      afterWrite();
+    });
+  }
+
+  function toggleArchive() {
+    startTransition(async () => {
+      const result = await archiveRowAction(table, id, !archived);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(archived ? "Unarchived" : "Archived");
       afterWrite();
     });
   }
@@ -178,6 +202,16 @@ function EditableRow({
       </span>
       <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(true)} aria-label={`Rename ${name}`}>
         <Pencil className="size-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-8"
+        onClick={toggleArchive}
+        disabled={pending}
+        aria-label={`${archived ? "Unarchive" : "Archive"} ${name}`}
+      >
+        {archived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
       </Button>
       <ConfirmDelete
         title={`Delete ${name}?`}

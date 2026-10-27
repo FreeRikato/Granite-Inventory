@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CATEGORIES, DEFAULT_VARIANT, SLOTS } from "@/lib/domain";
+import { CATEGORIES, DEFAULT_VARIANT } from "@/lib/domain";
 import { isoDate, money, positiveInteger, positiveNumber } from "./common";
 
 export const productSchema = z.object({
@@ -34,7 +34,7 @@ export const batchSchema = z
     variantName: z.string().trim().min(1).max(80).default(DEFAULT_VARIANT),
     supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
-    slot: z.enum(SLOTS),
+    slot: z.string().trim().min(1, "Pick a yard slot").max(20, "Yard slot must be 20 characters or fewer"),
     initialUnits: positiveInteger("Unit Quantity must be greater than zero"),
     unitPurchasePrice: money("Unit Purchase Price"),
     freightCost: money("Freight Cost").default(0),

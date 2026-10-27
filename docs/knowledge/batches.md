@@ -1,5 +1,6 @@
 ---
 code:
+  - supabase/migrations/20261027182609_archive_and_named_slots.sql
   - supabase/migrations/20260911100000_stock.sql
   - supabase/migrations/20260926165731_api_observations.sql
   - supabase/migrations/20261026184634_stock_line_without_variant.sql
@@ -28,6 +29,9 @@ The code is written on the physical stack, so [[corrections]] never change it.
 - Size (length and breadth) is required for Granite and Tiles and forbidden for Memorial. The rule needs the Product's category, so it lives in a trigger rather than a check constraint.
 - The Inward form keeps Save Batch disabled for Granite until length and breadth are filled, the same way it waits for a supplier. A zero thickness deliberately keeps the button enabled, so the click shows which field is wrong.
 - `suggest_slot()` picks the yard slot from category and length: Memorial goes to DOOM, 4 to 5 ft to 4FT, 5 to 6 ft to 5FT, anything else to CUSTOM. `lib/domain.ts` mirrors it so the form can preview the slot before saving.
+- Slot is free text, so a yard can name its own areas ("Back Row"). The built-in codes stay as stored values and `slotLabel` shows them as "4 ft Slot" and so on; a typed slot is shown as written. `batches_slot_shape` keeps it trimmed and 1 to 20 characters, and `validate_batch_input` refuses a longer one with readable copy first. A blank slot counts as none, so the size suggestion applies. `slotChoices` lists the built-ins first, then typed slots alphabetically, for every slot picker and the yard order.
+- The inward stack picker keys each option by `JSON.stringify([slot, number])`, because a typed slot may contain any character, including the `|` the old key used.
+- `create_batch` refuses an archived Product or Supplier; `correct_batch` refuses only a change onto one, so editing an old Batch whose Supplier was archived still works (`private.refuse_archived_lists`).
 
 ## Stack (Batch number)
 

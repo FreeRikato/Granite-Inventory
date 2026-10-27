@@ -46,15 +46,17 @@ export const recentStacksQuery = queryOptions({
 export const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () =>
-    rows<Pick<Tables<"products">, "id" | "name" | "abbreviation" | "category">>(
-      createClient().from("products").select("id, name, abbreviation, category").order("name"),
+    rows<Pick<Tables<"products">, "id" | "name" | "abbreviation" | "category" | "archived_at">>(
+      createClient().from("products").select("id, name, abbreviation, category, archived_at").order("name"),
     ),
 });
 
 export const suppliersQuery = queryOptions({
   queryKey: ["suppliers"],
   queryFn: () =>
-    rows<Pick<Tables<"suppliers">, "id" | "name">>(createClient().from("suppliers").select("id, name").order("name")),
+    rows<Pick<Tables<"suppliers">, "id" | "name" | "phone" | "archived_at">>(
+      createClient().from("suppliers").select("id, name, phone, archived_at").order("name"),
+    ),
 });
 
 export const customerListQuery = queryOptions({
@@ -66,7 +68,12 @@ export const recentBatchesQuery = queryOptions({
   queryKey: ["recent-batches"],
   queryFn: () =>
     rows<Tables<"v_batches">>(
-      createClient().from("v_batches").select("*").order("created_at", { ascending: false }).limit(8),
+      createClient()
+        .from("v_batches")
+        .select("*")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(8),
     ),
 });
 

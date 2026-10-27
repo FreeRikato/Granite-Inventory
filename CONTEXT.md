@@ -50,7 +50,11 @@ _Avoid_: Separator, divider
 
 **Sold Out**:
 A Batch whose Available is zero. Hidden from the Yard view by default, kept for history.
-_Avoid_: Closed, archived, empty
+_Avoid_: Closed, empty
+
+**Archived**:
+A Batch, Product or Supplier an Admin has set aside without deleting it. An Archived Batch leaves Sell, Stock Lines, the Public Catalog and the stock KPIs, and the Yard shows it only with "Show archived"; its Sales stay in history. An Archived Product or Supplier leaves the Inward pickers and takes no new Batches, while existing Batches keep it. Unarchiving brings each back.
+_Avoid_: Hidden, disabled, soft-deleted
 
 **Age**:
 Days since a Batch's purchase date. Measured from purchase, not from last Sale.
@@ -60,7 +64,7 @@ Fresh, Ageing or Stale, decided by a Batch's Age against two thresholds set by t
 _Avoid_: Old stock, status (for age)
 
 **Correction**:
-An Admin editing or deleting a Batch or Sale after the fact. Available is re-balanced and a Correction is refused if it would make Available negative.
+An Admin editing, archiving or deleting a Batch or Sale after the fact. Available is re-balanced and a Correction is refused if it would make Available negative.
 _Avoid_: Reversal, adjustment
 
 ### Selling
@@ -128,7 +132,7 @@ Length and breadth in feet plus thickness in millimetres of every piece in a Bat
 _Avoid_: Dimension (alone), spec
 
 **Slot**:
-The physical area of the yard where a Batch is stacked: 4 ft Slot, 5 ft Slot, Doom Stones or Custom. Suggested from the Batch's Size and Category, but the operator has the final say.
+The physical area of the yard where a Batch is stacked: 4 ft Slot, 5 ft Slot, Doom Stones, Custom, or any name the operator types (up to 20 characters). Suggested from the Batch's Size and Category, but the operator has the final say.
 _Avoid_: Location, zone, rack
 
 **Stack**:

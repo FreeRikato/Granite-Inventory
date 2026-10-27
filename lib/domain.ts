@@ -1,5 +1,5 @@
-export function stackLabel(slot: Slot, stackNumber: string): string {
-  return `${SLOT_LABEL[slot]} · ${stackNumber}`;
+export function stackLabel(slot: string, stackNumber: string): string {
+  return `${slotLabel(slot)} · ${stackNumber}`;
 }
 
 export const DEFAULT_VARIANT = "Standard";
@@ -54,6 +54,13 @@ export function isCategory(value: unknown): value is Category {
 }
 export function isSlot(value: unknown): value is Slot {
   return SLOTS.includes(value as Slot);
+}
+export function slotLabel(slot: string): string {
+  return isSlot(slot) ? SLOT_LABEL[slot] : slot;
+}
+export function slotChoices(used: readonly (string | null)[]): string[] {
+  const named = new Set(used.filter((s): s is string => Boolean(s) && !isSlot(s)));
+  return [...SLOTS, ...[...named].sort((a, b) => a.localeCompare(b))];
 }
 export function isCustomerType(value: unknown): value is CustomerType {
   return CUSTOMER_TYPES.includes(value as CustomerType);

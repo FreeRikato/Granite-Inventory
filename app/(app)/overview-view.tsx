@@ -30,7 +30,7 @@ export function OverviewView() {
 
   const k = kpis.data;
   const stale = batches.data
-    .filter((b) => b.ageing_band === "STALE" && (b.available ?? 0) > 0)
+    .filter((b) => b.ageing_band === "STALE" && (b.available ?? 0) > 0 && !b.archived_at)
     .sort((a, b) => (a.purchase_date ?? "").localeCompare(b.purchase_date ?? ""))
     .slice(0, STALE_ROWS);
   const fetching = kpis.isFetching || moving.isFetching || batches.isFetching;

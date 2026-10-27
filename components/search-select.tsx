@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,13 @@ export type SearchOption = {
   readonly hint?: string;
   readonly phone?: string | null;
   readonly keywords?: readonly string[];
+};
+
+export type OptionAction = {
+  readonly label: string;
+  readonly icon: LucideIcon;
+  readonly onSelect: (option: SearchOption) => void;
+  readonly destructive?: boolean;
 };
 
 const CREATE_VALUE_PREFIX = "__create__";
@@ -47,6 +54,7 @@ type Props = {
   readonly emptyText?: string;
   readonly onCreate?: (query: string) => void;
   readonly createLabel?: (query: string) => string;
+  readonly optionActions?: readonly OptionAction[];
   readonly disabled?: boolean;
   readonly id?: string;
   readonly className?: string;
@@ -61,6 +69,7 @@ export function SearchSelect({
   emptyText = "Nothing found.",
   onCreate,
   createLabel = (q) => `Add "${q}"`,
+  optionActions,
   disabled,
   id,
   className,
@@ -103,7 +112,10 @@ export function SearchSelect({
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent
+        className={cn("w-[var(--radix-popover-trigger-width)] p-0", optionActions && "min-w-72")}
+        align="start"
+      >
         <Command filter={commandFilter}>
           <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
           <CommandList>
@@ -123,6 +135,26 @@ export function SearchSelect({
                     {option.hint ? <span className="truncate text-xs text-muted-foreground">{option.hint}</span> : null}
                   </span>
                   <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                  {optionActions?.map((action) => (
+                    <Button
+                      key={action.label}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className={cn("size-7", action.destructive && "text-stale")}
+                      aria-label={`${action.label} ${option.label}`}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpen(false);
+                        setQuery("");
+                        action.onSelect(option);
+                      }}
+                    >
+                      <action.icon className="size-4" />
+                    </Button>
+                  ))}
                 </CommandItem>
               ))}
               {onCreate && trimmed && !hasExactMatch ? (

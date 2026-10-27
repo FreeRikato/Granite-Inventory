@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleOff } from "lucide-react";
+import { Archive, CircleOff } from "lucide-react";
 import { AgeingBanner } from "@/components/ageing-badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDims } from "@/lib/format";
@@ -20,10 +20,16 @@ export function BatchCard({ batch, actions }: Props) {
       className={cn(
         "rounded-tile border bg-card p-4 shadow-sm",
         stale ? "border-stale/40" : "border-border",
-        batch.sold_out && "opacity-60",
+        (batch.sold_out || batch.archived_at) && "opacity-60",
       )}
     >
       <div className={cn("flex flex-wrap gap-2", stale ? "mb-3" : "mb-2")}>
+        {batch.archived_at ? (
+          <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Archive className="size-4" aria-hidden="true" />
+            Archived
+          </div>
+        ) : null}
         {batch.sold_out ? (
           <div className="flex items-center gap-2 rounded-lg bg-stale-soft px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stale">
             <CircleOff className="size-4" aria-hidden="true" />
@@ -48,7 +54,7 @@ export function BatchCard({ batch, actions }: Props) {
         </dl>
         <div className="flex shrink-0 items-center gap-2">
           {actions}
-          {!batch.sold_out && batch.id ? (
+          {!batch.sold_out && !batch.archived_at && batch.id ? (
             <Button asChild variant="outline" size="sm" className="h-9 bg-card font-semibold">
               <Link href={`/sell?batch=${batch.id}`}>Sell from this Batch</Link>
             </Button>

@@ -30,7 +30,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
             await supabase
               .from("v_yard_batches")
               .select(
-                "id, batch_code, line_key, available, purchase_date, product_name, length_ft, breadth_ft, thickness_mm",
+                "id, batch_code, line_key, available, purchase_date, product_name, length_ft, breadth_ft, thickness_mm, archived_at",
               )
               .order("purchase_date")
           ).data ?? [],

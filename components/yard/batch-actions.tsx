@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
-import { Pencil } from "lucide-react";
+import { Archive, ArchiveRestore, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { Field } from "@/components/field";
@@ -11,16 +11,16 @@ import { SearchSelect } from "@/components/search-select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SLOTS, SLOT_LABEL, isCategory, isSlot } from "@/lib/domain";
+import { isCategory, slotChoices, slotLabel } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
 import type { Tables } from "@/lib/database.types";
-import { correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
+import { archiveBatchAction, correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
 
 export type EditLists = {
-  readonly products: readonly { id: string; name: string; category: string }[];
-  readonly suppliers: readonly { id: string; name: string }[];
+  readonly products: readonly { id: string; name: string; category: string; archived_at: string | null }[];
+  readonly suppliers: readonly { id: string; name: string; archived_at: string | null }[];
+  readonly slots: readonly string[];
 };
 
 type EditableBatch = Tables<"v_batches">;
@@ -46,6 +46,19 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
     });
   }
 
+  function toggleArchive() {
+    const archiving = !batch.archived_at;
+    startTransition(async () => {
+      const result = await archiveBatchAction(batch.id ?? "", archiving);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Batch ${batch.batch_code} ${archiving ? "archived" : "unarchived"}`);
+      afterWrite();
+    });
+  }
+
   return (
     <>
       <Button
@@ -58,6 +71,17 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
       >
         <Pencil className="size-4" />
         {iconOnly ? null : " Edit"}
+      </Button>
+      <Button
+        variant={iconOnly ? "ghost" : "outline"}
+        size={iconOnly ? "icon" : "sm"}
+        className={iconOnly ? "size-8" : "h-9 bg-card"}
+        onClick={toggleArchive}
+        disabled={pending}
+        aria-label={`${batch.archived_at ? "Unarchive" : "Archive"} ${batch.batch_code}`}
+      >
+        {batch.archived_at ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
+        {iconOnly ? null : batch.archived_at ? " Unarchive" : " Archive"}
       </Button>
       {(batch.units_sold ?? 0) === 0 ? (
         <ConfirmDelete
@@ -125,13 +149,16 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
     lengthFt: batch.length_ft?.toString() ?? "",
     breadthFt: batch.breadth_ft?.toString() ?? "",
     thicknessMm: batch.thickness_mm?.toString() ?? "",
-    slot: isSlot(batch.slot) ? batch.slot : "CUSTOM",
+    slot: batch.slot ?? "CUSTOM",
     stackNumber: batch.stack_number ?? "",
     initialUnits: batch.initial_units?.toString() ?? "",
     unitPurchasePrice: batch.unit_purchase_price?.toString() ?? "",
     freightCost: batch.freight_cost?.toString() ?? "0",
     notes: batch.notes ?? "",
   });
+  const productOptions = lists.products.filter((p) => !p.archived_at || p.id === batch.product_id);
+  const supplierOptions = lists.suppliers.filter((s) => !s.archived_at || s.id === batch.supplier_id);
+  const slots = slotChoices([...lists.slots, batch.slot, form.slot]);
   const product = lists.products.find((p) => p.id === form.productId);
   const memorial = product ? isCategory(product.category) && product.category === "MEMORIAL" : false;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -170,7 +197,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
         <Field label="Supplier" htmlFor="eb-supplier">
           <SearchSelect
             id="eb-supplier"
-            options={lists.suppliers.map((s) => ({ value: s.id, label: s.name }))}
+            options={supplierOptions.map((s) => ({ value: s.id, label: s.name }))}
             value={form.supplierId}
             onChange={(v) => set("supplierId", v)}
             placeholder="Supplier"
@@ -180,7 +207,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
         <Field label="Product" htmlFor="eb-product">
           <SearchSelect
             id="eb-product"
-            options={lists.products.map((p) => ({ value: p.id, label: p.name }))}
+            options={productOptions.map((p) => ({ value: p.id, label: p.name }))}
             value={form.productId}
             onChange={(v) => set("productId", v)}
             placeholder="Product"
@@ -256,23 +283,17 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Yard slot" htmlFor="eb-slot">
-          <Select
+          <SearchSelect
+            id="eb-slot"
+            options={slots.map((s) => ({ value: s, label: slotLabel(s) }))}
             value={form.slot}
-            onValueChange={(v) => {
-              if (isSlot(v)) set("slot", v);
-            }}
-          >
-            <SelectTrigger id="eb-slot" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SLOTS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {SLOT_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(v) => set("slot", v)}
+            placeholder="Yard slot"
+            searchPlaceholder="Search or type a slot..."
+            onCreate={(name) => set("slot", name)}
+            createLabel={(q) => `Add slot "${q}"`}
+            className="h-9"
+          />
         </Field>
         <Field label="Batch number" htmlFor="eb-stack">
           <Input

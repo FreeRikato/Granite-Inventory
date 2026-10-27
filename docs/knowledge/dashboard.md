@@ -1,5 +1,6 @@
 ---
 code:
+  - supabase/migrations/20261027182609_archive_and_named_slots.sql
   - supabase/migrations/20260911140000_dashboard.sql
   - app/(app)/page.tsx
   - app/(app)/overview-view.tsx
@@ -15,6 +16,7 @@ Every figure on Overview is derived from batches and sales; nothing is stored. "
 
 - Moving sizes: units sold in the last N days per length x breadth, thickness ignored. Memorial has no size, so it shows as one row per Product. The chart is ranked bars with one series, so one hue and direct labels.
 - Stock donut: part-to-whole of what is still in the yard versus what has been sold, all time.
+- Archived Batches are out of Active stock, inventory value and the last-month comparison (both sides of it, so the change stays like for like), but their units sold still count, because those Sales happened.
 - The stale panel is a slice of the shared batches query: the oldest stale batches that still have stock ([[browser-reads]]).
 - KPI tiles use compact rupees: ₹5.2L, ₹1.2Cr. A negative amount puts the sign before the symbol (-₹5,050, -₹2.5L); `tests/tooling/format.test.ts` guards it.
 

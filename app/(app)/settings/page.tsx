@@ -18,8 +18,8 @@ export default async function SettingsPage() {
   const [{ data: team }, { data: settings }, products, suppliers, batchReferences] = await Promise.all([
     isAdmin ? supabase.from("team_members").select("*").order("created_at") : empty,
     supabase.from("settings").select("*").maybeSingle(),
-    isAdmin ? supabase.from("products").select("id, name, abbreviation, category").order("name") : empty,
-    isAdmin ? supabase.from("suppliers").select("id, name").order("name") : empty,
+    isAdmin ? supabase.from("products").select("id, name, abbreviation, category, archived_at").order("name") : empty,
+    isAdmin ? supabase.from("suppliers").select("id, name, archived_at").order("name") : empty,
     isAdmin ? supabase.from("v_batches").select("batch_code, product_id, supplier_id") : empty,
   ]);
 

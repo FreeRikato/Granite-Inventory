@@ -116,6 +116,16 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
             Show sold out
           </Label>
         </div>
+        <div className="flex items-center gap-2 pl-1">
+          <Switch
+            id="show-archived"
+            checked={query.archived}
+            onCheckedChange={(c) => update({ archived: c ? "1" : null })}
+          />
+          <Label htmlFor="show-archived" className="text-sm text-muted-foreground">
+            Show archived
+          </Label>
+        </div>
       </div>
     </div>
   );

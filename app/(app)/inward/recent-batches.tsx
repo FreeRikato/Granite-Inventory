@@ -1,5 +1,5 @@
 import { formatDate, formatRupees, formatSize } from "@/lib/format";
-import { SLOT_LABEL, isSlot, stackLabel } from "@/lib/domain";
+import { slotLabel, stackLabel } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
 import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 
@@ -26,7 +26,7 @@ export function RecentBatches({ batches, editLists }: Props) {
                 <th className="py-2 pr-4 text-right font-medium">Pieces</th>
                 <th className="py-2 text-right font-medium">Landed cost</th>
                 {editLists ? (
-                  <th className="relative w-20 py-2">
+                  <th className="relative w-28 py-2">
                     <span className="sr-only">Actions</span>
                   </th>
                 ) : null}
@@ -41,11 +41,7 @@ export function RecentBatches({ batches, editLists }: Props) {
                     {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                   </td>
                   <td className="py-2.5 pr-4">
-                    {isSlot(b.slot)
-                      ? b.stack_number
-                        ? stackLabel(b.slot, b.stack_number)
-                        : SLOT_LABEL[b.slot]
-                      : b.slot}
+                    {b.slot ? (b.stack_number ? stackLabel(b.slot, b.stack_number) : slotLabel(b.slot)) : null}
                   </td>
                   <td className="py-2.5 pr-4">{b.purchase_date ? formatDate(b.purchase_date) : ""}</td>
                   <td className="py-2.5 pr-4 text-right tabular">

@@ -35,10 +35,10 @@ export function deleteBlockedMessage(
   rowName = tableLabel[table],
 ): string {
   if (batches.length === 1 && batches[0]?.batch_code) {
-    return `Cannot delete ${rowName}: batch ${batches[0].batch_code} still uses it.`;
+    return `Cannot delete ${rowName}: batch ${batches[0].batch_code} still uses it. Archive it instead.`;
   }
   if (batches.length > 0) {
-    return `Cannot delete ${rowName}: ${batches.length} batches still use it.`;
+    return `Cannot delete ${rowName}: ${batches.length} batches still use it. Archive it instead.`;
   }
   return "Only possible when no batch uses it.";
 }

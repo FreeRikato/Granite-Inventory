@@ -24,7 +24,7 @@ export function SellView() {
   }
 
   const sellable = batches.data
-    .filter((b) => (b.available ?? 0) > 0)
+    .filter((b) => (b.available ?? 0) > 0 && !b.archived_at)
     .sort(
       (a, b) =>
         (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "") ||
