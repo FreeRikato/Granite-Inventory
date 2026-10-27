@@ -25,6 +25,7 @@ import {
   type Slot,
 } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
+import { NAME_MAX } from "@/lib/schemas/common";
 import { useRefusal } from "@/lib/use-refusal";
 import { createClient } from "@/lib/supabase/client";
 import { createProductAction, createSupplierAction, saveBatchAction } from "./actions";
@@ -395,6 +396,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               <Field label="Name" htmlFor="np-name">
                 <Input
                   id="np-name"
+                  maxLength={NAME_MAX}
                   value={newProduct.name}
                   onChange={(e) =>
                     setNewProduct({
@@ -461,6 +463,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               <Field label="Name" htmlFor="ns-name">
                 <Input
                   id="ns-name"
+                  maxLength={NAME_MAX}
                   value={newSupplier.name}
                   onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
                   autoFocus={!newSupplier.name}

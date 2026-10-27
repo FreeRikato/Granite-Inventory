@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, type CustomerType } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
+import { NAME_MAX } from "@/lib/schemas/common";
+import { useRefusal } from "@/lib/use-refusal";
 import { cn } from "@/lib/utils";
 import { createCustomerAction, updateCustomerAction } from "@/app/(app)/customers/actions";
 
@@ -85,6 +87,7 @@ function CustomerForm({
 }) {
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<CustomerDraft>(initial);
+  const refusal = useRefusal(form);
 
   function save() {
     startTransition(async () => {
@@ -92,7 +95,7 @@ function CustomerForm({
         ? await updateCustomerAction({ ...form, id: existingId })
         : await createCustomerAction(form);
       if (!result.ok) {
-        toast.error(result.error);
+        refusal.refuse(result.error);
         return;
       }
       if (!existingId && "existed" in result.data && result.data.existed) {
@@ -107,6 +110,7 @@ function CustomerForm({
       <Field label="Name" htmlFor="cd-name">
         <Input
           id="cd-name"
+          maxLength={NAME_MAX}
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           autoFocus={!form.name}
@@ -141,6 +145,11 @@ function CustomerForm({
           ))}
         </div>
       </Field>
+      {refusal.error ? (
+        <p className="text-xs text-stale" role="alert">
+          {refusal.error}
+        </p>
+      ) : null}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel

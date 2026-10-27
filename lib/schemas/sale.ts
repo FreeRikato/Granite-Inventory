@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { CUSTOMER_TYPES, PAYMENT_MODES } from "@/lib/domain";
-import { isoDate, money, positiveInteger } from "./common";
+import { isoDate, money, name, positiveInteger } from "./common";
 
 export const customerSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(80),
+  name,
   phone: z
     .string()
     .trim()

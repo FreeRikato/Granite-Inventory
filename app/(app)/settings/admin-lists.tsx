@@ -15,6 +15,7 @@ import {
   type BatchReference,
 } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
+import { NAME_MAX } from "@/lib/schemas/common";
 import { deleteRowAction, renameRowAction } from "./actions";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
@@ -131,6 +132,7 @@ function EditableRow({
       <li className="flex flex-col gap-2 py-2">
         <Input
           value={draft.name}
+          maxLength={NAME_MAX}
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           aria-label={`Name for ${name}`}
           className="h-8"
