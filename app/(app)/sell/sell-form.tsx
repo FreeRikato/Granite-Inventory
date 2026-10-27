@@ -145,7 +145,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     >
       <div className="flex min-w-0 flex-col gap-4">
         <Card>
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Field label="Sale Date" htmlFor="saleDate">
               <Input
                 id="saleDate"
@@ -169,7 +169,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         </Card>
 
         <Card>
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
             <Field label="Customer" htmlFor="customer">
               <div className="flex gap-2">
                 <SearchSelect
@@ -278,7 +278,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         ) : null}
 
         <Card>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Quantity Sold" htmlFor="quantity" hint={batch ? `${batch.available} available` : undefined}>
               <Input
                 id="quantity"
@@ -331,7 +331,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             />
           </div>
           {stickering ? (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Stickering Cost (₹)" htmlFor="stickeringCost" hint="Per piece, paid to the engraver">
                 <Input
                   id="stickeringCost"
