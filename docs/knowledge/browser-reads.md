@@ -14,6 +14,9 @@ code:
   - components/view-state.tsx
   - components/shell/member-provider.tsx
   - components/shell/command-palette.tsx
+  - app/(app)/customers/actions.ts
+  - tests/seam/paged-reads.test.ts
+  - tests/seam/all-rows.test.ts
   - tests/e2e/client-reads.spec.ts
   - tests/e2e/persisted-reads.spec.ts
   - tests/e2e/router-cache.spec.ts
@@ -26,6 +29,14 @@ The main pages (Overview, Yard, Sell, Customers, Inward) are static shells: the 
 ## Reads
 
 `lib/query/reads.ts` holds the browser-side reads. Each is one PostgREST call with the user's JWT, so RLS decides what comes back exactly as it does on the server ([[access-model]]). Overview, Yard and Sell share the batches query, so visiting one warms the others; each view narrows it itself.
+
+## Paged reads
+
+PostgREST returns at most 1,000 rows per request (`max_rows`), and a larger answer is cut off without an error. Every list read therefore goes through `allRows` in `lib/query/reads.ts`, which asks for 1,000 rows at a time with `.range()` until a short page comes back. Each read orders by a unique key (`id`, `line_key`, or `name` then `id`) and `allRows` drops any row whose key it has already seen, so a write landing between two pages cannot show one row twice. Offset paging cannot see a row skipped by a delete in the same window; the next refetch corrects it, and keyset paging was left out as more machinery than a 10 s staleness window needs. The Customers list and its tiles, the Sell customer picker, the Yard and Overview batches, the stock lines, the products and suppliers lists and the command palette all use these readers.
+
+If a palette read fails, `Promise.allSettled` keeps the list that did arrive and leaves the other empty; the next open asks again for whatever is still missing, and nothing is thrown into the page.
+
+The duplicate-phone check in `createCustomerAction` reads every customer that has a phone through the same pager (`findCustomerByPhone`), so a phone held by a customer beyond the first 1,000 still returns the existing customer instead of a second one. A failed read there comes back as a `fail(...)` result like any other action error. `tests/seam/paged-reads.test.ts` seeds tagged rows past 1,000 and proves each read, the phone check and `createCustomerAction` against local Supabase; `tests/seam/all-rows.test.ts` proves the dedupe and the products and suppliers readers.
 
 ## Freshness
 

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NAV_ITEMS, SETTINGS_ITEM } from "@/lib/nav";
 import { formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { readCustomerOptions, readStockLines } from "@/lib/query/reads";
 import type { Tables } from "@/lib/database.types";
 
 type Line = Pick<
@@ -31,21 +32,14 @@ export function CommandPalette() {
         returnFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
       }
       setOpen(next);
-      if (!next || lines !== null) return;
+      if (!next || (lines !== null && customers !== null)) return;
       const supabase = createClient();
-      void Promise.all([
-        supabase
-          .from("v_stock_lines")
-          .select("line_key, product_name, length_ft, breadth_ft, thickness_mm, available, category")
-          .gt("available", 0)
-          .order("product_name"),
-        supabase.from("customers").select("id, name, phone").order("name"),
-      ]).then(([l, c]) => {
-        setLines(l.data ?? []);
-        setCustomers(c.data ?? []);
+      void Promise.allSettled([readStockLines(supabase), readCustomerOptions(supabase)]).then(([l, c]) => {
+        if (l.status === "fulfilled") setLines(l.value);
+        if (c.status === "fulfilled") setCustomers(c.value);
       });
     },
-    [lines],
+    [lines, customers],
   );
 
   useEffect(() => {

@@ -100,3 +100,18 @@ test("admin deletes a customer with no sales and returns to the list", async ({ 
   await expect(page.getByTestId("customer-row").filter({ hasText: "Throwaway Customer" })).toHaveCount(0);
   await expect(page.getByTestId("customer-row").filter({ hasText: "Murugan Constructions" })).toBeVisible();
 });
+
+test("the tiles count every customer past the 1,000 row cap", async ({ page, signIn }) => {
+  await sql(
+    `insert into public.customers (name, phone, customer_type)
+     select 'Tile Customer ' || lpad(n::text, 4, '0'), '+91 8' || lpad(n::text, 9, '0'),
+            case when n <= 200 then 'CONTRACTOR' when n <= 500 then 'TRUST' else 'REGULAR' end
+     from generate_series(1, 1100) n`,
+  );
+  await signIn("operator");
+  await page.goto("/customers");
+  const tile = (label: string) => page.locator("dt", { hasText: label }).locator("xpath=following-sibling::dd");
+  await expect(tile("Total Customers")).toHaveText("1102");
+  await expect(tile("Contractors")).toHaveText("201");
+  await expect(tile("Trusts")).toHaveText("300");
+});

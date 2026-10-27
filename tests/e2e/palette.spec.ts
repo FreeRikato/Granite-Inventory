@@ -56,3 +56,24 @@ test("mobile: More sheet reaches Customers, Settings and Sign out; manifest is s
   expect(manifest.ok()).toBe(true);
   expect((await manifest.json()).name).toBe("Kirthik Granite");
 });
+
+test("a failed palette read does not throw, keeps the reads that succeeded and retries on the next open", async ({
+  page,
+  signIn,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "the palette is desktop only");
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await signIn("operator");
+  await page.goto("/");
+  await page.route("**/rest/v1/v_stock_lines*", (route) => route.abort());
+  await openPalette(page);
+  await expect(page.getByRole("option", { name: /Murugan Constructions/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /Jet Black/ })).toHaveCount(0);
+  expect(pageErrors).toEqual([]);
+
+  await page.keyboard.press("Escape");
+  await page.unroute("**/rest/v1/v_stock_lines*");
+  await openPalette(page);
+  await expect(page.getByRole("option", { name: /Jet Black.*5×3 ft/ })).toBeVisible();
+});
