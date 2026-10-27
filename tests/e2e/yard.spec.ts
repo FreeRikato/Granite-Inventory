@@ -101,3 +101,24 @@ test("an empty yard says so, and the filter message appears only when a filter i
   await expect(page.getByText("No batches in the yard yet. Log a delivery to get started.")).toBeVisible();
   await expect(page.getByText("Nothing matches these filters.")).toHaveCount(0);
 });
+
+test("a failed first load of the yard shows the error, not the skeleton", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.route("**/rest/v1/v_yard_batches*", (route) => route.fulfill({ status: 500, json: { message: "boom" } }));
+  await page.goto("/yard");
+  await expect(page.getByText("Could not load the yard")).toBeVisible({ timeout: 30_000 });
+});
+
+test("a stack of more than six purchases is one framed section with one heading", async ({ page, signIn }) => {
+  await sql(`
+    insert into public.batches (batch_code, variant_id, supplier_id, purchase_date, length_ft, breadth_ft, thickness_mm, slot, stack_number, initial_units, units_sold, unit_purchase_price, freight_cost)
+    select 'BIG-' || g, v.id, s.id, private.ist_today() - g, 4, 2, 16, '4FT', '99', 5, 0, 1400, 0
+    from generate_series(1, 7) g, public.variants v join public.products p on p.id = v.product_id, public.suppliers s
+    where p.name = 'Black Pearl' and s.name = 'Madurai Quarry'`);
+  await signIn("operator");
+  await page.goto("/yard?q=BIG");
+  const stacks = page.getByTestId("yard-stack");
+  await expect(stacks).toHaveCount(1);
+  await expect(stacks.getByRole("heading", { level: 2 })).toHaveText(["4 ft Slot · 99"]);
+  await expect(stacks.getByTestId("yard-batch")).toHaveCount(7);
+});
