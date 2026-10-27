@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import type { Tables } from "@/lib/database.types";
 import { ROLE_LABEL, ROLES, isRole, type Role } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { addMemberAction, removeMemberAction, setMemberRoleAction } from "./actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Props = {
   readonly members: readonly Tables<"team_members">[];
@@ -23,7 +24,7 @@ type Props = {
 
 export function TeamAccess({ members, currentEmail }: Props) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<{ email: string; name: string; role: Role }>({
     email: "",
@@ -32,7 +33,7 @@ export function TeamAccess({ members, currentEmail }: Props) {
   });
 
   function run(task: () => Promise<{ ok: boolean; error?: string }>, success: string) {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await task();
       if (!result.ok) {
         toast.error(result.error ?? "Something went wrong");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/admin-list-references";
 import { CATEGORIES, CATEGORY_LABEL, isCategory } from "@/lib/domain";
 import { deleteRowAction, renameRowAction } from "./actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
 type Supplier = { id: string; name: string };
@@ -87,7 +88,7 @@ function EditableRow({
   batchReferences: readonly BatchReference[];
 }) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     name,
@@ -97,7 +98,7 @@ function EditableRow({
   const blockingBatches = referencesForTable(table, id, batchReferences);
 
   function save() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await renameRowAction({
         table,
         id,
@@ -115,7 +116,7 @@ function EditableRow({
   }
 
   function remove() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await deleteRowAction(table, id);
       if (!result.ok) {
         toast.error(result.error);

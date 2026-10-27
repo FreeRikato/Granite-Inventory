@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { AddButton } from "@/components/add-button";
@@ -27,6 +27,7 @@ import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordSaleAction } from "./actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
 type Line = Tables<"v_stock_lines">;
@@ -56,7 +57,7 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
   const customers = useMemo(() => {
     const byId = new Map(initialCustomers.map((c) => [c.id, c]));
@@ -107,7 +108,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await recordSaleAction({
         batchId,
         customerId,

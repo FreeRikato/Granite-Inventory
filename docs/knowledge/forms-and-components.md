@@ -8,6 +8,7 @@ code:
   - components/shell/page-loading.tsx
   - components/shell/command-palette.tsx
   - lib/nav.ts
+  - lib/use-single-flight.ts
 ---
 # Forms and shared components
 
@@ -20,6 +21,7 @@ code:
 - `PageLoading`: the static placeholder shown while a page's server render is in flight, so a tap on the nav responds immediately. It has no animation on purpose, and its title is `aria-hidden` so heading-based readiness signals and screen readers are unaffected.
 - Command palette: search or jump to pages, Stock Lines and Customers ([[browser-reads]]).
 - Navigation: the mobile tab bar shows the first four pages and the rest live under More. Pages whose rows come from the browser cache render an empty shell on the server, so the nav prefetches that shell in full and a click needs no server round trip.
+- `useSingleFlight`: every write from a form, dialog or button goes through it instead of a bare `useTransition`. The pending flag only reaches the button after React re-renders, so several clicks in the same tick all reach the handler and each sends the write. The hook sets a ref on the first call and drops later calls until the write settles. A repeated phone was already deduplicated by `create_customer`, but customers without a phone are not unique by name on purpose (walk-ins), so the guard lives in the client and the database gets no name constraint. Tests: `tests/e2e/single-flight.spec.ts`.
 
 The searchable select used across forms has its own note: [[search-select]].
 

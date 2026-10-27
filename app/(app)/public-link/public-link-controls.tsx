@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { Check, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { updateSettingsAction } from "@/app/(app)/settings/actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Props = {
   readonly url: string;
@@ -22,13 +23,13 @@ type Props = {
 
 export function PublicLinkControls({ url, catalogPublic, whatsappNumber, businessName, canEdit }: Props) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [copied, setCopied] = useState(false);
   const [number, setNumber] = useState(whatsappNumber);
   const testLink = whatsappLink(number, `Hi ${businessName}, testing the catalog button.`);
 
   function save(patch: { catalogPublic?: boolean; whatsappNumber?: string }) {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await updateSettingsAction(patch);
       if (!result.ok) {
         toast.error(result.error);

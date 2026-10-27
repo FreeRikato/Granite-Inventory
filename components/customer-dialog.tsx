@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, type CustomerType } from "@/lib/do
 import type { Tables } from "@/lib/database.types";
 import { cn } from "@/lib/utils";
 import { createCustomerAction, updateCustomerAction } from "@/app/(app)/customers/actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 export type CustomerDraft = { readonly name: string; readonly phone: string; readonly customerType: CustomerType };
 
@@ -83,11 +84,11 @@ function CustomerForm({
   onClose: () => void;
   onSaved: (customer: Tables<"customers">) => void;
 }) {
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [form, setForm] = useState<CustomerDraft>(initial);
 
   function save() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = existingId
         ? await updateCustomerAction({ ...form, id: existingId })
         : await createCustomerAction(form);

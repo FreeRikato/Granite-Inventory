@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { updateSettingsAction } from "./actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Props = { readonly ageing: number; readonly stale: number };
 
@@ -15,14 +16,14 @@ const PRESETS = [90, 180, 365] as const;
 
 export function InventoryRules({ ageing, stale }: Props) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [form, setForm] = useState({ ageing: String(ageing), stale: String(stale) });
   const a = Number.parseInt(form.ageing, 10);
   const s = Number.parseInt(form.stale, 10);
   const dirty = form.ageing !== String(ageing) || form.stale !== String(stale);
 
   function save() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await updateSettingsAction({ ageingAfterDays: form.ageing, staleAfterDays: form.stale });
       if (!result.ok) {
         toast.error(result.error);

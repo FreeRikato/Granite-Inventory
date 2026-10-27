@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import type { Tables } from "@/lib/database.types";
 import { formatDate, formatSize, todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
 import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Sale = Tables<"v_sales">;
 type BatchOption = Pick<
@@ -42,12 +43,12 @@ export type SaleEditLists = {
 export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lists: SaleEditLists }) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   function remove() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await deleteSaleAction(sale.id ?? "");
       if (!result.ok) {
         toast.error(result.error);
@@ -107,7 +108,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
 }
 
 function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditLists; onDone: () => void }) {
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [form, setForm] = useState({
     batchId: sale.batch_id ?? "",
     customerId: sale.customer_id ?? "",
@@ -131,7 +132,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
   function submit(e: React.FormEvent) {
     e.preventDefault();
     clear();
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await correctSaleAction({ ...form, saleId: sale.id });
       if (!result.ok) {
         refuse(result.error);

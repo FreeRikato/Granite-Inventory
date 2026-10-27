@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAfterWrite } from "@/lib/query/provider";
 import { Pencil, Trash2 } from "lucide-react";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isCustomerType } from "@/lib/domain";
 import { deleteCustomerAction } from "../actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Props = {
   readonly customer: { id: string; name: string; phone: string | null; customer_type: string; is_walk_in: boolean };
@@ -29,11 +30,11 @@ type Props = {
 export function CustomerActions({ customer, canDelete }: Props) {
   const router = useRouter();
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [draft, setDraft] = useState<CustomerDraft | null>(null);
 
   function remove() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await deleteCustomerAction(customer.id);
       if (!result.ok) {
         toast.error(result.error);

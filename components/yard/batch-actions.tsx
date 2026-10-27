@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { SLOTS, SLOT_LABEL, isCategory, isSlot } from "@/lib/domain";
 import { todayIso } from "@/lib/format";
 import type { Tables } from "@/lib/database.types";
 import { correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 export type EditLists = {
   readonly products: readonly { id: string; name: string; category: string }[];
@@ -30,12 +31,12 @@ type Props = { readonly batch: EditableBatch; readonly lists: EditLists; readonl
 export function BatchActions({ batch, lists, iconOnly }: Props) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   function remove() {
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await deleteBatchAction(batch.id ?? "");
       if (!result.ok) {
         toast.error(result.error);
@@ -116,7 +117,7 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
 }
 
 function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: EditLists; onDone: () => void }) {
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     productId: batch.product_id ?? "",
@@ -139,7 +140,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await correctBatchAction({
         ...form,
         batchId: batch.id,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
 import { createClient } from "@/lib/supabase/client";
 import { createProductAction, createSupplierAction, saveBatchAction } from "./actions";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
 type Product = { id: string; name: string; abbreviation: string; category: string };
 type Supplier = { id: string; name: string };
@@ -70,7 +71,7 @@ const EMPTY: FormState = {
 
 export function InwardForm({ products: initialProducts, suppliers: initialSuppliers, recentStacks }: Props) {
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const [pending, runOnce] = useSingleFlight();
   const [form, setForm] = useState<FormState>(EMPTY);
   const { error, refuse, clear } = useRefusal(form);
   const [products, setProducts] = useState(initialProducts);
@@ -122,7 +123,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await saveBatchAction({
         productId: form.productId,
         supplierId: form.supplierId,
@@ -149,7 +150,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
 
   function saveSupplier() {
     if (!newSupplier) return;
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await createSupplierAction(newSupplier);
       if (!result.ok) {
         toast.error(result.error);
@@ -163,7 +164,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
 
   function saveProduct() {
     if (!newProduct) return;
-    startTransition(async () => {
+    runOnce(async () => {
       const result = await createProductAction(newProduct);
       if (!result.ok) {
         toast.error(result.error);
