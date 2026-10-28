@@ -35,6 +35,31 @@ test("an admin archives a batch with sales, finds it behind Show archived and un
   await expect(card.getByRole("link", { name: "Sell from this Batch" })).toBeVisible();
 });
 
+test("a batch can be deleted only after it is archived and only when nothing was sold from it", async ({
+  page,
+  signIn,
+}) => {
+  await seedYard();
+  await signIn("admin");
+  await page.goto("/yard");
+
+  const card = page.getByTestId("yard-batch").filter({ hasText: "JB-FIVE-01" });
+  await expect(card.getByRole("button", { name: "Delete" })).toHaveCount(0);
+  await card.getByRole("button", { name: "Archive JB-FIVE-01", exact: true }).click();
+  await expect(page.getByText("Batch JB-FIVE-01 archived")).toBeVisible();
+
+  await page.getByRole("switch", { name: "Show archived" }).click();
+  await confirmDelete(page, card.getByRole("button", { name: "Delete" }));
+  await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
+  await expect(card).toHaveCount(0);
+
+  const sold = page.getByTestId("yard-batch").filter({ hasText: "BP-OLD-01" });
+  await sold.getByRole("button", { name: "Archive BP-OLD-01", exact: true }).click();
+  await expect(page.getByText("Batch BP-OLD-01 archived")).toBeVisible();
+  await expect(sold.getByRole("button", { name: "Unarchive BP-OLD-01", exact: true })).toBeVisible();
+  await expect(sold.getByRole("button", { name: "Delete" })).toHaveCount(0);
+});
+
 test("an admin edits, archives and deletes from the Inward pickers and types a new yard slot", async ({
   page,
   signIn,

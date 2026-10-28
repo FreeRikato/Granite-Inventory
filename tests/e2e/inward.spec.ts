@@ -128,7 +128,27 @@ test("Save Batch waits for a positive size on granite and the click still refuse
   await expect(page.getByText(/Must be more than 0/)).toHaveCount(0);
 });
 
-test("an admin edits and deletes a batch from Recent batches and an operator sees neither", async ({
+test("Recent batches hides archived batches until Show archived is on, and only then offers Delete", async ({
+  page,
+  signIn,
+}) => {
+  await seedYard();
+  await signIn("admin");
+  await page.goto("/inward");
+  const row = page.getByTestId("batch-row").filter({ hasText: "JB-FIVE-01" });
+  await row.getByRole("button", { name: "Archive JB-FIVE-01" }).click();
+  await expect(page.getByText("Batch JB-FIVE-01 archived")).toBeVisible();
+  await expect(row).toHaveCount(0);
+
+  await page.getByRole("switch", { name: "Show archived" }).click();
+  await expect(row).toContainText("Archived");
+  await expect(row.getByRole("button", { name: "Unarchive JB-FIVE-01" })).toBeVisible();
+  await confirmDelete(page, row.getByRole("button", { name: "Delete JB-FIVE-01" }));
+  await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
+  await expect(row).toHaveCount(0);
+});
+
+test("an admin edits a batch from Recent batches, which offers no Delete while it is live, and an operator sees neither", async ({
   page,
   signIn,
 }) => {
@@ -143,9 +163,8 @@ test("an admin edits and deletes a batch from Recent batches and an operator see
   await expect(page.getByText("Batch JB-FIVE-01 updated")).toBeVisible();
   await expect(row).toContainText("/ 8");
 
-  await confirmDelete(page, row.getByRole("button", { name: "Delete JB-FIVE-01" }));
-  await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
-  await expect(row).toHaveCount(0);
+  await expect(row.getByRole("button", { name: "Archive JB-FIVE-01" })).toBeVisible();
+  await expect(row.getByRole("button", { name: "Delete JB-FIVE-01" })).toHaveCount(0);
 
   await page.request.post("/auth/signout");
   await signIn("operator");

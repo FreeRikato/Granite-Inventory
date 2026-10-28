@@ -1,6 +1,7 @@
 ---
 code:
   - supabase/migrations/20261027182609_archive_and_named_slots.sql
+  - supabase/migrations/20261028053403_archive_before_delete.sql
   - tests/seam/archive.test.ts
   - tests/e2e/archive.spec.ts
   - supabase/migrations/20260911160000_corrections.sql
@@ -10,6 +11,7 @@ code:
   - components/yard/batch-actions.tsx
   - components/confirm-delete.tsx
   - app/(app)/inward/recent-batches.tsx
+  - app/(app)/inward/inward-view.tsx
   - app/(app)/customers/[id]/sale-actions.tsx
   - tests/seam/corrections.test.ts
 ---
@@ -22,7 +24,7 @@ Admin-only edits and deletes of Batches and Sales that keep Available consistent
 - The Batch Code is kept on edit: it is written on the physical stack ([[batches]]).
 - Editing a sale locks both batches (old and new) in a fixed order, so two corrections cannot deadlock. It gives the old pieces back first, then takes the new quantity from the possibly same batch.
 - A sale keeps the landed-cost snapshot it was recorded at. The snapshot moves only when the sale moves to another batch.
-- A Batch cannot be deleted while it has sales; the database refuses, so the yard card simply hides Delete in that case. Archive is the way out for a Batch with sales: `archive_batch` stamps `archived_at` (a raw fact; clearing it unarchives) and every stock figure filters on it, while Sales keep pointing at the Batch. `record_sale` refuses an archived Batch, and `correct_sale` refuses only moving a Sale onto one, so a past Sale on it can still be fixed.
+- A Batch is deleted in two steps: archive it, then delete it. `delete_batch` refuses a Batch that has sales (checked first, so the message stays "has N sale(s)") and a Batch that is not archived ("Archive batch X before deleting it"), so the yard card shows Delete only on an archived Batch with no sales, which means only behind Show archived. Recent batches on Inward hides archived Batches too, until its own Show archived switch (top right of the card, local state, not in the URL) is on; archived rows then appear dimmed with an Archived tag and offer Unarchive and Delete. Archive is the way out for a Batch with sales: `archive_batch` stamps `archived_at` (a raw fact; clearing it unarchives) and every stock figure filters on it, while Sales keep pointing at the Batch. `record_sale` refuses an archived Batch, and `correct_sale` refuses only moving a Sale onto one, so a past Sale on it can still be fixed.
 - Products and Suppliers carry the same `archived_at`. Admins write it straight through the existing update policy (`archiveRowAction`), so it needs no function. Archived rows leave the Inward pickers but stay in the Settings list, which unarchives them; the Yard Edit dialog still offers a Batch's own archived Product or Supplier.
 - Products and Suppliers (the lists that grow from the Inward form) can be renamed in Settings. Deleting one is refused by the database while Batches reference it. Variants are hidden ([[batches]]), so they have no list.
 

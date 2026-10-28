@@ -146,18 +146,16 @@ export const customerListQuery = queryOptions({
   queryFn: () => readCustomerList(createClient()),
 });
 
-export const recentBatchesQuery = queryOptions({
-  queryKey: ["recent-batches"],
-  queryFn: () =>
-    rows<Tables<"v_batches">>(
-      createClient()
-        .from("v_batches")
-        .select("*")
-        .is("archived_at", null)
-        .order("created_at", { ascending: false })
-        .limit(8),
-    ),
-});
+export const recentBatchesQuery = (includeArchived: boolean) =>
+  queryOptions({
+    queryKey: ["recent-batches", includeArchived],
+    queryFn: () => {
+      const query = createClient().from("v_batches").select("*");
+      return rows<Tables<"v_batches">>(
+        (includeArchived ? query : query.is("archived_at", null)).order("created_at", { ascending: false }).limit(8),
+      );
+    },
+  });
 
 export const dashboardKpisQuery = queryOptions({
   queryKey: ["dashboard-kpis"],
