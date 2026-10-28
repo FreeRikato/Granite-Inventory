@@ -13,11 +13,13 @@ code:
   - components/data-age.tsx
   - components/view-state.tsx
   - components/shell/member-provider.tsx
+  - components/shell/offline-notice.tsx
   - components/shell/command-palette.tsx
   - tests/e2e/client-reads.spec.ts
   - tests/e2e/persisted-reads.spec.ts
   - tests/e2e/router-cache.spec.ts
   - tests/e2e/loading.spec.ts
+  - tests/e2e/offline.spec.ts
 ---
 # Browser reads and caching
 
@@ -54,3 +56,9 @@ Every write goes through a server action. Afterwards the caller invalidates both
 - `loading.spec.ts`: either the route placeholder carries the title (a cold navigation) or the prefetched shell already painted the real heading and only the rows area is busy. Both keep the destination title on screen while loading. It waits for Overview's own rows before observing, so the first busy element seen belongs to the navigation.
 
 Related: [[yard]], [[testing]].
+
+## Offline
+
+`OfflineNotice` sits in the app layout and shows a fixed "You are offline" bar while `navigator.onLine` is false, so a stale page painted from the disk cache is never mistaken for live data. It follows the browser's `online` and `offline` events.
+
+The `role="status"` container is always mounted and only its child bar comes and goes, because a screen reader announces changes inside a live region that is already in the page, not one that mounts together with its text.
