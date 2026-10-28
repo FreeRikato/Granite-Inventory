@@ -91,6 +91,9 @@ test("a Product filter resets to All when its only Batch is deleted", async ({ p
   await expect(productFilter).toHaveText(/Product:\s*Filter Target/);
 
   const batch = page.getByTestId("yard-batch").filter({ hasText: "FT-ONLY-01" });
+  await batch.getByRole("button", { name: "Archive FT-ONLY-01", exact: true }).click();
+  await expect(page.getByText("Batch FT-ONLY-01 archived")).toBeVisible();
+  await page.getByRole("switch", { name: "Show archived" }).click();
   await confirmDelete(page, batch.getByRole("button", { name: "Delete" }));
   await expect(batch).toHaveCount(0);
   await expect(productFilter).toHaveText(/Product:\s*All/);
