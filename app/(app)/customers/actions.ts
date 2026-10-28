@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
 import { customerSchema } from "@/lib/schemas/sale";
+import { findCustomerByPhone } from "@/lib/query/reads";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 
@@ -14,10 +15,12 @@ export async function createCustomerAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid customer");
   const supabase = await createClient();
   if (parsed.data.phone) {
-    const digits = parsed.data.phone.replace(/\D/g, "").slice(-10);
-    const { data: existing } = await supabase.from("customers").select("*").not("phone", "is", null);
-    const match = (existing ?? []).find((c) => (c.phone ?? "").replace(/\D/g, "").slice(-10) === digits);
-    if (match) return ok({ ...match, existed: true });
+    try {
+      const match = await findCustomerByPhone(supabase, parsed.data.phone);
+      if (match) return ok({ ...match, existed: true });
+    } catch (error) {
+      return fail(messageOf(error));
+    }
   }
   const { data, error } = await supabase
     .from("customers")
