@@ -37,7 +37,7 @@ export function InwardView() {
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <InwardForm products={products.data} suppliers={suppliers.data} recentStacks={stacks.data} />
         <Notice className="h-fit">
           Batches are never merged. Every purchase becomes its own tracked lot, even if it&apos;s the same product and
