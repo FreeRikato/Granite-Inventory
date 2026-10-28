@@ -31,8 +31,9 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await page.getByLabel("Breadth (ft)").fill("2");
   await page.getByLabel("Thickness (mm)").fill("16");
   await page.getByLabel("Unit Quantity").fill("15");
-  await page.getByLabel("Unit Purchase Price (₹)").fill("1400");
-  await page.getByLabel("Freight Cost (₹)").fill("750");
+  await expect(page.getByLabel("Freight Cost")).toHaveCount(0);
+  await expect(page.getByText("Per piece, freight included")).toBeVisible();
+  await page.getByLabel("Unit Purchase Price (₹)").fill("1450");
 
   await page.getByRole("button", { name: "Add new batch number" }).click();
   const stackDialog = page.getByRole("dialog", { name: "New batch number" });
@@ -158,6 +159,7 @@ test("an admin edits a batch from Recent batches, which offers no Delete while i
   const row = page.getByTestId("batch-row").filter({ hasText: "JB-FIVE-01" });
   await openDialog(page, row.getByRole("button", { name: "Edit JB-FIVE-01" }));
   const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Freight Cost")).toHaveCount(0);
   await dialog.getByLabel("Unit Quantity").fill("8");
   await dialog.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Batch JB-FIVE-01 updated")).toBeVisible();

@@ -67,7 +67,6 @@ type FormState = {
   stackNumber: string;
   initialUnits: string;
   unitPurchasePrice: string;
-  freightCost: string;
 };
 
 const EMPTY: FormState = {
@@ -81,7 +80,6 @@ const EMPTY: FormState = {
   stackNumber: "",
   initialUnits: "",
   unitPurchasePrice: "",
-  freightCost: "",
 };
 
 export function InwardForm({ products: initialProducts, suppliers: initialSuppliers, recentStacks, canManage }: Props) {
@@ -153,7 +151,6 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         stackNumber: form.stackNumber,
         initialUnits: form.initialUnits,
         unitPurchasePrice: form.unitPurchasePrice,
-        freightCost: form.freightCost === "" ? 0 : form.freightCost,
         memorial,
         lengthFt: form.lengthFt,
         breadthFt: form.breadthFt,
@@ -407,7 +404,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Unit Quantity" htmlFor="initialUnits">
           <Input
             id="initialUnits"
@@ -421,7 +418,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
             className="h-11"
           />
         </Field>
-        <Field label="Unit Purchase Price (₹)" htmlFor="unitPurchasePrice">
+        <Field label="Unit Purchase Price (₹)" htmlFor="unitPurchasePrice" hint="Per piece, freight included">
           <Input
             id="unitPurchasePrice"
             type="number"
@@ -431,23 +428,6 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
             placeholder="0"
             value={form.unitPurchasePrice}
             onChange={(e) => set("unitPurchasePrice", e.target.value)}
-            className="h-11"
-          />
-        </Field>
-        <Field
-          label="Freight Cost (₹)"
-          htmlFor="freightCost"
-          hint="Lorry and handling, spread across the pieces into landed cost"
-        >
-          <Input
-            id="freightCost"
-            type="number"
-            inputMode="decimal"
-            step="1"
-            min="0"
-            placeholder="Optional"
-            value={form.freightCost}
-            onChange={(e) => set("freightCost", e.target.value)}
             className="h-11"
           />
         </Field>

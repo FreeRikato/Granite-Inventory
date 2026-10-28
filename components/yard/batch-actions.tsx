@@ -153,7 +153,6 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
     stackNumber: batch.stack_number ?? "",
     initialUnits: batch.initial_units?.toString() ?? "",
     unitPurchasePrice: batch.unit_purchase_price?.toString() ?? "",
-    freightCost: batch.freight_cost?.toString() ?? "0",
     notes: batch.notes ?? "",
   });
   const productOptions = lists.products.filter((p) => !p.archived_at || p.id === batch.product_id);
@@ -249,7 +248,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
           </Field>
         </div>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Unit Quantity" htmlFor="eb-units" hint={`${batch.units_sold ?? 0} already sold`}>
           <Input
             id="eb-units"
@@ -260,7 +259,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             onChange={(e) => set("initialUnits", e.target.value)}
           />
         </Field>
-        <Field label="Unit Purchase Price (₹)" htmlFor="eb-price">
+        <Field label="Unit Purchase Price (₹)" htmlFor="eb-price" hint="Per piece, freight included">
           <Input
             id="eb-price"
             type="number"
@@ -268,16 +267,6 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             min="0"
             value={form.unitPurchasePrice}
             onChange={(e) => set("unitPurchasePrice", e.target.value)}
-          />
-        </Field>
-        <Field label="Freight Cost (₹)" htmlFor="eb-freight">
-          <Input
-            id="eb-freight"
-            type="number"
-            step="1"
-            min="0"
-            value={form.freightCost}
-            onChange={(e) => set("freightCost", e.target.value)}
           />
         </Field>
       </div>
