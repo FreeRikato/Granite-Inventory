@@ -8,6 +8,9 @@ code:
   - components/shell/page-loading.tsx
   - components/shell/command-palette.tsx
   - lib/nav.ts
+  - app/(app)/inward/inward-view.tsx
+  - app/(app)/inward/inward-form.tsx
+  - app/(app)/sell/sell-form.tsx
 ---
 # Forms and shared components
 
@@ -20,6 +23,7 @@ code:
 - `PageLoading`: the static placeholder shown while a page's server render is in flight, so a tap on the nav responds immediately. It has no animation on purpose, and its title is `aria-hidden` so heading-based readiness signals and screen readers are unaffected.
 - Command palette: search or jump to pages, Stock Lines and Customers ([[browser-reads]]).
 - Navigation: the mobile tab bar shows the first four pages and the rest live under More. Pages whose rows come from the browser cache render an empty shell on the server, so the nav prefetches that shell in full and a click needs no server round trip.
+- Phone width: a bare `grid` has one auto-sized column that grows to its widest child, so a long selected supplier, product or customer name pushed Inward and Sell past the screen and the Add buttons out of view. The form grids on those pages say `grid-cols-1` (a `minmax(0, 1fr)` track) so children shrink and the select labels truncate. A 375px Playwright check in `responsive.spec.ts` selects long names and asserts no sideways page scroll. `/customers` did not overflow at 375px with 1,000 customers (long single-word and multi-word names, 20-character phones, every type, recent purchases), so it has no code change; a second 375px check seeds that data to keep it that way. At 320px the fixed bottom nav and the KPI row do reach about 9px past the screen, which is outside the 375px target.
 
 The searchable select used across forms has its own note: [[search-select]].
 

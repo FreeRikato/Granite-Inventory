@@ -100,3 +100,42 @@ test("admin deletes a customer with no sales and returns to the list", async ({ 
   await expect(page.getByTestId("customer-row").filter({ hasText: "Throwaway Customer" })).toHaveCount(0);
   await expect(page.getByTestId("customer-row").filter({ hasText: "Murugan Constructions" })).toBeVisible();
 });
+
+test("an over-long customer name explains the limit once, inline", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/customers");
+  await openDialog(page, page.getByRole("button", { name: "Add Customer" }));
+  const name = page.getByLabel("Name");
+  await expect(name).toHaveAttribute("maxlength", "80");
+  await name.pressSequentially("x".repeat(81));
+  await expect(name).toHaveValue("x".repeat(80));
+  await name.evaluate((input: HTMLInputElement) => {
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    setValue?.call(input, "x".repeat(81));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  const add = page.getByRole("button", { name: "Add customer" });
+  await add.click();
+  await add.click();
+  const message = page.getByRole("dialog").getByRole("alert");
+  await expect(message).toHaveText("Name must be 80 characters or fewer");
+  await expect(page.locator("[data-sonner-toast]")).toHaveCount(0);
+  await expect(page.getByText(/too big|expected string/i)).toHaveCount(0);
+  await name.fill("x".repeat(80));
+  await expect(message).toHaveCount(0);
+});
+
+test("the tiles count every customer past the 1,000 row cap", async ({ page, signIn }) => {
+  await sql(
+    `insert into public.customers (name, phone, customer_type)
+     select 'Tile Customer ' || lpad(n::text, 4, '0'), '+91 8' || lpad(n::text, 9, '0'),
+            case when n <= 200 then 'CONTRACTOR' when n <= 500 then 'TRUST' else 'REGULAR' end
+     from generate_series(1, 1100) n`,
+  );
+  await signIn("operator");
+  await page.goto("/customers");
+  const tile = (label: string) => page.locator("dt", { hasText: label }).locator("xpath=following-sibling::dd");
+  await expect(tile("Total Customers")).toHaveText("1102");
+  await expect(tile("Contractors")).toHaveText("201");
+  await expect(tile("Trusts")).toHaveText("300");
+});

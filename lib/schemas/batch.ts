@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { CATEGORIES, DEFAULT_VARIANT } from "@/lib/domain";
-import { isoDate, money, positiveInteger, positiveNumber } from "./common";
+import { isoDate, money, name, positiveInteger, positiveNumber } from "./common";
 
 export const productSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(80),
+  name,
   abbreviation: z
     .string()
     .trim()
@@ -13,7 +13,7 @@ export const productSchema = z.object({
 });
 
 export const supplierSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(80),
+  name,
   phone: z.string().trim().max(20).optional(),
 });
 
@@ -31,7 +31,7 @@ const unsizedBatch = z.object({
 export const batchSchema = z
   .object({
     productId: z.string({ error: "Pick a product" }).uuid("Pick a product"),
-    variantName: z.string().trim().min(1).max(80).default(DEFAULT_VARIANT),
+    variantName: name.default(DEFAULT_VARIANT),
     supplierId: z.string({ error: "Pick a supplier" }).uuid("Pick a supplier"),
     purchaseDate: isoDate,
     slot: z.string().trim().min(1, "Pick a yard slot").max(20, "Yard slot must be 20 characters or fewer"),

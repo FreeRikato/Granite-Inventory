@@ -35,6 +35,7 @@ import {
 } from "@/lib/domain";
 import type { AdminListTable } from "@/lib/admin-list-references";
 import { todayIso } from "@/lib/format";
+import { NAME_MAX } from "@/lib/schemas/common";
 import { useRefusal } from "@/lib/use-refusal";
 import { createClient } from "@/lib/supabase/client";
 import { archiveRowAction, deleteRowAction, renameRowAction } from "@/app/(app)/settings/actions";
@@ -296,7 +297,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
     <form onSubmit={submit} className="rounded-card bg-card p-6 shadow-sm md:p-8" noValidate>
       <h2 className="text-base font-semibold">Log New Purchase</h2>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Purchase Date" htmlFor="purchaseDate">
           <Input
             id="purchaseDate"
@@ -361,7 +362,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
           Doom Stones have a fixed size and are tracked by unit count.
         </Notice>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Length (ft)" htmlFor="lengthFt">
             <Input
               id="lengthFt"
@@ -406,7 +407,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         </div>
       )}
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Unit Quantity" htmlFor="initialUnits">
           <Input
             id="initialUnits"
@@ -452,7 +453,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         </Field>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Yard slot and batch number" htmlFor="stack">
           <div className="flex gap-2">
             <SearchSelect
@@ -515,6 +516,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               <Field label="Name" htmlFor="np-name">
                 <Input
                   id="np-name"
+                  maxLength={NAME_MAX}
                   value={newProduct.name}
                   onChange={(e) =>
                     setNewProduct({
@@ -581,6 +583,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               <Field label="Name" htmlFor="ns-name">
                 <Input
                   id="ns-name"
+                  maxLength={NAME_MAX}
                   value={newSupplier.name}
                   onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
                   autoFocus={!newSupplier.name}

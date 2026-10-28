@@ -63,10 +63,9 @@ export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
 
 export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"]): YardBatch[] {
   const dir = sort === "oldest" ? 1 : -1;
-  const byDate = (a: YardBatch, b: YardBatch) => {
-    const d = (a.purchase_date ?? "").localeCompare(b.purchase_date ?? "");
-    return d !== 0 ? d : (a.created_at ?? "").localeCompare(b.created_at ?? "");
-  };
+  const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  const byDate = (a: YardBatch, b: YardBatch) =>
+    compare(a.purchase_date ?? "", b.purchase_date ?? "") || compare(a.created_at ?? "", b.created_at ?? "");
   const lineStart = new Map<string, YardBatch>();
   for (const b of [...list].sort(byDate)) {
     if (!lineStart.has(b.line_key ?? "")) lineStart.set(b.line_key ?? "", b);
@@ -91,7 +90,9 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
   const groups = new Map<string, YardBatch[]>();
   for (const b of list) {
     const key = b.stack_number ? `${b.slot}|${b.stack_number}` : "none";
-    groups.set(key, [...(groups.get(key) ?? []), b]);
+    const group = groups.get(key);
+    if (group) group.push(b);
+    else groups.set(key, [b]);
   }
   const order = slotChoices(list.map((b) => b.slot));
   const rank = (slot: string | null) => (slot ? order.indexOf(slot) : order.length);
@@ -114,4 +115,44 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
         (a.stackNumber ?? "").localeCompare(b.stackNumber ?? "", undefined, { numeric: true })
       );
     });
+}
+
+export type YardEntry = {
+  readonly batch: YardBatch;
+  readonly gap: number | null;
+};
+
+export type StackChunk = {
+  readonly key: string;
+  readonly group: StackGroup;
+  readonly leading: boolean;
+  readonly trailing: boolean;
+  readonly entries: readonly YardEntry[];
+};
+
+export const CHUNK_SIZE = 6;
+
+export const WINDOW_AFTER = 100;
+
+export function chunkStacks(groups: readonly StackGroup[], sort: YardQuery["sort"], size = CHUNK_SIZE): StackChunk[] {
+  return groups.flatMap((group) => {
+    const sorted = sortBatches(group.batches, sort);
+    const entries = sorted.map((batch, i) => {
+      const prev = sorted[i - 1];
+      const sameLine = prev && prev.line_key === batch.line_key;
+      const later = sort === "oldest" ? batch : prev;
+      return { batch, gap: sameLine ? (later?.days_since_previous ?? null) : null };
+    });
+    const chunks: StackChunk[] = [];
+    for (let start = 0; start < entries.length; start += size) {
+      chunks.push({
+        key: `${group.key}#${start}`,
+        group,
+        leading: start === 0,
+        trailing: start + size >= entries.length,
+        entries: entries.slice(start, start + size),
+      });
+    }
+    return chunks;
+  });
 }

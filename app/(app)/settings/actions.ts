@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { CATEGORIES, ROLES, type Role } from "@/lib/domain";
+import type { Role } from "@/lib/domain";
 import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
-import { settingsSchema } from "@/lib/schemas/settings";
+import { memberSchema, renameSchema, settingsSchema } from "@/lib/schemas/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 import {
@@ -40,12 +39,6 @@ export async function updateSettingsAction(input: unknown): Promise<ActionResult
   return ok(data);
 }
 
-const memberSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Enter a Google email"),
-  name: z.string().trim().max(80).optional(),
-  role: z.enum(ROLES),
-});
-
 export async function addMemberAction(input: unknown): Promise<ActionResult<Tables<"team_members">>> {
   const parsed = memberSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid member");
@@ -78,20 +71,6 @@ export async function removeMemberAction(id: string): Promise<ActionResult<null>
   revalidatePath("/settings");
   return ok(null);
 }
-
-const renameSchema = z.object({
-  table: z.enum(["products", "suppliers"]),
-  id: z.string().uuid(),
-  name: z.string().trim().min(1, "Name is required").max(80),
-  abbreviation: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z0-9]{1,4}$/, "1 to 4 letters or digits")
-    .optional(),
-  category: z.enum(CATEGORIES).optional(),
-  phone: z.string().trim().max(20).optional(),
-});
 
 export async function renameRowAction(input: unknown): Promise<ActionResult<null>> {
   const parsed = renameSchema.safeParse(input);

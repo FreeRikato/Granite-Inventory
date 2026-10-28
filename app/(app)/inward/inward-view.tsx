@@ -38,7 +38,7 @@ export function InwardView() {
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <InwardForm
           products={products.data.filter((p) => !p.archived_at)}
           suppliers={suppliers.data.filter((s) => !s.archived_at)}
