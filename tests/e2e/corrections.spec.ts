@@ -46,7 +46,10 @@ test("admin edits a batch from the yard and a sale from the customer page", asyn
   await expect(page.getByText("No sales recorded for this customer.")).toBeVisible();
 });
 
-test("a batch with sales cannot be deleted and an operator sees no correction controls", async ({ page, signIn }) => {
+test("a batch with sales cannot be deleted, an unsold one only after archiving, and an operator sees no correction controls", async ({
+  page,
+  signIn,
+}) => {
   await signIn("admin");
   await page.goto("/yard?slot=4FT");
   const old = page.locator('[data-batch-code="BP-OLD-01"]');
@@ -54,6 +57,10 @@ test("a batch with sales cannot be deleted and an operator sees no correction co
   await expect(page.locator('[data-batch-code="BP-NEW-01"]').getByRole("button", { name: "Delete" })).toHaveCount(0);
 
   await page.goto("/yard?slot=5FT");
+  await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Archive JB-FIVE-01", exact: true }).click();
+  await expect(page.getByText("Batch JB-FIVE-01 archived")).toBeVisible();
+  await page.getByRole("switch", { name: "Show archived" }).click();
   await confirmDelete(page, page.getByRole("button", { name: "Delete" }));
   await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
 

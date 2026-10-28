@@ -43,7 +43,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - Admin only. Edit and delete on Batch and Sale via SQL functions that re-balance Available and re-snapshot Landed Cost where a Sale's Batch changes.
 - Refused if the result would make any Batch's Available negative.
-- Archive (`archive_batch`) works on any Batch, sold from or not, and is undone by Unarchive. An archived Batch is left out of Sell, Stock Lines, the Public Catalog, the stale panel, Recent batches on Inward, Active stock, inventory value and the "vs last month" figure. Its Sales and their margins stay, and so do units sold in the donut and fast movers. `record_sale` refuses an archived Batch, and `correct_sale` refuses moving a Sale onto one but still edits a Sale already on it. Delete stays limited to Batches with no Sales.
+- Archive (`archive_batch`) works on any Batch, sold from or not, and is undone by Unarchive. An archived Batch is left out of Sell, Stock Lines, the Public Catalog, the stale panel, Recent batches on Inward, Active stock, inventory value and the "vs last month" figure. Its Sales and their margins stay, and so do units sold in the donut and fast movers. `record_sale` refuses an archived Batch, and `correct_sale` refuses moving a Sale onto one but still edits a Sale already on it. Delete is limited to Batches that are archived and have no Sales: archive first, then delete from the Yard or Recent batches under Show archived.
 - A Batch purchase date cannot be moved later than its earliest Sale; the refusal names that date.
 - `updated_at` and `updated_by` on Batch and Sale. No audit log in Phase 1.
 - Available on mobile as well as desktop.

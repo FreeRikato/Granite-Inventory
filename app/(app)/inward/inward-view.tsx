@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
 import { Notice } from "@/components/notice";
 import { useMember } from "@/components/shell/member-provider";
@@ -16,7 +17,8 @@ export function InwardView() {
   const hydrated = useHydrated();
   const products = useQuery(productsQuery);
   const suppliers = useQuery(suppliersQuery);
-  const recent = useQuery(recentBatchesQuery);
+  const [showArchived, setShowArchived] = useState(false);
+  const recent = useQuery({ ...recentBatchesQuery(showArchived), placeholderData: keepPreviousData });
   const stacks = useQuery(recentStacksQuery);
 
   if (!hydrated || !products.isSuccess || !suppliers.isSuccess || !recent.isSuccess || !stacks.isSuccess) {
@@ -52,6 +54,8 @@ export function InwardView() {
       </div>
       <RecentBatches
         batches={recent.data}
+        showArchived={showArchived}
+        onShowArchivedChange={setShowArchived}
         editLists={
           isAdmin
             ? { products: products.data, suppliers: suppliers.data, slots: slotChoices(stacks.data.map((s) => s.slot)) }

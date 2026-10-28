@@ -1,3 +1,7 @@
+import { Archive } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { formatDate, formatRupees, formatSize } from "@/lib/format";
 import { slotLabel, stackLabel } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
@@ -5,12 +9,25 @@ import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 
 type Row = Tables<"v_batches">;
 
-type Props = { readonly batches: readonly Row[]; readonly editLists: EditLists | null };
+type Props = {
+  readonly batches: readonly Row[];
+  readonly editLists: EditLists | null;
+  readonly showArchived: boolean;
+  readonly onShowArchivedChange: (value: boolean) => void;
+};
 
-export function RecentBatches({ batches, editLists }: Props) {
+export function RecentBatches({ batches, editLists, showArchived, onShowArchivedChange }: Props) {
   return (
     <section className="rounded-card bg-card p-6 shadow-sm">
-      <h2 className="text-base font-semibold">Recent batches</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">Recent batches</h2>
+        <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+          <Switch id="recent-show-archived" checked={showArchived} onCheckedChange={onShowArchivedChange} />
+          <Label htmlFor="recent-show-archived" className="text-sm text-muted-foreground">
+            Show archived
+          </Label>
+        </div>
+      </div>
       {batches.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">No batches logged yet.</p>
       ) : (
@@ -34,8 +51,20 @@ export function RecentBatches({ batches, editLists }: Props) {
             </thead>
             <tbody>
               {batches.map((b) => (
-                <tr key={b.id ?? b.batch_code} className="group border-t border-border" data-testid="batch-row">
-                  <td className="py-2.5 pr-4 font-mono text-xs">{b.batch_code}</td>
+                <tr
+                  key={b.id ?? b.batch_code}
+                  className={cn("group border-t border-border", b.archived_at && "opacity-60")}
+                  data-testid="batch-row"
+                >
+                  <td className="py-2.5 pr-4 font-mono text-xs">
+                    {b.batch_code}
+                    {b.archived_at ? (
+                      <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-sans text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <Archive className="size-3" aria-hidden="true" />
+                        Archived
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="py-2.5 pr-4 font-medium">{b.product_name}</td>
                   <td className="py-2.5 pr-4">
                     {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}

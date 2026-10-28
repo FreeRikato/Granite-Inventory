@@ -81,10 +81,14 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     expect(sale.data?.landed_cost).toBe(1000);
   });
 
-  it("batch delete is refused while sales exist and works once they are gone", async () => {
+  it("batch delete is refused while sales exist or the batch is live, and works once it is archived and unsold", async () => {
     const sale = await recordSale(operator, { batchId: a, customerId, quantity: 1 });
     expect(expectError(await admin.rpc("delete_batch", { p_batch_id: a })).message).toMatch(/has 1 sale/);
     await admin.rpc("delete_sale", { p_sale_id: sale.data?.id ?? "" });
+    expect(expectError(await admin.rpc("delete_batch", { p_batch_id: a })).message).toMatch(
+      /Archive batch .* before deleting/,
+    );
+    await admin.rpc("archive_batch", { p_batch_id: a, p_archived: true });
     const gone = await admin.rpc("delete_batch", { p_batch_id: a });
     expect(gone.error).toBeNull();
     expect((await admin.from("batches").select("id").eq("id", a)).data).toEqual([]);

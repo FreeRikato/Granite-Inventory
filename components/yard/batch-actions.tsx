@@ -83,10 +83,10 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
         {batch.archived_at ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
         {iconOnly ? null : batch.archived_at ? " Unarchive" : " Archive"}
       </Button>
-      {(batch.units_sold ?? 0) === 0 ? (
+      {batch.archived_at && (batch.units_sold ?? 0) === 0 ? (
         <ConfirmDelete
           title={`Delete batch ${batch.batch_code}?`}
-          description="This batch has no sales. It will be removed from the yard for good."
+          description="This batch is archived and has no sales. It will be removed for good."
           onConfirm={remove}
           disabled={pending}
           iconLabel={iconOnly ? `Delete ${batch.batch_code}` : undefined}

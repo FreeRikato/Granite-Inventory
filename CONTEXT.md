@@ -53,7 +53,7 @@ A Batch whose Available is zero. Hidden from the Yard view by default, kept for 
 _Avoid_: Closed, empty
 
 **Archived**:
-A Batch, Product or Supplier an Admin has set aside without deleting it. An Archived Batch leaves Sell, Stock Lines, the Public Catalog and the stock KPIs, and the Yard shows it only with "Show archived"; its Sales stay in history. An Archived Product or Supplier leaves the Inward pickers and takes no new Batches, while existing Batches keep it. Unarchiving brings each back.
+A Batch, Product or Supplier an Admin has set aside without deleting it. An Archived Batch leaves Sell, Stock Lines, the Public Catalog and the stock KPIs, and the Yard shows it only with "Show archived"; its Sales stay in history. Only an Archived Batch with no Sales can be deleted. An Archived Product or Supplier leaves the Inward pickers and takes no new Batches, while existing Batches keep it. Unarchiving brings each back.
 _Avoid_: Hidden, disabled, soft-deleted
 
 **Age**:
