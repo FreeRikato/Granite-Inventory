@@ -5,6 +5,7 @@ import { DataAge } from "@/components/data-age";
 import { Notice } from "@/components/notice";
 import { useMember } from "@/components/shell/member-provider";
 import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { slotChoices } from "@/lib/domain";
 import { useHydrated } from "@/lib/query/provider";
 import { productsQuery, recentBatchesQuery, recentStacksQuery, suppliersQuery } from "@/lib/query/reads";
 import { InwardForm } from "./inward-form";
@@ -38,7 +39,12 @@ export function InwardView() {
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <InwardForm products={products.data} suppliers={suppliers.data} recentStacks={stacks.data} />
+        <InwardForm
+          products={products.data.filter((p) => !p.archived_at)}
+          suppliers={suppliers.data.filter((s) => !s.archived_at)}
+          recentStacks={stacks.data}
+          canManage={isAdmin}
+        />
         <Notice className="h-fit">
           Batches are never merged. Every purchase becomes its own tracked lot, even if it&apos;s the same product and
           size as existing stock.
@@ -46,7 +52,11 @@ export function InwardView() {
       </div>
       <RecentBatches
         batches={recent.data}
-        editLists={isAdmin ? { products: products.data, suppliers: suppliers.data } : null}
+        editLists={
+          isAdmin
+            ? { products: products.data, suppliers: suppliers.data, slots: slotChoices(stacks.data.map((s) => s.slot)) }
+            : null
+        }
       />
     </>
   );

@@ -18,13 +18,13 @@ describe("admin-list reference helpers", () => {
   it("uses the row name", () => {
     expect(deleteBlockedMessage("products", [], "Jet Black Granite")).toBe("Only possible when no batch uses it.");
     expect(deleteBlockedMessage("suppliers", [batchReference], "Madurai Quarry")).toBe(
-      "Cannot delete Madurai Quarry: batch JB-12SEP26-01 still uses it.",
+      "Cannot delete Madurai Quarry: batch JB-12SEP26-01 still uses it. Archive it instead.",
     );
   });
 
   it("names a Product when one Batch blocks deletion", () => {
     expect(deleteBlockedMessage("products", [batchReference], "Jet Black Granite")).toBe(
-      "Cannot delete Jet Black Granite: batch JB-12SEP26-01 still uses it.",
+      "Cannot delete Jet Black Granite: batch JB-12SEP26-01 still uses it. Archive it instead.",
     );
   });
 });

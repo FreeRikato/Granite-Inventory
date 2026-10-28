@@ -39,4 +39,5 @@ export const renameSchema = z.object({
     .regex(/^[A-Z0-9]{1,4}$/, "1 to 4 letters or digits")
     .optional(),
   category: z.enum(CATEGORIES).optional(),
+  phone: z.string().trim().max(20).optional(),
 });

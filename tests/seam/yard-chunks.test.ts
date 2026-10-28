@@ -6,6 +6,7 @@ function batch(n: number): YardBatch {
   return {
     age_days: 10,
     ageing_band: "FRESH",
+    archived_at: null,
     available: 2,
     batch_code: `B-${n}`,
     breadth_ft: 2,

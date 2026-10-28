@@ -82,19 +82,24 @@ export function readCustomerList(db: Db) {
   );
 }
 
-type ProductOption = Pick<Tables<"products">, "id" | "name" | "abbreviation" | "category">;
+type ProductOption = Pick<Tables<"products">, "id" | "name" | "abbreviation" | "category" | "archived_at">;
 
 export function readProducts(db: Db) {
   return allRows<ProductOption>(
     (from, to) =>
-      db.from("products").select("id, name, abbreviation, category").order("name").order("id").range(from, to),
+      db
+        .from("products")
+        .select("id, name, abbreviation, category, archived_at")
+        .order("name")
+        .order("id")
+        .range(from, to),
     (row) => row.id,
   );
 }
 
 export function readSuppliers(db: Db) {
-  return allRows<Pick<Tables<"suppliers">, "id" | "name">>(
-    (from, to) => db.from("suppliers").select("id, name").order("name").order("id").range(from, to),
+  return allRows<Pick<Tables<"suppliers">, "id" | "name" | "phone" | "archived_at">>(
+    (from, to) => db.from("suppliers").select("id, name, phone, archived_at").order("name").order("id").range(from, to),
     (row) => row.id,
   );
 }
@@ -145,7 +150,12 @@ export const recentBatchesQuery = queryOptions({
   queryKey: ["recent-batches"],
   queryFn: () =>
     rows<Tables<"v_batches">>(
-      createClient().from("v_batches").select("*").order("created_at", { ascending: false }).limit(8),
+      createClient()
+        .from("v_batches")
+        .select("*")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(8),
     ),
 });
 

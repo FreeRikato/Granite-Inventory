@@ -1,10 +1,10 @@
 import type { Tables } from "@/lib/database.types";
-import { SLOTS, isAgeFilter, isSlot, type AgeFilter, type Slot } from "@/lib/domain";
+import { isAgeFilter, slotChoices, type AgeFilter } from "@/lib/domain";
 
 export type YardBatch = Tables<"v_yard_batches">;
 
 export type YardQuery = {
-  readonly slot: Slot | null;
+  readonly slot: string | null;
   readonly q: string;
   readonly product: string | null;
   readonly thickness: number | null;
@@ -14,6 +14,7 @@ export type YardQuery = {
   readonly line: string | null;
   readonly sort: "oldest" | "newest";
   readonly sold: boolean;
+  readonly archived: boolean;
 };
 
 type Raw = Record<string, string | string[] | undefined>;
@@ -25,12 +26,11 @@ function one(raw: Raw, key: string): string | null {
 }
 
 export function parseYardQuery(raw: Raw): YardQuery {
-  const slot = one(raw, "slot");
   const age = one(raw, "age");
   const ageNumber = age && /^\d+$/.test(age) ? Number(age) : null;
   const thickness = one(raw, "thickness");
   return {
-    slot: isSlot(slot) ? slot : null,
+    slot: one(raw, "slot"),
     q: one(raw, "q") ?? "",
     product: one(raw, "product"),
     thickness: thickness ? Number.parseInt(thickness, 10) : null,
@@ -40,10 +40,12 @@ export function parseYardQuery(raw: Raw): YardQuery {
     line: one(raw, "line"),
     sort: one(raw, "sort") === "newest" ? "newest" : "oldest",
     sold: one(raw, "sold") === "1",
+    archived: one(raw, "archived") === "1",
   };
 }
 
 export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
+  if (!q.archived && b.archived_at) return false;
   if (!q.sold && b.sold_out) return false;
   if (q.slot && b.slot !== q.slot) return false;
   if (q.product && b.product_id !== q.product) return false;
@@ -78,7 +80,7 @@ export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"])
 
 export type StackGroup = {
   readonly key: string;
-  readonly slot: Slot | null;
+  readonly slot: string | null;
   readonly stackNumber: string | null;
   readonly batches: readonly YardBatch[];
   readonly available: number;
@@ -92,17 +94,18 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
     if (group) group.push(b);
     else groups.set(key, [b]);
   }
-  const rank = (slot: Slot | null) => (slot ? SLOTS.indexOf(slot) : SLOTS.length);
+  const order = slotChoices(list.map((b) => b.slot));
+  const rank = (slot: string | null) => (slot ? order.indexOf(slot) : order.length);
   return [...groups.entries()]
     .map(([key, batches]) => {
       const first = batches[0];
-      const slot = key !== "none" && isSlot(first?.slot) ? first.slot : null;
+      const slot = key !== "none" ? (first?.slot ?? null) : null;
       return {
         key,
         slot,
         stackNumber: key === "none" ? null : (first?.stack_number ?? null),
         batches,
-        available: batches.reduce((n, b) => n + (b.available ?? 0), 0),
+        available: batches.reduce((n, b) => n + (b.archived_at ? 0 : (b.available ?? 0)), 0),
       };
     })
     .sort((a, b) => {

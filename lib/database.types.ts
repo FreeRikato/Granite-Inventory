@@ -36,6 +36,7 @@ export type Database = {
     Tables: {
       batches: {
         Row: {
+          archived_at: string | null
           batch_code: string
           breadth_ft: number | null
           created_at: string
@@ -58,6 +59,7 @@ export type Database = {
           variant_id: string
         }
         Insert: {
+          archived_at?: string | null
           batch_code: string
           breadth_ft?: number | null
           created_at?: string
@@ -80,6 +82,7 @@ export type Database = {
           variant_id: string
         }
         Update: {
+          archived_at?: string | null
           batch_code?: string
           breadth_ft?: number | null
           created_at?: string
@@ -189,6 +192,7 @@ export type Database = {
       products: {
         Row: {
           abbreviation: string
+          archived_at: string | null
           category: string
           created_at: string
           created_by: string | null
@@ -197,6 +201,7 @@ export type Database = {
         }
         Insert: {
           abbreviation: string
+          archived_at?: string | null
           category: string
           created_at?: string
           created_by?: string | null
@@ -205,6 +210,7 @@ export type Database = {
         }
         Update: {
           abbreviation?: string
+          archived_at?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
@@ -361,6 +367,7 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          archived_at: string | null
           created_at: string
           id: string
           location: string | null
@@ -368,6 +375,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           id?: string
           location?: string | null
@@ -375,6 +383,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           id?: string
           location?: string | null
@@ -468,6 +477,7 @@ export type Database = {
     Views: {
       v_batches: {
         Row: {
+          archived_at: string | null
           available: number | null
           batch_code: string | null
           breadth_ft: number | null
@@ -661,6 +671,7 @@ export type Database = {
         Row: {
           age_days: number | null
           ageing_band: string | null
+          archived_at: string | null
           available: number | null
           batch_code: string | null
           breadth_ft: number | null
@@ -698,6 +709,38 @@ export type Database = {
     }
     Functions: {
       ageing_band: { Args: { p_age_days: number }; Returns: string }
+      archive_batch: {
+        Args: { p_archived?: boolean; p_batch_id: string }
+        Returns: {
+          archived_at: string | null
+          batch_code: string
+          breadth_ft: number | null
+          created_at: string
+          created_by: string | null
+          freight_cost: number
+          id: string
+          initial_units: number
+          landed_cost: number | null
+          length_ft: number | null
+          notes: string | null
+          purchase_date: string
+          slot: string
+          stack_number: string | null
+          supplier_id: string
+          thickness_mm: number | null
+          unit_purchase_price: number
+          units_sold: number
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "batches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       correct_batch: {
         Args: {
           p_batch_id: string
@@ -716,6 +759,7 @@ export type Database = {
           p_variant_name: string
         }
         Returns: {
+          archived_at: string | null
           batch_code: string
           breadth_ft: number | null
           created_at: string
@@ -802,6 +846,7 @@ export type Database = {
           p_variant_name: string
         }
         Returns: {
+          archived_at: string | null
           batch_code: string
           breadth_ft: number | null
           created_at: string

@@ -28,6 +28,14 @@ export async function correctBatchAction(input: unknown): Promise<ActionResult<T
   return ok(data);
 }
 
+export async function archiveBatchAction(batchId: string, archived: boolean): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("archive_batch", { p_batch_id: batchId, p_archived: archived });
+  if (error) return fail(messageOf(error));
+  revalidateStock();
+  return ok(null);
+}
+
 export async function deleteBatchAction(batchId: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_batch", { p_batch_id: batchId });

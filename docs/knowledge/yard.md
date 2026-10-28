@@ -1,5 +1,6 @@
 ---
 code:
+  - supabase/migrations/20261027182609_archive_and_named_slots.sql
   - supabase/migrations/20260911110000_yard_view.sql
   - lib/yard.ts
   - app/(app)/yard/page.tsx
@@ -21,7 +22,7 @@ Age, Ageing Band, Sold Out and the Clamp gap are all derived in the yard view fr
 
 ## Ordering and grouping
 
-The yard is one section per Stack, the pile named by a Slot and a Batch number ([[batches]]). `groupByStack` in `lib/yard.ts` orders sections by Slot, then by Batch number with a numeric compare so 2 sorts before 10; Batches without a number fall into a last "No batch number" section. Slot is an ordinary filter now, so `/yard?slot=5FT` still narrows the page.
+The yard is one section per Stack, the pile named by a Slot and a Batch number ([[batches]]). `groupByStack` in `lib/yard.ts` orders sections by Slot, then by Batch number with a numeric compare so 2 sorts before 10; Batches without a number fall into a last "No batch number" section. Slot is an ordinary filter now, so `/yard?slot=5FT` still narrows the page. Typed slots ([[batches]]) sort after the built-ins, alphabetically, and appear in the Slot filter. Archived Batches are hidden unless `?archived=1` ("Show archived"), and a section's available count leaves them out, since they are not stock anyone can sell.
 
 Inside a section, Batches of one Stock Line stay together, so the Clamp (the virtual divider between two deliveries of the same stone) sits between them. Lines are ordered by their oldest batch, and batches within a line by date.
 

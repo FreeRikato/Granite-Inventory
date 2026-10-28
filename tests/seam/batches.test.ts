@@ -94,6 +94,15 @@ describe("batches: create_batch", () => {
     expect(forced.data?.slot).toBe("CUSTOM");
   });
 
+  it("a slot can be any typed name of up to 20 characters, trimmed, and a blank one falls back to the suggestion", async () => {
+    const named = await createBatch(operator, { productId, supplierId, slot: "  6 ft Back Row " });
+    expect(named.data?.slot).toBe("6 ft Back Row");
+    const blank = await createBatch(operator, { productId, supplierId, slot: "   " });
+    expect(blank.data?.slot).toBe("4FT");
+    const tooLong = await createBatch(operator, { productId, supplierId, slot: "x".repeat(21) });
+    expect(expectError(tooLong).message).toBe("Yard slot must be 20 characters or fewer");
+  });
+
   it("memorial batches carry no size and land in the Doom slot; granite requires size", async () => {
     const doom = await createProduct(operator, { name: "Doom Stone", abbreviation: "DS", category: "MEMORIAL" });
     const ok = await createBatch(operator, { productId: doom, supplierId, variantName: "Std Cross", length: null });

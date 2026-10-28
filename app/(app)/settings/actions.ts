@@ -75,15 +75,29 @@ export async function removeMemberAction(id: string): Promise<ActionResult<null>
 export async function renameRowAction(input: unknown): Promise<ActionResult<null>> {
   const parsed = renameSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid name");
-  const { table, id, name, abbreviation, category } = parsed.data;
+  const { table, id, name, abbreviation, category, phone } = parsed.data;
   const supabase = await createClient();
   const query =
     table === "products"
       ? supabase.from("products").update({ name, ...(abbreviation && { abbreviation }), ...(category && { category }) })
-      : supabase.from("suppliers").update({ name });
+      : supabase.from("suppliers").update({ name, ...(phone !== undefined && { phone: phone || null }) });
   const { data, error } = await query.eq("id", id).select("id");
   if (error) return fail(messageOf(error));
   if (!data || data.length === 0) return fail("Only an Admin can rename");
+  revalidatePath("/", "layout");
+  return ok(null);
+}
+
+export async function archiveRowAction(
+  table: AdminListTable,
+  id: string,
+  archived: boolean,
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const archivedAt = archived ? new Date().toISOString() : null;
+  const { data, error } = await supabase.from(table).update({ archived_at: archivedAt }).eq("id", id).select("id");
+  if (error) return fail(messageOf(error));
+  if (!data || data.length === 0) return fail("Only an Admin can archive");
   revalidatePath("/", "layout");
   return ok(null);
 }

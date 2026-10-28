@@ -31,6 +31,7 @@ type BatchOption = Pick<
   | "length_ft"
   | "breadth_ft"
   | "thickness_mm"
+  | "archived_at"
 >;
 type CustomerOption = { id: string; name: string; phone: string | null };
 
@@ -125,7 +126,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
 
   const current = lists.batches.find((b) => b.id === sale.batch_id);
   const options = lists.batches
-    .filter((b) => b.id === sale.batch_id || (b.available ?? 0) > 0)
+    .filter((b) => b.id === sale.batch_id || ((b.available ?? 0) > 0 && !b.archived_at))
     .sort((a, b) => (a.line_key === current?.line_key ? -1 : 1) - (b.line_key === current?.line_key ? -1 : 1));
 
   function submit(e: React.FormEvent) {
