@@ -52,6 +52,11 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("15 / 15");
   await expect(row).toContainText("₹1,450");
   await expect(row).toContainText("4 ft Slot · 12");
+  const headers = page.getByRole("columnheader");
+  const landedIndex = (await headers.allTextContents()).indexOf("Landed cost");
+  await expect(headers.nth(landedIndex + 1)).toHaveText("Total cost");
+  await expect(row.getByRole("cell").nth(landedIndex)).toHaveText("₹1,450");
+  await expect(row.getByRole("cell").nth(landedIndex + 1)).toHaveText("₹21,750");
 
   await page.getByRole("combobox", { name: "Yard slot and batch number" }).click();
   await page.getByRole("option", { name: "4 ft Slot · 12" }).click();
@@ -143,6 +148,7 @@ test("Recent batches hides archived batches until Show archived is on, and only 
 
   await page.getByRole("switch", { name: "Show archived" }).click();
   await expect(row).toContainText("Archived");
+  await expect(row.getByRole("cell", { name: "₹14,400" })).toBeVisible();
   await expect(row.getByRole("button", { name: "Unarchive JB-FIVE-01" })).toBeVisible();
   await confirmDelete(page, row.getByRole("button", { name: "Delete JB-FIVE-01" }));
   await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();

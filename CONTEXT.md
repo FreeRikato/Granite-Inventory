@@ -37,6 +37,9 @@ _Avoid_: Misc cost, inward cost
 The true per-piece cost of a Batch. It equals the Unit Purchase Price (plus any legacy Freight Cost spread evenly over the pieces bought). All margins and inventory value use Landed Cost.
 _Avoid_: Purchase price (when freight matters), cost price
 
+**Total cost**:
+What the whole Batch cost: pieces bought times Unit Purchase Price, plus any legacy Freight Cost. A Batch of 15 pieces at ₹1,450 has a Total cost of ₹21,750. Derived in `v_batches` and shown in Recent batches, for archived Batches too.
+
 **Category**:
 The broad line a Product belongs to: Granite, Memorial, Tiles.
 

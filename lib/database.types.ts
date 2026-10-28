@@ -500,6 +500,7 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string | null
           thickness_mm: number | null
+          total_cost: number | null
           unit_purchase_price: number | null
           units_sold: number | null
           updated_at: string | null

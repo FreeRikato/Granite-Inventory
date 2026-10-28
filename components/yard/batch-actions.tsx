@@ -23,7 +23,7 @@ export type EditLists = {
   readonly slots: readonly string[];
 };
 
-type EditableBatch = Tables<"v_batches">;
+type EditableBatch = Omit<Tables<"v_batches">, "total_cost">;
 
 type Props = { readonly batch: EditableBatch; readonly lists: EditLists; readonly iconOnly?: boolean };
 
