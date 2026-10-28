@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Tables } from "@/lib/database.types";
 import { ROLE_LABEL, ROLES, isRole, type Role } from "@/lib/domain";
+import { NAME_MAX } from "@/lib/schemas/common";
 import { cn } from "@/lib/utils";
 import { addMemberAction, removeMemberAction, setMemberRoleAction } from "./actions";
 
@@ -133,7 +134,12 @@ export function TeamAccess({ members, currentEmail }: Props) {
               />
             </Field>
             <Field label="Name" htmlFor="tm-name">
-              <Input id="tm-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+              <Input
+                id="tm-name"
+                value={draft.name}
+                maxLength={NAME_MAX}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
             </Field>
             <Field label="Role" htmlFor="tm-role">
               <Select

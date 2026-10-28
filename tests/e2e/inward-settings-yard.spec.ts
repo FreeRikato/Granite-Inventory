@@ -96,3 +96,19 @@ test("a Product filter resets to All when its only Batch is deleted", async ({ p
   await expect(productFilter).toHaveText(/Product:\s*All/);
   await expect(page.locator("body")).not.toContainText(productId);
 });
+
+test("every name input in the inward dialogs and settings stops at 80 characters", async ({ page, signIn }) => {
+  await signIn("admin");
+  await page.goto("/inward");
+  await page.getByRole("button", { name: "Add new product" }).click();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveAttribute("maxlength", "80");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Add new supplier" }).click();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveAttribute("maxlength", "80");
+
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Rename Madurai Quarry" }).click();
+  await expect(page.getByLabel("Name for Madurai Quarry")).toHaveAttribute("maxlength", "80");
+  await page.getByRole("button", { name: "Invite a Google account" }).click();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveAttribute("maxlength", "80");
+});
