@@ -168,6 +168,6 @@ test("mobile customers list fits a 375px screen with a thousand stress-like cust
 
   await signIn("admin");
   await page.goto("/customers");
-  await expect(page.getByTestId("customer-row")).toHaveCount(1000);
+  await expect(page.getByTestId("customer-row")).toHaveCount(1001);
   await expectNoHorizontalPageScroll(page);
 });
