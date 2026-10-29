@@ -6,11 +6,17 @@ code:
   - supabase/migrations/20261026184634_stock_line_without_variant.sql
   - lib/schemas/batch.ts
   - supabase/migrations/20261026190835_batch_stack_number.sql
+  - supabase/migrations/20261029100000_fold_freight_into_price.sql
+  - supabase/migrations/20261029110000_batch_total_cost.sql
+  - app/(app)/inward/recent-batches.tsx
   - lib/domain.ts
   - lib/rpc-args.ts
   - app/(app)/inward/inward-form.tsx
   - app/(app)/inward/page.tsx
+  - components/yard/batch-actions.tsx
   - tests/e2e/inward.spec.ts
+  - tests/seam/batch-form-path.test.ts
+  - tests/seam/batch-total-cost.test.ts
 ---
 # Batches
 
@@ -41,6 +47,16 @@ A Stack is the pile a Batch is put on, named by a Slot plus a typed number; scre
 - `private.normalize_stack_number` trims and refuses more than 20 characters with readable copy before the `batches_stack_number_shape` check can fire ([[readable-refusals]]). `create_batch` refuses a blank number; `correct_batch` treats a blank as "keep the current one", so editing an older Batch never forces one in.
 - `v_yard_batches` selects `b.*` from `v_batches`, so adding `stack_number` to `v_batches` meant dropping and recreating it; `create or replace` cannot insert a column ahead of the ones it adds.
 - In the inward form the slot comes from the chosen pair. The size-based suggestion now only seeds the slot in the Add dialog.
+
+## Freight is part of the price
+
+The client adds freight into the Unit Purchase Price themselves, so neither the Inward form nor the Edit dialog asks for a Freight Cost, and `batchSchema` and `batchRpcArgs` no longer carry it. `create_batch` then takes its default 0, and `correct_batch` writes `coalesce(p_freight_cost, 0)`, so an edit from the app leaves freight at 0 and Landed Cost equals the price. The column and the `p_freight_cost` parameter stay so the database rules (non-negative, spread over the pieces into `landed_cost`) keep working for any caller that still sends it; the seam tests that call the raw RPCs with freight still cover that.
+
+`20261029100000_fold_freight_into_price.sql` runs once: for every Batch with freight it sets `unit_purchase_price = landed_cost` and `freight_cost = 0`. `landed_cost` is already rounded to paise, so it comes out unchanged; Sales hold their own snapshot and are not touched. The statement runs with `batches_check_size` disabled and enables it again right after: the fold only moves money between two columns, and an admin may have changed a Product's category in Settings after the Batch was inwarded (a sized Batch under a Product that is now Memorial, or the reverse), which would make the size rule abort the whole migration and the deploy. A Batch with no freight is not matched, so its `updated_at` stays. `tests/seam/batch-form-path.test.ts` drives the form path (`batchSchema`, `batchRpcArgs`, then the RPC) to show a stray `freightCost` in the payload is ignored.
+
+## Total cost
+
+Recent batches shows what a whole Batch cost next to the per-piece Landed cost, so nobody multiplies by Pieces by hand. `20261029110000_batch_total_cost.sql` appends `total_cost = initial_units * unit_purchase_price + freight_cost` as the last column of `v_batches` (`create or replace view` can only append). It is derived, not stored: the formula still adds `freight_cost` so a Batch inserted with freight reads its true cost, and an archived Batch keeps its value because the view does not filter on `archived_at`. `RecentBatches` renders it with `formatRupees`, right-aligned with tabular figures, and the table keeps its sideways scroll on phones. `tests/seam/batch-total-cost.test.ts` covers the value, the freight case and an archived row; `tests/e2e/inward.spec.ts` checks the column order and the figures.
 
 ## Hidden Variants
 

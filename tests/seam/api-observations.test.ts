@@ -62,7 +62,6 @@ describe("API observations: readable refusals", () => {
       thicknessMm: 16,
       initialUnits: 5,
       unitPurchasePrice: 1000,
-      freightCost: 0,
     };
     expect(batchSchema.safeParse(batch).success).toBe(true);
     for (const override of [
@@ -71,7 +70,6 @@ describe("API observations: readable refusals", () => {
       { thicknessMm: 2_147_483_648 },
       { initialUnits: 2_147_483_648 },
       { unitPurchasePrice: 1e10 },
-      { freightCost: 1e10 },
     ]) {
       expect(batchSchema.safeParse({ ...batch, ...override }).success, JSON.stringify(override)).toBe(false);
     }
@@ -103,13 +101,12 @@ describe("API observations: readable refusals", () => {
   });
 
   it("every negative amount is refused by the field's label", () => {
-    const batch = batchSchema.safeParse({ unitPurchasePrice: -1, freightCost: -1 });
+    const batch = batchSchema.safeParse({ unitPurchasePrice: -1 });
     const sale = saleSchema.safeParse({ salePrice: -1, stickeringCost: -1, stickeringPrice: -1, miscExpense: -1 });
     const messages = (error: { issues: { path: PropertyKey[]; message: string }[] } | undefined, key: string) =>
       error?.issues.find((i) => i.path[0] === key)?.message;
 
     expect(messages(batch.error, "unitPurchasePrice")).toBe("Unit Purchase Price cannot be negative");
-    expect(messages(batch.error, "freightCost")).toBe("Freight Cost cannot be negative");
     expect(messages(sale.error, "salePrice")).toBe("Stone Sale Price cannot be negative");
     expect(messages(sale.error, "stickeringCost")).toBe("Stickering Cost cannot be negative");
     expect(messages(sale.error, "stickeringPrice")).toBe("Stickering Price cannot be negative");

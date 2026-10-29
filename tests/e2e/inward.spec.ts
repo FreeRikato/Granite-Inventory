@@ -31,8 +31,9 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await page.getByLabel("Breadth (ft)").fill("2");
   await page.getByLabel("Thickness (mm)").fill("16");
   await page.getByLabel("Unit Quantity").fill("15");
-  await page.getByLabel("Unit Purchase Price (₹)").fill("1400");
-  await page.getByLabel("Freight Cost (₹)").fill("750");
+  await expect(page.getByLabel("Freight Cost")).toHaveCount(0);
+  await expect(page.getByText("Per piece, freight included")).toBeVisible();
+  await page.getByLabel("Unit Purchase Price (₹)").fill("1450");
 
   await page.getByRole("button", { name: "Add new batch number" }).click();
   const stackDialog = page.getByRole("dialog", { name: "New batch number" });
@@ -51,6 +52,11 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
   await expect(row).toContainText("15 / 15");
   await expect(row).toContainText("₹1,450");
   await expect(row).toContainText("4 ft Slot · 12");
+  const headers = page.getByRole("columnheader");
+  const landedIndex = (await headers.allTextContents()).indexOf("Landed cost");
+  await expect(headers.nth(landedIndex + 1)).toHaveText("Total cost");
+  await expect(row.getByRole("cell").nth(landedIndex)).toHaveText("₹1,450");
+  await expect(row.getByRole("cell").nth(landedIndex + 1)).toHaveText("₹21,750");
 
   await page.getByRole("combobox", { name: "Yard slot and batch number" }).click();
   await page.getByRole("option", { name: "4 ft Slot · 12" }).click();
@@ -142,6 +148,7 @@ test("Recent batches hides archived batches until Show archived is on, and only 
 
   await page.getByRole("switch", { name: "Show archived" }).click();
   await expect(row).toContainText("Archived");
+  await expect(row.getByRole("cell", { name: "₹14,400" })).toBeVisible();
   await expect(row.getByRole("button", { name: "Unarchive JB-FIVE-01" })).toBeVisible();
   await confirmDelete(page, row.getByRole("button", { name: "Delete JB-FIVE-01" }));
   await expect(page.getByText("Batch JB-FIVE-01 deleted")).toBeVisible();
@@ -158,6 +165,7 @@ test("an admin edits a batch from Recent batches, which offers no Delete while i
   const row = page.getByTestId("batch-row").filter({ hasText: "JB-FIVE-01" });
   await openDialog(page, row.getByRole("button", { name: "Edit JB-FIVE-01" }));
   const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Freight Cost")).toHaveCount(0);
   await dialog.getByLabel("Unit Quantity").fill("8");
   await dialog.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Batch JB-FIVE-01 updated")).toBeVisible();

@@ -37,7 +37,6 @@ export const batchSchema = z
     slot: z.string().trim().min(1, "Pick a yard slot").max(20, "Yard slot must be 20 characters or fewer"),
     initialUnits: positiveInteger("Unit Quantity must be greater than zero"),
     unitPurchasePrice: money("Unit Purchase Price"),
-    freightCost: money("Freight Cost").default(0),
     notes: z.string().trim().max(500).optional(),
     stackNumber: z.string().trim().max(20, "Batch number must be 20 characters or fewer").optional(),
   })
