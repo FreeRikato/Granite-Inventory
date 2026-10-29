@@ -1,6 +1,7 @@
 ---
 code:
   - supabase/migrations/20261029180000_chat_query.sql
+  - supabase/migrations/20261029230000_chat_sales_bills.sql
   - tests/seam/chat-query.test.ts
   - app/api/chat/route.ts
   - lib/chat/answer.ts

@@ -227,6 +227,13 @@ export type Database = {
             foreignKeyName: "bills_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "v_customers"
             referencedColumns: ["id"]
           },
@@ -746,6 +753,7 @@ export type Database = {
         Row: {
           batch_code: string | null
           batch_id: string | null
+          bill_id: string | null
           breadth_ft: number | null
           category: string | null
           created_at: string | null
@@ -758,7 +766,6 @@ export type Database = {
           length_ft: number | null
           margin: number | null
           margin_pct: number | null
-          misc_expense: number | null
           payment_mode: string | null
           product_abbreviation: string | null
           product_id: string | null
@@ -780,7 +787,15 @@ export type Database = {
           variant_id: string | null
           variant_name: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_chat_stock_lines: {
         Row: {
