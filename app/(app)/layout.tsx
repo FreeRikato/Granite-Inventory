@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <OfflineNotice />
         <div className="flex min-h-svh bg-background">
           <AppSidebar businessName={businessName ?? "Granite"} member={session.member} />
-          <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-12 md:pb-12 md:pt-10">
+          <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-12 md:pb-12 md:pt-10 xl:has-[[data-ask-open]]:pr-[calc(380px+1.5rem)]">
             <div className="mx-auto flex max-w-[1120px] flex-col gap-7">{children}</div>
           </main>
           <MobileTabBar />

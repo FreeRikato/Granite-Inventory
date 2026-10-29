@@ -1,19 +1,22 @@
 import { z } from "zod/v4";
-import { createLibrary, defineComponent, type ComponentRenderer } from "@openuidev/react-lang";
+import { createLibrary, defineComponent } from "@openuidev/lang-core";
+import type { ComponentRenderer, Library } from "@openuidev/react-lang";
 
 const point = z.object({ label: z.string(), value: z.number() });
 const series = z.object({ name: z.string(), values: z.array(z.number()) });
-const seriesChart = z.object({ labels: z.array(z.string()), series: z.array(series) });
+const seriesChart = () => z.object({ labels: z.array(z.string()), series: z.array(series) });
 
 const leafProps = {
   Metric: z.object({ label: z.string(), value: z.number(), format: z.enum(["rupees", "number"]).optional() }),
   RankedBars: z.object({ rows: z.array(point) }),
   Donut: z.object({ slices: z.array(point) }),
-  LineChart: seriesChart,
-  BarChart: seriesChart,
+  LineChart: seriesChart(),
+  BarChart: seriesChart(),
   Table: z.object({ columns: z.array(z.string()), rows: z.array(z.array(z.union([z.string(), z.number()]))) }),
   Text: z.object({ text: z.string() }),
 };
+
+type LibraryRenderer = Library["components"][string]["component"];
 
 export type LeafName = keyof typeof leafProps;
 export type LeafProps<K extends LeafName> = z.infer<(typeof leafProps)[K]>;
@@ -76,7 +79,7 @@ export function buildChatLibrary(r: Renderers) {
     }),
     component: r.Stack,
   });
-  return createLibrary({
+  return createLibrary<LibraryRenderer>({
     components: [stack, metric, rankedBars, donut, lineChart, barChart, table, text],
     root: "Stack",
   });

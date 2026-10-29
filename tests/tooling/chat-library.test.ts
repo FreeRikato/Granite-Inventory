@@ -30,6 +30,13 @@ describe("component prompt", () => {
     );
   });
 
+  it("names every component as a child of Stack", () => {
+    const stack = componentPrompt().match(/^Stack\(children: \((.+)\)\[\]\)/m);
+    expect(stack?.[1].split(" | ").toSorted()).toEqual(
+      ["BarChart", "Donut", "LineChart", "Metric", "RankedBars", "Table", "Text"].toSorted(),
+    );
+  });
+
   it("is the same text the renderer's library produces", () => {
     expect(componentPrompt()).toBe(chatLibrary.prompt());
   });

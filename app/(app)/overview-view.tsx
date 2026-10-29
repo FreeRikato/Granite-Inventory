@@ -126,32 +126,34 @@ export function OverviewView() {
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <section className="grid gap-6 rounded-card bg-card p-6 shadow-sm sm:grid-cols-2 sm:divide-x sm:divide-border">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm text-muted-foreground">Active stock</span>
-              {change !== null ? (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular",
-                    change >= 0 ? "bg-accent text-accent-foreground" : "bg-stale-soft text-stale",
-                  )}
-                  data-testid="stock-change"
-                >
-                  {change >= 0 ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-                  {formatPercent(Math.abs(change))} vs last month
-                </span>
-              ) : null}
+        <section className="@container grid rounded-card bg-card p-6 shadow-sm">
+          <div className="grid gap-6 @min-[480px]:grid-cols-2 @min-[480px]:divide-x @min-[480px]:divide-border">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-muted-foreground">Active stock</span>
+                {change !== null ? (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular",
+                      change >= 0 ? "bg-accent text-accent-foreground" : "bg-stale-soft text-stale",
+                    )}
+                    data-testid="stock-change"
+                  >
+                    {change >= 0 ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
+                    {formatPercent(Math.abs(change))} vs last month
+                  </span>
+                ) : null}
+              </div>
+              <span className="text-5xl font-bold tracking-tight tabular" data-testid="kpi-active">
+                {formatNumber(active)}
+              </span>
             </div>
-            <span className="text-5xl font-bold tracking-tight tabular" data-testid="kpi-active">
-              {formatNumber(active)}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3 sm:pl-6">
-            <span className="text-sm text-muted-foreground">Total inventory value</span>
-            <span className="text-5xl font-bold tracking-tight tabular" data-testid="kpi-value">
-              {formatRupeesCompact(k?.inventory_value ?? 0)}
-            </span>
+            <div className="flex flex-col gap-3 @min-[480px]:pl-6">
+              <span className="text-sm text-muted-foreground">Total inventory value</span>
+              <span className="text-5xl font-bold tracking-tight tabular" data-testid="kpi-value">
+                {formatRupeesCompact(k?.inventory_value ?? 0)}
+              </span>
+            </div>
           </div>
         </section>
         <section className="flex flex-col divide-y divide-border rounded-card bg-card px-6 shadow-sm">
@@ -178,22 +180,24 @@ export function OverviewView() {
         <TopCustomersCard />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[400px_minmax(0,1fr)]">
-        <section className="rounded-card bg-card p-6 shadow-sm">
-          <h2 className="text-base font-bold">Stock status</h2>
-          <div className="mt-4">
-            <StockDonut active={active} sold={k?.units_sold_total ?? 0} />
-          </div>
-        </section>
-        <section className="rounded-card bg-card p-6 shadow-sm">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-bold">Fast vs slow moving</h2>
-            <span className="text-xs text-muted-foreground">units sold · last 90 days</span>
-          </div>
-          <div className="mt-4">
-            <MovingBars rows={moving.data} />
-          </div>
-        </section>
+      <div className="@container">
+        <div className="grid gap-4 @min-[640px]:grid-cols-[400px_minmax(0,1fr)]">
+          <section className="rounded-card bg-card p-6 shadow-sm">
+            <h2 className="text-base font-bold">Stock status</h2>
+            <div className="mt-4">
+              <StockDonut active={active} sold={k?.units_sold_total ?? 0} />
+            </div>
+          </section>
+          <section className="rounded-card bg-card p-6 shadow-sm">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-base font-bold">Fast vs slow moving</h2>
+              <span className="text-xs text-muted-foreground">units sold · last 90 days</span>
+            </div>
+            <div className="mt-4">
+              <MovingBars rows={moving.data} />
+            </div>
+          </section>
+        </div>
       </div>
 
       <section className="rounded-card bg-card p-6 shadow-sm">

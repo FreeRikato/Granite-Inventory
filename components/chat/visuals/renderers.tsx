@@ -66,7 +66,13 @@ function Axes() {
 }
 
 export const renderers: Renderers = {
-  Stack: ({ props, renderNode }) => <div className="flex flex-col gap-4">{props.children.map(renderNode)}</div>,
+  Stack: ({ props, renderNode }) => (
+    <div className="flex flex-col gap-4">
+      {props.children.map((child, index) => (
+        <Fragment key={index}>{renderNode(child)}</Fragment>
+      ))}
+    </div>
+  ),
   Text: ({ props }) => <p className="text-sm">{useDealias()(props.text)}</p>,
   Metric: ({ props }) => {
     const dealias = useDealias();

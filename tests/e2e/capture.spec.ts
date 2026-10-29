@@ -1,4 +1,4 @@
-import { test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
@@ -19,5 +19,13 @@ test("capture every page", async ({ page, signIn }, testInfo) => {
     await page.waitForLoadState("networkidle");
     const name = path === "/" ? "overview" : path.slice(1).replace(/\//g, "-");
     await page.screenshot({ path: `${process.env.CAPTURE}/${testInfo.project.name}-${name}.png`, fullPage: true });
+    if (path === "/") {
+      await page.getByRole("button", { name: "Ask", exact: true }).click();
+      const panel = page.getByTestId("chat-panel");
+      await panel.getByRole("textbox", { name: "Ask a question" }).fill("stale by supplier");
+      await panel.getByRole("button", { name: "Send" }).click();
+      await expect(panel.locator("[data-slot='chart']")).toBeVisible();
+      await page.screenshot({ path: `${process.env.CAPTURE}/${testInfo.project.name}-overview-ask.png` });
+    }
   }
 });

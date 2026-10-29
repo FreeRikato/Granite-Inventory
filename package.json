@@ -21,8 +21,10 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
+    "@ai-sdk/react": "4.0.156",
     "@base-ui/react": "^1.8.0",
     "@openrouter/ai-sdk-provider": "^3.1.0",
+    "@openuidev/lang-core": "1.0.2",
     "@openuidev/react-lang": "^1.0.2",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
