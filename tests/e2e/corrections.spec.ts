@@ -48,6 +48,26 @@ test("admin edits a batch from the yard and a sale from the customer page", asyn
   await expect(page.getByText("No sales recorded for this customer.")).toBeVisible();
 });
 
+test("switching a batch between a sized and a Memorial product clears its price, since one is per sq ft and the other per piece", async ({
+  page,
+  signIn,
+}) => {
+  await signIn("admin");
+  await page.goto("/yard?slot=5FT");
+  await openDialog(page, page.getByRole("button", { name: "Edit JB-FIVE-01" }));
+  const price = page.getByLabel("Unit Purchase Price (₹)");
+  await expect(price).toHaveValue("160");
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: "Black Pearl" }).click();
+  await expect(price).toHaveValue("160");
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: "Doom Stone" }).click();
+  await expect(price).toHaveValue("");
+  await expect(page.getByText("Per piece, freight included")).toBeVisible();
+});
+
 test("a batch with sales cannot be deleted, an unsold one only after archiving, and an operator sees no correction controls", async ({
   page,
   signIn,

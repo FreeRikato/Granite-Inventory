@@ -32,6 +32,9 @@ begin
   if p_unit_purchase_price < 0 then
     raise exception 'Unit purchase price must be zero or more' using errcode = 'check_violation';
   end if;
+  if round(p_unit_purchase_price, 10) >= 1e12 then
+    raise exception 'Unit purchase price is too large' using errcode = 'check_violation';
+  end if;
   if coalesce(p_freight_cost, 0) < 0 then
     raise exception 'Freight cost must be zero or more' using errcode = 'check_violation';
   end if;
@@ -53,8 +56,8 @@ begin
       using errcode = 'check_violation';
   end if;
   if round(
-    coalesce(round(p_length_ft, 2) * round(p_breadth_ft, 2), 1) * p_unit_purchase_price
-      + coalesce(p_freight_cost, 0) / p_initial_units,
+    coalesce(round(p_length_ft, 2) * round(p_breadth_ft, 2), 1) * round(p_unit_purchase_price, 10)
+      + round(coalesce(p_freight_cost, 0), 2) / p_initial_units,
     2
   ) >= 1e10 then
     raise exception 'Landed Cost per piece is too large' using errcode = 'check_violation';

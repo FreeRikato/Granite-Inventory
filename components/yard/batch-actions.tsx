@@ -158,8 +158,11 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
   const productOptions = lists.products.filter((p) => !p.archived_at || p.id === batch.product_id);
   const supplierOptions = lists.suppliers.filter((s) => !s.archived_at || s.id === batch.supplier_id);
   const slots = slotChoices([...lists.slots, batch.slot, form.slot]);
-  const product = lists.products.find((p) => p.id === form.productId);
-  const memorial = product ? isCategory(product.category) && product.category === "MEMORIAL" : false;
+  const isMemorial = (productId: string) => {
+    const product = lists.products.find((p) => p.id === productId);
+    return product ? isCategory(product.category) && product.category === "MEMORIAL" : false;
+  };
+  const memorial = isMemorial(form.productId);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   function submit(e: React.FormEvent) {
@@ -208,7 +211,13 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             id="eb-product"
             options={productOptions.map((p) => ({ value: p.id, label: p.name }))}
             value={form.productId}
-            onChange={(v) => set("productId", v)}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                productId: v,
+                unitPurchasePrice: isMemorial(v) === isMemorial(f.productId) ? f.unitPurchasePrice : "",
+              }))
+            }
             placeholder="Product"
             className="h-9"
           />

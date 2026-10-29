@@ -113,4 +113,29 @@ describe("v_batches: total_cost", () => {
     });
     expect(batch.error?.message).toBe("Landed Cost per piece is too large");
   });
+
+  it("checks the freight as the column stores it, rounded to paise", async () => {
+    const memorialId = await createProduct(operator, { name: "Doom Stone", abbreviation: "DS", category: "MEMORIAL" });
+    const batch = await createBatch(operator, {
+      productId: memorialId,
+      supplierId,
+      length: null,
+      units: 2,
+      unitPrice: 9999999999.99,
+      freight: 0.005,
+    });
+    expect(batch.error?.message).toBe("Landed Cost per piece is too large");
+  });
+
+  it("refuses a per sq ft price too large to store, even on a tiny piece", async () => {
+    const batch = await createBatch(operator, {
+      productId,
+      supplierId,
+      length: 0.01,
+      breadth: 0.01,
+      units: 1,
+      unitPrice: 1e12,
+    });
+    expect(batch.error?.message).toBe("Unit purchase price is too large");
+  });
 });

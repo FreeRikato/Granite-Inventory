@@ -38,7 +38,7 @@ The true per-piece cost of a Batch. It equals the Area times the Unit Purchase P
 _Avoid_: Purchase price (when freight matters), cost price
 
 **Total cost**:
-What the whole Batch cost: pieces bought times Landed Cost, so Area times pieces times Unit Purchase Price (pieces times price for Memorial), plus any legacy Freight Cost. A Batch of 15 pieces of 4 × 2 ft at ₹181.25 per sq ft has a Total cost of ₹21,750. Derived in `v_batches` and shown in Recent batches, for archived Batches too.
+What the whole Batch cost: pieces bought times Landed Cost, so Area times pieces times Unit Purchase Price (pieces times price for Memorial); any legacy Freight Cost is already inside Landed Cost. A Batch of 15 pieces of 4 × 2 ft at ₹181.25 per sq ft has a Total cost of ₹21,750. Derived in `v_batches` and shown in Recent batches, for archived Batches too.
 
 **Area**:
 Length times breadth of one piece, in square feet. Shown read-only beside Length and Breadth on the Inward form and the Edit dialog; not stored.
