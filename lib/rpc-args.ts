@@ -1,5 +1,5 @@
 import type { BatchInput } from "@/lib/schemas/batch";
-import type { SaleInput } from "@/lib/schemas/sale";
+import type { BillInput, SaleInput } from "@/lib/schemas/sale";
 
 export function batchRpcArgs(b: BatchInput) {
   return {
@@ -30,5 +30,21 @@ export function saleRpcArgs(s: SaleInput) {
     p_stickering_cost: s.hasStickering ? s.stickeringCost : 0,
     p_stickering_price: s.hasStickering ? s.stickeringPrice : 0,
     p_notes: s.notes,
+  };
+}
+
+export function billRpcArgs(b: BillInput) {
+  return {
+    p_customer_id: b.customerId,
+    p_sale_date: b.saleDate,
+    p_payment_mode: b.paymentMode,
+    p_lines: b.lines.map((l) => ({
+      batch_id: l.batchId,
+      quantity: l.quantity,
+      sale_price: l.salePrice,
+      has_stickering: l.hasStickering,
+      stickering_cost: l.hasStickering ? l.stickeringCost : 0,
+      stickering_price: l.hasStickering ? l.stickeringPrice : 0,
+    })),
   };
 }

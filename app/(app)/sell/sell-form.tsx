@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AddButton } from "@/components/add-button";
 import { AgeingBadge } from "@/components/ageing-badge";
@@ -23,10 +24,12 @@ import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
 import { computeMargin, marginHealth } from "@/lib/margin";
+import { billLineSchema } from "@/lib/schemas/sale";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
-import { recordSaleAction } from "./actions";
+import { recordBillAction } from "./actions";
+import { addLine, describeOrder, orderFigures, piecesInCart, removeLine, type CartLine } from "./cart";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
 type Line = Tables<"v_stock_lines">;
@@ -38,11 +41,6 @@ type Props = {
   readonly batches: readonly Batch[];
   readonly preselectBatchId: string | null;
 };
-
-function num(value: string): number {
-  const n = Number.parseFloat(value);
-  return Number.isFinite(n) ? n : 0;
-}
 
 export function customerDraftFromQuery(query: string): CustomerDraft {
   const trimmed = query.trim();
@@ -76,10 +74,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [stickeringCost, setStickeringCost] = useState("");
   const [stickeringPrice, setStickeringPrice] = useState("");
   const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
-  const { error, refuse, clear } = useRefusal([
-    saleDate,
-    paymentMode,
-    customerId,
+  const [cart, setCart] = useState<readonly CartLine[]>([]);
+  const addRefusal = useRefusal([
+    cart,
     lineKey,
     batchId,
     quantity,
@@ -88,46 +85,95 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     stickeringCost,
     stickeringPrice,
   ]);
+  const { error, refuse, clear } = useRefusal([saleDate, paymentMode, customerId, cart]);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
   const lineBatches = useMemo(() => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []), [batches, lineKey]);
   const batch = lineBatches.find((b) => b.id === batchId) ?? null;
+  const remaining = (b: Batch) => (b.available ?? 0) - piecesInCart(cart, b.id);
+  const remainingOfLine = (l: Line) =>
+    (l.available ?? 0) -
+    batches.filter((b) => b.line_key === l.line_key).reduce((sum, b) => sum + piecesInCart(cart, b.id), 0);
+  const firstWithStock = (key: string) => {
+    const options = batches.filter((b) => b.line_key === key);
+    return (options.find((b) => remaining(b) > 0) ?? options[0])?.id ?? null;
+  };
 
-  const figures = computeMargin({
-    quantity: Math.floor(num(quantity)),
-    salePrice: num(salePrice),
-    landedCost: batch?.landed_cost ?? 0,
-    stickering: stickering ? { cost: num(stickeringCost), price: num(stickeringPrice) } : null,
-  });
-  const health = marginHealth(batch ? figures.marginPct : null);
+  const figures = orderFigures(cart);
+  const health = marginHealth(cart.length > 0 ? figures.marginPct : null);
+
+  function resetLineFields() {
+    setBatchId(null);
+    setLineKey(null);
+    setQuantity("1");
+    setSalePrice("");
+    setStickering(false);
+    setStickeringCost("");
+    setStickeringPrice("");
+  }
+
+  function addToOrder() {
+    if (!batch) return;
+    const parsed = billLineSchema.safeParse({
+      batchId: batch.id,
+      quantity,
+      salePrice,
+      hasStickering: stickering,
+      stickeringCost: stickeringCost || 0,
+      stickeringPrice: stickeringPrice || 0,
+    });
+    if (!parsed.success) {
+      addRefusal.refuse(parsed.error.issues[0]?.message ?? "Check the line");
+      return;
+    }
+    const line = parsed.data;
+    if (line.quantity > remaining(batch)) {
+      addRefusal.refuse(`Only ${remaining(batch)} available in batch ${batch.batch_code}`);
+      return;
+    }
+    setCart(
+      addLine(cart, {
+        batchId: line.batchId,
+        batchCode: batch.batch_code ?? "",
+        productName: batch.product_name ?? "",
+        size: formatSize({
+          length_ft: batch.length_ft,
+          breadth_ft: batch.breadth_ft,
+          thickness_mm: batch.thickness_mm,
+        }),
+        quantity: line.quantity,
+        salePrice: line.salePrice,
+        landedCost: batch.landed_cost ?? 0,
+        stickering: line.hasStickering ? { cost: line.stickeringCost, price: line.stickeringPrice } : null,
+      }),
+    );
+    resetLineFields();
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
     startTransition(async () => {
-      const result = await recordSaleAction({
-        batchId,
+      const result = await recordBillAction({
         customerId,
         saleDate,
-        quantity,
-        salePrice,
         paymentMode,
-        hasStickering: stickering,
-        stickeringCost: stickeringCost || 0,
-        stickeringPrice: stickeringPrice || 0,
+        lines: cart.map((l) => ({
+          batchId: l.batchId,
+          quantity: l.quantity,
+          salePrice: l.salePrice,
+          hasStickering: l.stickering !== null,
+          stickeringCost: l.stickering?.cost ?? 0,
+          stickeringPrice: l.stickering?.price ?? 0,
+        })),
       });
       if (!result.ok) {
         refuse(result.error);
         return;
       }
-      toast.success(`Sale recorded: ${result.data.quantity} from ${batch?.batch_code ?? "batch"}`);
-      setBatchId(null);
-      setLineKey(null);
-      setQuantity("1");
-      setSalePrice("");
-      setStickering(false);
-      setStickeringCost("");
-      setStickeringPrice("");
+      toast.success(`Sale recorded: ${cart.map((l) => `${l.quantity} from ${l.batchCode}`).join(", ")}`);
+      setCart([]);
+      resetLineFields();
       afterWrite();
     });
   }
@@ -217,13 +263,13 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               options={lines.map((l) => ({
                 value: l.line_key ?? "",
                 label: `${l.product_name} · ${formatSize({ length_ft: l.length_ft, breadth_ft: l.breadth_ft, thickness_mm: l.thickness_mm })}`,
-                hint: `${l.available} available in ${l.batches_with_stock} ${l.batches_with_stock === 1 ? "batch" : "batches"}`,
+                hint: `${remainingOfLine(l)} available in ${l.batches_with_stock} ${l.batches_with_stock === 1 ? "batch" : "batches"}`,
                 keywords: [l.product_abbreviation ?? "", `${l.length_ft ?? ""}x${l.breadth_ft ?? ""}`],
               }))}
               value={lineKey}
               onChange={(v) => {
                 setLineKey(v);
-                setBatchId(batches.find((b) => b.line_key === v)?.id ?? null);
+                setBatchId(firstWithStock(v));
               }}
               placeholder="Search product, e.g. Black Pearl 4×2 ft"
               searchPlaceholder="Product or size..."
@@ -260,7 +306,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                         {formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm })}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {b.available} available · from{" "}
+                        Bought {b.purchase_date ? formatDate(b.purchase_date) : ""} · {remaining(b)} available · from{" "}
                         {b.supplier_name}
                       </span>
                     </span>
@@ -274,14 +320,14 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
 
         <Card>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Quantity Sold" htmlFor="quantity" hint={batch ? `${batch.available} available` : undefined}>
+            <Field label="Quantity Sold" htmlFor="quantity" hint={batch ? `${remaining(batch)} available` : undefined}>
               <Input
                 id="quantity"
                 type="number"
                 inputMode="numeric"
                 min="1"
                 step="1"
-                max={batch?.available ?? undefined}
+                max={batch ? remaining(batch) : undefined}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="h-11"
@@ -343,6 +389,64 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             </div>
           ) : null}
         </Card>
+
+        <div className="flex flex-col gap-3">
+          {addRefusal.error ? (
+            <Notice tone="error" icon="alert">
+              {addRefusal.error}
+            </Notice>
+          ) : null}
+          <Button type="button" variant="secondary" disabled={!batch} onClick={addToOrder} className="h-11 w-full">
+            Add to order
+          </Button>
+        </div>
+
+        <Card>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-[15px] font-bold">This order</h2>
+            {cart.length > 0 ? (
+              <span className="text-sm text-muted-foreground" data-testid="order-count">
+                {describeOrder(cart)}
+              </span>
+            ) : null}
+          </div>
+          {cart.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">No lines yet. Add a product to start the order.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {cart.map((l, index) => (
+                <li
+                  key={`${l.batchId}-${l.salePrice}-${l.stickering?.cost ?? "none"}-${l.stickering?.price ?? "none"}`}
+                  data-testid="cart-line"
+                  className="flex min-w-0 items-center gap-3 rounded-tile border border-border bg-card px-4 py-3"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm font-semibold">
+                      {l.productName} · {l.size}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {l.batchCode} · {l.quantity} × {formatRupees(l.salePrice)}
+                      {l.stickering ? ` + ${formatRupees(l.stickering.price)} stickering` : ""}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold tabular">
+                    {formatRupees(computeMargin(l).revenue)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${l.productName} ${l.batchCode}`}
+                    disabled={pending}
+                    onClick={() => setCart(removeLine(cart, index))}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
       <aside
@@ -356,11 +460,13 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           <Row
             label="Landed Cost (auto)"
             sub="From the batch, freight included"
-            value={batch ? formatRupees(figures.landedTotal) : "Pick a batch"}
+            value={cart.length > 0 ? formatRupees(figures.landedTotal) : "Add a line"}
             muted
           />
           <Row label="Base Margin" value={formatRupees(figures.stoneMargin)} />
-          {stickering ? <Row label="Stickering Margin" value={formatRupees(figures.stickeringMargin)} /> : null}
+          {cart.some((l) => l.stickering) ? (
+            <Row label="Stickering Margin" value={formatRupees(figures.stickeringMargin)} />
+          ) : null}
         </dl>
         <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
           <div>
@@ -379,7 +485,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               health === "none" && "bg-muted text-muted-foreground",
             )}
           >
-            {figures.marginPct === null || !batch ? "0%" : `${figures.marginPct.toFixed(1)}%`}
+            {figures.marginPct === null ? "0%" : `${figures.marginPct.toFixed(1)}%`}
           </span>
         </div>
         {error ? (
@@ -389,10 +495,10 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         ) : null}
         <Button
           type="submit"
-          disabled={pending || !batch || !customer}
+          disabled={pending || cart.length === 0 || !customer}
           className="mt-5 h-12 w-full text-base font-semibold"
         >
-          {pending ? "Recording..." : "Record Sale"}
+          {pending ? "Recording..." : cart.length > 1 ? `Record Sale (${cart.length} lines)` : "Record Sale"}
         </Button>
       </aside>
 

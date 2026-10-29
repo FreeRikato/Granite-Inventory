@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CUSTOMER_TYPES, PAYMENT_MODES } from "@/lib/domain";
-import { isoDate, money, name, positiveInteger } from "./common";
+import { isoDate, money, name, positiveInteger, requiredMoney } from "./common";
 
 export const customerSchema = z.object({
   name,
@@ -19,7 +19,7 @@ export const saleSchema = z.object({
   customerId: z.string().uuid("Pick a customer"),
   saleDate: isoDate,
   quantity: positiveInteger("Sale quantity must be greater than zero"),
-  salePrice: money("Stone Sale Price"),
+  salePrice: requiredMoney("Stone Sale Price"),
   paymentMode: z.enum(PAYMENT_MODES),
   hasStickering: z.boolean(),
   stickeringCost: money("Stickering Cost").default(0),
@@ -27,5 +27,23 @@ export const saleSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+export const billLineSchema = saleSchema.pick({
+  batchId: true,
+  quantity: true,
+  salePrice: true,
+  hasStickering: true,
+  stickeringCost: true,
+  stickeringPrice: true,
+});
+
+export const billSchema = z.object({
+  customerId: saleSchema.shape.customerId,
+  saleDate: saleSchema.shape.saleDate,
+  paymentMode: saleSchema.shape.paymentMode,
+  lines: z.array(billLineSchema).min(1, "Add at least one line to the order"),
+});
+
 export type SaleInput = z.infer<typeof saleSchema>;
+export type BillLineInput = z.infer<typeof billLineSchema>;
+export type BillInput = z.infer<typeof billSchema>;
 export type CustomerInput = z.infer<typeof customerSchema>;

@@ -1,7 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { cleanPgMessage } from "@/lib/action-result";
 import { batchSchema } from "@/lib/schemas/batch";
-import { saleSchema } from "@/lib/schemas/sale";
+import { billLineSchema, billSchema, saleSchema } from "@/lib/schemas/sale";
+import { billRpcArgs } from "@/lib/rpc-args";
 import { expectError, ensureTestUsers, resetDomainData, signedInClient, sql, type Db } from "./harness";
 import { createProduct, today } from "./fixtures";
 
@@ -98,6 +99,84 @@ describe("API observations: readable refusals", () => {
     expect(quantity.error?.issues.find((i) => i.path[0] === "quantity")?.message).toBe(
       "Sale quantity must be greater than zero",
     );
+  });
+
+  it("an order is refused without lines, and each line keeps the sale field sentences", () => {
+    const line = {
+      batchId: "00000000-0000-4000-8000-000000000003",
+      quantity: 2,
+      salePrice: 1650,
+      hasStickering: false,
+    };
+    const order = {
+      customerId: "00000000-0000-4000-8000-000000000004",
+      saleDate: today(),
+      paymentMode: "CASH",
+    };
+
+    const empty = billSchema.safeParse({ ...order, lines: [] });
+    expect(empty.error?.issues[0]?.message).toBe("Add at least one line to the order");
+    expect(billSchema.safeParse({ ...order, lines: [line] }).success).toBe(true);
+    const zero = billSchema.safeParse({ ...order, lines: [line, { ...line, quantity: 0 }] });
+    expect(zero.error?.issues[0]?.message).toBe("Sale quantity must be greater than zero");
+    const negative = billSchema.safeParse({ ...order, lines: [{ ...line, salePrice: -1 }] });
+    expect(negative.error?.issues[0]?.message).toBe("Stone Sale Price cannot be negative");
+  });
+
+  it("a blank Stone Sale Price is refused, not read as zero", () => {
+    const line = { batchId: "00000000-0000-4000-8000-000000000003", quantity: 2, hasStickering: false };
+
+    for (const blank of ["", "   ", undefined]) {
+      const parsed = billLineSchema.safeParse({ ...line, salePrice: blank });
+      expect(parsed.error?.issues[0]?.message, JSON.stringify(blank)).toBe("Stone Sale Price is required");
+    }
+    expect(billLineSchema.safeParse({ ...line, salePrice: "0" }).success).toBe(true);
+    expect(billLineSchema.safeParse({ ...line, salePrice: 0 }).success).toBe(true);
+  });
+
+  it("the record_bill arguments carry stickering only on lines that have it", () => {
+    const parsed = billSchema.parse({
+      customerId: "00000000-0000-4000-8000-000000000004",
+      saleDate: today(),
+      paymentMode: "UPI",
+      lines: [
+        {
+          batchId: "00000000-0000-4000-8000-000000000003",
+          quantity: 4,
+          salePrice: 2600,
+          hasStickering: false,
+          stickeringCost: 100,
+          stickeringPrice: 250,
+        },
+        {
+          batchId: "00000000-0000-4000-8000-000000000005",
+          quantity: 5,
+          salePrice: 1650,
+          hasStickering: true,
+          stickeringCost: 100,
+          stickeringPrice: 250,
+        },
+      ],
+    });
+
+    expect(billRpcArgs(parsed).p_lines).toEqual([
+      {
+        batch_id: "00000000-0000-4000-8000-000000000003",
+        quantity: 4,
+        sale_price: 2600,
+        has_stickering: false,
+        stickering_cost: 0,
+        stickering_price: 0,
+      },
+      {
+        batch_id: "00000000-0000-4000-8000-000000000005",
+        quantity: 5,
+        sale_price: 1650,
+        has_stickering: true,
+        stickering_cost: 100,
+        stickering_price: 250,
+      },
+    ]);
   });
 
   it("every negative amount is refused by the field's label", () => {

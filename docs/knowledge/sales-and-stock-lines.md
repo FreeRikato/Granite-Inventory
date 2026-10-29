@@ -8,8 +8,6 @@ code:
   - lib/margin.ts
   - lib/whatsapp.ts
   - app/(app)/customers/actions.ts
-  - app/(app)/sell/sell-view.tsx
-  - app/(app)/sell/sell-form.tsx
   - app/(app)/customers/[id]/page.tsx
   - tests/e2e/customers.spec.ts
 ---
@@ -25,7 +23,7 @@ A Bill groups the Sales of one purchase: `bills` holds customer, sale date and p
 
 ## Stock Lines
 
-Every Batch sharing product and size (Variant is ignored, [[batches]]), seen as one sellable item. The Sell form picks a Stock Line and is offered its sellable Batches oldest first. Overview, Yard and Sell share one batches query that carries every Batch; the Sell view narrows it to sellable ones itself ([[browser-reads]]).
+Every Batch sharing product and size (Variant is ignored, [[batches]]), seen as one sellable item. The Sell form ([[sell-cart]]) picks a Stock Line and is offered its sellable Batches oldest first. Overview, Yard and Sell share one batches query that carries every Batch; the Sell view narrows it to sellable ones itself ([[browser-reads]]).
 
 ## Customers
 

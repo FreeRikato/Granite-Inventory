@@ -139,6 +139,11 @@ test("mobile inward and sell fit a 375px screen with seeded rows", async ({ page
     .click();
   await expect(page.getByTestId("fifo-batch").first()).toBeVisible();
   await expectNoHorizontalPageScroll(page);
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  await expect(page.getByTestId("cart-line")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^Remove Black Pearl/ })).toBeVisible();
+  await expectNoHorizontalPageScroll(page);
 });
 
 test("mobile customers list fits a 375px screen with a thousand stress-like customers", async ({

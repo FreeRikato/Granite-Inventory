@@ -10,7 +10,6 @@ code:
   - lib/nav.ts
   - app/(app)/inward/inward-view.tsx
   - app/(app)/inward/inward-form.tsx
-  - app/(app)/sell/sell-form.tsx
 ---
 # Forms and shared components
 
@@ -27,4 +26,4 @@ code:
 
 The searchable select used across forms has its own note: [[search-select]].
 
-Related: [[sales-and-stock-lines]], [[batches]].
+Related: [[sales-and-stock-lines]], [[sell-cart]], [[batches]].
