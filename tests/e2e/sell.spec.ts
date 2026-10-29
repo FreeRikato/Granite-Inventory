@@ -24,6 +24,8 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await signIn("operator");
   await page.goto("/sell");
   await expect(page.getByRole("heading", { name: "Sell Stone" })).toBeVisible();
+  await expect(page.getByLabel("Misc Expense (₹)")).toHaveCount(0);
+  await expect(page.getByTestId("order-summary")).not.toContainText("Misc Expense");
 
   await page.getByRole("radio", { name: "UPI" }).click();
 

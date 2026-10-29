@@ -24,7 +24,6 @@ export const saleSchema = z.object({
   hasStickering: z.boolean(),
   stickeringCost: money("Stickering Cost").default(0),
   stickeringPrice: money("Stickering Price").default(0),
-  miscExpense: money("Misc Expense").default(0),
   notes: z.string().trim().max(500).optional(),
 });
 

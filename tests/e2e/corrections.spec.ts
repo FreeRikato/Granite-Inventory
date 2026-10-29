@@ -33,6 +33,7 @@ test("admin edits a batch from the yard and a sale from the customer page", asyn
   await page.goto("/customers");
   await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
   await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-OLD-01" }));
+  await expect(page.getByLabel("Misc Expense (₹)")).toHaveCount(0);
   await page.getByLabel("Quantity").fill("3");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Sale updated")).toBeVisible();

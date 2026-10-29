@@ -85,7 +85,6 @@ export type SaleInput = {
   salePrice?: number;
   paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
   stickering?: { cost: number; price: number };
-  misc?: number;
 };
 
 export function recordSale(db: Db, input: SaleInput) {
@@ -99,6 +98,5 @@ export function recordSale(db: Db, input: SaleInput) {
     p_has_stickering: input.stickering !== undefined,
     p_stickering_cost: input.stickering?.cost ?? 0,
     p_stickering_price: input.stickering?.price ?? 0,
-    p_misc_expense: input.misc ?? 0,
   });
 }

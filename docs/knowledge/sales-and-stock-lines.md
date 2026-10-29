@@ -3,6 +3,7 @@ code:
   - supabase/migrations/20260911120000_sales.sql
   - supabase/migrations/20260911130000_customers_view.sql
   - supabase/migrations/20260926165731_api_observations.sql
+  - supabase/migrations/20261029170000_remove_misc_expense.sql
   - lib/margin.ts
   - lib/whatsapp.ts
   - app/(app)/customers/actions.ts
@@ -30,7 +31,7 @@ Every Batch sharing product and size (Variant is ignored, [[batches]]), seen as 
 
 ## Margin
 
-`v_sales` derives the money. Margin excludes misc expense by design: it is tracked but never part of margin. `lib/margin.ts` mirrors the same math so the Sell form can show margin live before saving. The colour is green above 25 percent, red below 10 and amber between, from the meeting brief.
+`v_sales` derives the money. Sell and Edit sale take no Misc Expense: the 20261029200000 migration dropped it from `record_sale`, `correct_sale` and `v_sales`, while the `sales.misc_expense` column stays so old values are never lost, and new Sales store its default 0. `lib/margin.ts` mirrors the same math so the Sell form can show margin live before saving. The colour is green above 25 percent, red below 10 and amber between, from the meeting brief. `validate_sale_input` also refuses a NaN or infinite sale price or stickering amount, which would pass the zero-or-more checks and turn every revenue and margin sum into NaN. The date and payment-mode refusals live in `private.validate_bill_header`, shared by `validate_sale_input` and `record_bill` ([[readable-refusals]]).
 
 The customer page shows each sale's Margin % through `formatPercent`, one decimal like Sell Stone and the dashboard.
 

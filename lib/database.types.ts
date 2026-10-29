@@ -625,7 +625,6 @@ export type Database = {
           length_ft: number | null
           margin: number | null
           margin_pct: number | null
-          misc_expense: number | null
           notes: string | null
           payment_mode: string | null
           product_abbreviation: string | null
@@ -794,7 +793,6 @@ export type Database = {
           p_batch_id: string
           p_customer_id: string
           p_has_stickering?: boolean
-          p_misc_expense?: number
           p_notes?: string
           p_payment_mode: string
           p_quantity: number
@@ -906,7 +904,6 @@ export type Database = {
           p_batch_id: string
           p_customer_id: string
           p_has_stickering?: boolean
-          p_misc_expense?: number
           p_notes?: string
           p_payment_mode: string
           p_quantity: number

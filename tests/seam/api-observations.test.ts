@@ -102,7 +102,7 @@ describe("API observations: readable refusals", () => {
 
   it("every negative amount is refused by the field's label", () => {
     const batch = batchSchema.safeParse({ unitPurchasePrice: -1 });
-    const sale = saleSchema.safeParse({ salePrice: -1, stickeringCost: -1, stickeringPrice: -1, miscExpense: -1 });
+    const sale = saleSchema.safeParse({ salePrice: -1, stickeringCost: -1, stickeringPrice: -1 });
     const messages = (error: { issues: { path: PropertyKey[]; message: string }[] } | undefined, key: string) =>
       error?.issues.find((i) => i.path[0] === key)?.message;
 
@@ -110,6 +110,5 @@ describe("API observations: readable refusals", () => {
     expect(messages(sale.error, "salePrice")).toBe("Stone Sale Price cannot be negative");
     expect(messages(sale.error, "stickeringCost")).toBe("Stickering Cost cannot be negative");
     expect(messages(sale.error, "stickeringPrice")).toBe("Stickering Price cannot be negative");
-    expect(messages(sale.error, "miscExpense")).toBe("Misc Expense cannot be negative");
   });
 });

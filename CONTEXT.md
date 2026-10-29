@@ -94,9 +94,6 @@ _Avoid_: Lettering, engraving service (as the canonical term)
 **Payment Mode**:
 How a Sale was paid: Cash, UPI or Bank Transfer. Every Sale is treated as paid in full; credit and dues are out of scope.
 
-**Misc Expense**:
-A one-off cost on a Sale such as transport to site or loading. Recorded for bookkeeping but excluded from Margin.
-
 **Customer**:
 The person or organisation a Sale is made to. Every Sale has a Customer; anonymous cash buyers go to a shared Walk-in Customer.
 The Walk-in Customer flag is immutable for every role.

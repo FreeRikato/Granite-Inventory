@@ -29,7 +29,6 @@ export function saleRpcArgs(s: SaleInput) {
     p_has_stickering: s.hasStickering,
     p_stickering_cost: s.hasStickering ? s.stickeringCost : 0,
     p_stickering_price: s.hasStickering ? s.stickeringPrice : 0,
-    p_misc_expense: s.miscExpense,
     p_notes: s.notes,
   };
 }

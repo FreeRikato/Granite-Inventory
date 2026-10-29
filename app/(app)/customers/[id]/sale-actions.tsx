@@ -119,7 +119,6 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
     hasStickering: sale.has_stickering ?? false,
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
     stickeringPrice: sale.stickering_price?.toString() ?? "0",
-    miscExpense: sale.misc_expense?.toString() ?? "0",
   });
   const { error, refuse, clear } = useRefusal(form);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -199,7 +198,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
           />
         </Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Quantity" htmlFor="es-qty">
           <Input
             id="es-qty"
@@ -218,16 +217,6 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
             step="1"
             value={form.salePrice}
             onChange={(e) => set("salePrice", e.target.value)}
-          />
-        </Field>
-        <Field label="Misc Expense (₹)" htmlFor="es-misc">
-          <Input
-            id="es-misc"
-            type="number"
-            min="0"
-            step="1"
-            value={form.miscExpense}
-            onChange={(e) => set("miscExpense", e.target.value)}
           />
         </Field>
       </div>

@@ -36,7 +36,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 ## Selling
 
 - One Sale = one Batch. Multi-batch purchases are recorded as multiple Sales.
-- Sale Price, Stickering Cost and Stickering Price are per piece; totals are derived from quantity. Misc Expense is a single amount per Sale, excluded from Margin.
+- Sale Price, Stickering Cost and Stickering Price are per piece; totals are derived from quantity.
 - Margin = qty × (sale_price − landed_cost) + qty × (stickering_price − stickering_cost). Margin % = margin / (qty × (sale_price + stickering_price)).
 - FIFO Listing shows Batches of the chosen Stock Line with Available > 0, oldest first, with Ageing Band. Any Batch may be picked; nothing is blocked or confirmed.
 - Payment Mode enum: CASH, UPI, BANK_TRANSFER. All Sales are considered paid. No credit or dues.
@@ -77,12 +77,12 @@ This is the first iteration after one rough call with the client. Expect heavy c
 |---|---|
 | Active stock | SUM(available) over Batches that are not archived |
 | Total inventory value | SUM(available × landed_cost) over Batches that are not archived |
-| MTD Revenue | SUM(qty × sale_price + qty × stickering_price) for Sales in the current calendar month (IST). Misc Expense excluded. |
+| MTD Revenue | SUM(qty × sale_price + qty × stickering_price) for Sales in the current calendar month (IST). |
 | MTD Margin | SUM(margin) for the month; % = margin / MTD Revenue |
 | vs last month | Active stock now vs Active stock at the last day of the previous month, computed as bought-before minus sold-before that date |
 | Stock status donut | All-time: SUM(available) vs SUM(units sold) |
 | Fast vs slow moving | Units sold in the last 90 days grouped by L × B (thickness ignored), top 5 descending. Memorial shown as one bar per Product. |
-| Margin by week / month | Margin for each of the last 12 weeks (Monday start) or 12 calendar months (IST), oldest first, the current one last. Same Margin and billed formulas as MTD; Misc Expense excluded; archived Batches' Sales count. A period with no Sales shows 0 and no percentage. |
+| Margin by week / month | Margin for each of the last 12 weeks (Monday start) or 12 calendar months (IST), oldest first, the current one last. Same Margin and billed formulas as MTD; archived Batches' Sales count. A period with no Sales shows 0 and no percentage. |
 | Top customers | The 5 Customers with the highest billed total (stone plus Stickering) in the chosen window: this month (IST), last 90 days (default) or all time. Each shows the billed amount, a bar scaled to the top Customer and their top 3 Products by pieces, then "+N more". The Walk-in Customer is ranked like any other; archived Batches' Sales count. |
 | Stale stock panel | Batches in the Stale band with Available > 0, oldest first, top 4, link to Yard filtered by Stale |
 

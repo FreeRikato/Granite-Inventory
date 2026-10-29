@@ -72,7 +72,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [batchId, setBatchId] = useState<string | null>(preselected?.id ?? null);
   const [quantity, setQuantity] = useState("1");
   const [salePrice, setSalePrice] = useState("");
-  const [miscExpense, setMiscExpense] = useState("");
   const [stickering, setStickering] = useState(false);
   const [stickeringCost, setStickeringCost] = useState("");
   const [stickeringPrice, setStickeringPrice] = useState("");
@@ -85,7 +84,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     batchId,
     quantity,
     salePrice,
-    miscExpense,
     stickering,
     stickeringCost,
     stickeringPrice,
@@ -100,7 +98,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     salePrice: num(salePrice),
     landedCost: batch?.landed_cost ?? 0,
     stickering: stickering ? { cost: num(stickeringCost), price: num(stickeringPrice) } : null,
-    miscExpense: num(miscExpense),
   });
   const health = marginHealth(batch ? figures.marginPct : null);
 
@@ -118,7 +115,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         hasStickering: stickering,
         stickeringCost: stickeringCost || 0,
         stickeringPrice: stickeringPrice || 0,
-        miscExpense: miscExpense || 0,
       });
       if (!result.ok) {
         refuse(result.error);
@@ -129,7 +125,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       setLineKey(null);
       setQuantity("1");
       setSalePrice("");
-      setMiscExpense("");
       setStickering(false);
       setStickeringCost("");
       setStickeringPrice("");
@@ -278,7 +273,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         ) : null}
 
         <Card>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Quantity Sold" htmlFor="quantity" hint={batch ? `${batch.available} available` : undefined}>
               <Input
                 id="quantity"
@@ -302,19 +297,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 placeholder="0"
                 value={salePrice}
                 onChange={(e) => setSalePrice(e.target.value)}
-                className="h-11"
-              />
-            </Field>
-            <Field label="Misc Expense (₹)" htmlFor="miscExpense" hint="Not part of margin">
-              <Input
-                id="miscExpense"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={miscExpense}
-                onChange={(e) => setMiscExpense(e.target.value)}
                 className="h-11"
               />
             </Field>
@@ -378,11 +360,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             muted
           />
           <Row label="Base Margin" value={formatRupees(figures.stoneMargin)} />
-          <Row
-            label="Misc Expense"
-            sub="Tracked separately, not part of margin"
-            value={formatRupees(num(miscExpense))}
-          />
           {stickering ? <Row label="Stickering Margin" value={formatRupees(figures.stickeringMargin)} /> : null}
         </dl>
         <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
