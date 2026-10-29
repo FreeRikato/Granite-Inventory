@@ -69,7 +69,7 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     const ok = await correctBatch(admin, a, 10, { price: 1200, variant: "Grade 2" });
     expect(ok.error).toBeNull();
     expect(ok.data?.batch_code).toBe(before.data?.batch_code);
-    expect(ok.data?.landed_cost).toBe(1200);
+    expect(ok.data?.landed_cost).toBe(9600);
     expect(ok.data?.updated_by).toBe("admin@test.local");
     const view = await admin.from("v_batches").select("available, variant_name").eq("id", a).single();
     expect(view.data).toEqual({ available: 2, variant_name: "Grade 2" });
@@ -78,7 +78,7 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
     expect(expectError(tooFew).message).toMatch(/already has 8 sold/);
 
     const sale = await admin.from("v_sales").select("landed_cost").single();
-    expect(sale.data?.landed_cost).toBe(1000);
+    expect(sale.data?.landed_cost).toBe(8000);
   });
 
   it("batch delete is refused while sales exist or the batch is live, and works once it is archived and unsold", async () => {
@@ -109,7 +109,7 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
       p_stickering_price: 300,
     });
     expect(moved.error).toBeNull();
-    expect(moved.data?.landed_cost).toBe(2000);
+    expect(moved.data?.landed_cost).toBe(16000);
     const batches = await admin.from("v_batches").select("id, available").in("id", [a, b]);
     expect(Object.fromEntries((batches.data ?? []).map((r) => [r.id, r.available]))).toEqual({ [a]: 15, [b]: 7 });
 

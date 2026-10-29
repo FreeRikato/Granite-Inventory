@@ -17,6 +17,14 @@ export function formatNumber(value: number): string {
   return inr.format(value);
 }
 
+const areaFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 4 });
+
+export function formatArea(lengthFt: string, breadthFt: string): string {
+  const length = Number.parseFloat(lengthFt);
+  const breadth = Number.parseFloat(breadthFt);
+  return length > 0 && breadth > 0 ? areaFmt.format(length * breadth) : "";
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }

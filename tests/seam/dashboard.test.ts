@@ -36,14 +36,14 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
       productId,
       supplierId,
       units: 20,
-      unitPrice: 1000,
+      unitPrice: 125,
       purchaseDate: iso(lastMonthMid),
     });
     const b = await createBatch(operator, {
       productId,
       supplierId,
       units: 10,
-      unitPrice: 2000,
+      unitPrice: 140,
       purchaseDate: iso(monthStart),
       length: 5,
       breadth: 3,
@@ -76,12 +76,12 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
 
     const { data: k } = await operator.from("v_dashboard_kpis").select("*").single();
     expect(k?.active_stock).toBe(20);
-    expect(k?.inventory_value).toBe(12 * 1000 + 8 * 2000);
+    expect(k?.inventory_value).toBe(12 * 8 * 125 + 8 * 15 * 140);
     expect(k?.units_sold_total).toBe(10);
     expect(k?.active_stock_last_month_end).toBe(15);
     expect(k?.mtd_revenue).toBe(3 * 1800 + 2 * 2500);
-    expect(k?.mtd_margin).toBe(3 * 500 + 3 * 200 + 2 * 500);
-    expect(k?.mtd_margin_pct).toBe(29.81);
+    expect(k?.mtd_margin).toBe(3 * 500 + 3 * 200 + 2 * 400);
+    expect(k?.mtd_margin_pct).toBe(27.88);
     expect(k?.mtd_sales).toBe(2);
     expect(k?.month_start).toBe(iso(monthStart));
 

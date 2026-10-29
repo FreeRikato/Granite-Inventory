@@ -15,11 +15,11 @@ export async function seedYard(): Promise<{ oldBatchId: string; newBatchId: stri
       returning id, product_id, name
     )
     insert into public.batches (batch_code, variant_id, supplier_id, purchase_date, length_ft, breadth_ft, thickness_mm, slot, stack_number, initial_units, units_sold, unit_purchase_price, freight_cost)
-    select 'BP-OLD-01', v.id, s.id, private.ist_today() - 232, 4, 2, 16, '4FT', '12', 15, 8, 1450, 0 from v, s where v.name = 'Grade 1'
+    select 'BP-OLD-01', v.id, s.id, private.ist_today() - 232, 4, 2, 16, '4FT', '12', 15, 8, 181.25, 0 from v, s where v.name = 'Grade 1'
     union all
-    select 'BP-NEW-01', v.id, s.id, private.ist_today() - 3, 4, 2, 16, '4FT', '12', 10, 3, 1500, 0 from v, s where v.name = 'Grade 1'
+    select 'BP-NEW-01', v.id, s.id, private.ist_today() - 3, 4, 2, 16, '4FT', '12', 10, 3, 187.5, 0 from v, s where v.name = 'Grade 1'
     union all
-    select 'JB-FIVE-01', v.id, s.id, private.ist_today() - 40, 5, 3, 20, '5FT', '3', 6, 0, 2400, 0 from v, s where v.name = 'Premium'
+    select 'JB-FIVE-01', v.id, s.id, private.ist_today() - 40, 5, 3, 20, '5FT', '3', 6, 0, 160, 0 from v, s where v.name = 'Premium'
     union all
     select 'DS-CROSS-01', v.id, s.id, private.ist_today() - 100, null, null, null, 'DOOM', null, 9, 0, 900, 0 from v, s where v.name = 'Std Cross'
     returning id, batch_code`);

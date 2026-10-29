@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { isCategory, slotChoices, slotLabel } from "@/lib/domain";
-import { todayIso } from "@/lib/format";
+import { formatArea, todayIso } from "@/lib/format";
 import type { Tables } from "@/lib/database.types";
 import { archiveBatchAction, correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
 
@@ -215,7 +215,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
         </Field>
       </div>
       {!memorial ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Length (ft)" htmlFor="eb-length">
             <Input
               id="eb-length"
@@ -234,6 +234,16 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
               min="0"
               value={form.breadthFt}
               onChange={(e) => set("breadthFt", e.target.value)}
+            />
+          </Field>
+          <Field label="Area (sq ft)" htmlFor="eb-area">
+            <Input
+              id="eb-area"
+              readOnly
+              tabIndex={-1}
+              placeholder="0"
+              value={formatArea(form.lengthFt, form.breadthFt)}
+              className="bg-muted tabular"
             />
           </Field>
           <Field label="Thickness (mm)" htmlFor="eb-thickness">
@@ -259,7 +269,11 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             onChange={(e) => set("initialUnits", e.target.value)}
           />
         </Field>
-        <Field label="Unit Purchase Price (₹)" htmlFor="eb-price" hint="Per piece, freight included">
+        <Field
+          label="Unit Purchase Price (₹)"
+          htmlFor="eb-price"
+          hint={memorial ? "Per piece, freight included" : "Per sq ft, freight included"}
+        >
           <Input
             id="eb-price"
             type="number"

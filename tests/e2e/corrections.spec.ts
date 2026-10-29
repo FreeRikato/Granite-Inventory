@@ -23,6 +23,7 @@ test("admin edits a batch from the yard and a sale from the customer page", asyn
   await page.goto("/yard?slot=5FT");
   await openDialog(page, page.getByRole("button", { name: "Edit JB-FIVE-01" }));
   await expect(page.getByLabel("Freight Cost")).toHaveCount(0);
+  await expect(page.getByLabel("Area (sq ft)")).toHaveValue("15");
   await page.getByLabel("Unit Quantity").fill("8");
   await page.getByLabel("Unit Purchase Price (₹)").fill("2500");
   await page.getByRole("button", { name: "Save changes" }).click();
