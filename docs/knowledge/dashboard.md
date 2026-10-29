@@ -17,13 +17,14 @@ code:
   - tests/seam/dashboard-trends.test.ts
   - tests/e2e/dashboard.spec.ts
   - tests/tooling/format.test.ts
+  - tests/tooling/stock-donut.test.ts
 ---
 # Dashboard
 
 Every figure on Overview is derived from batches and sales; nothing is stored. "This month" is the calendar month in India ([[ist-calendar]]).
 
-- Moving sizes: units sold in the last N days per length x breadth, thickness ignored. Memorial has no size, so it shows as one row per Product. The chart is ranked bars with one series, so one hue and direct labels.
-- Stock donut: part-to-whole of what is still in the yard versus what has been sold, all time.
+- Moving sizes: units sold in the last N days per length x breadth, thickness ignored. Memorial has no size, so it shows as one row per Product. The chart is ranked bars with one series, so one hue and direct labels. The chat draws its own ranked bars with the same list ([[chat-visuals]]).
+- Stock donut: part-to-whole of what is still in the yard versus what has been sold, all time. With neither, the ring is one grey (sold) slice. The chat draws its donut with the same ring and legend ([[chat-visuals]]).
 - Archived Batches are out of Active stock, inventory value and the last-month comparison (both sides of it, so the change stays like for like), but their units sold still count, because those Sales happened.
 - The stale panel is a slice of the shared batches query: the oldest stale batches that still have stock ([[browser-reads]]).
 - Margin by period: `margin_by_period('week' | 'month')` returns 12 rows, oldest first, ending with the current IST week (Monday start) or month. It is plpgsql rather than plain sql only so an unknown grain can raise an error. Every period is generated first and only Sales inside those 12 periods are summed and joined on, so a period with no Sales is a zero row with a null percentage instead of a gap. The formulas are the MTD ones, so Misc Expense is out and archived Batches' Sales stay in.
