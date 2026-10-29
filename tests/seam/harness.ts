@@ -7,7 +7,7 @@ export type Db = SupabaseClient<Database>;
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 const secretKey = process.env.SUPABASE_SECRET_KEY ?? "";
-const dbUrl = process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+export const dbUrl = process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 export const TEST_USERS = {
   admin: { email: "admin@test.local", role: "ADMIN" },

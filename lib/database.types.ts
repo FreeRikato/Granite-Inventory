@@ -123,6 +123,20 @@ export type Database = {
             foreignKeyName: "batches_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
+            referencedRelation: "v_chat_batches"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_suppliers"
+            referencedColumns: ["supplier_id"]
+          },
+          {
+            foreignKeyName: "batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
             referencedRelation: "v_yard_batches"
             referencedColumns: ["supplier_id"]
           },
@@ -131,6 +145,20 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "v_batches"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "batches_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_batches"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "batches_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
             referencedColumns: ["variant_id"]
           },
           {
@@ -296,6 +324,20 @@ export type Database = {
             foreignKeyName: "sales_batch_id_fkey"
             columns: ["batch_id"]
             isOneToOne: false
+            referencedRelation: "v_chat_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["batch_id"]
+          },
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
             referencedRelation: "v_sales"
             referencedColumns: ["batch_id"]
           },
@@ -312,6 +354,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "sales_customer_id_fkey"
@@ -454,6 +503,34 @@ export type Database = {
             foreignKeyName: "variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "v_chat_batches"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_stock_lines"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "v_sales"
             referencedColumns: ["product_id"]
           },
@@ -507,6 +584,171 @@ export type Database = {
           updated_by: string | null
           variant_id: string | null
           variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_chat_batches: {
+        Row: {
+          age_days: number | null
+          ageing_band: string | null
+          archived_at: string | null
+          available: number | null
+          batch_code: string | null
+          breadth_ft: number | null
+          category: string | null
+          created_at: string | null
+          days_since_previous: number | null
+          freight_cost: number | null
+          id: string | null
+          initial_units: number | null
+          landed_cost: number | null
+          length_ft: number | null
+          line_key: string | null
+          previous_purchase_date: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          purchase_date: string | null
+          slot: string | null
+          sold_out: boolean | null
+          stack_number: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          thickness_mm: number | null
+          total_cost: number | null
+          unit_purchase_price: number | null
+          units_sold: number | null
+          updated_at: string | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_chat_customers: {
+        Row: {
+          customer_alias: string | null
+          customer_type: string | null
+          is_walk_in: boolean | null
+        }
+        Insert: {
+          customer_alias?: never
+          customer_type?: string | null
+          is_walk_in?: boolean | null
+        }
+        Update: {
+          customer_alias?: never
+          customer_type?: string | null
+          is_walk_in?: boolean | null
+        }
+        Relationships: []
+      }
+      v_chat_kpis: {
+        Row: {
+          active_stock: number | null
+          active_stock_last_month_end: number | null
+          inventory_value: number | null
+          month_start: string | null
+          mtd_margin: number | null
+          mtd_margin_pct: number | null
+          mtd_revenue: number | null
+          mtd_sales: number | null
+          units_sold_total: number | null
+        }
+        Relationships: []
+      }
+      v_chat_products: {
+        Row: {
+          category: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+        }
+        Insert: {
+          category?: string | null
+          product_abbreviation?: string | null
+          product_id?: string | null
+          product_name?: string | null
+        }
+        Update: {
+          category?: string | null
+          product_abbreviation?: string | null
+          product_id?: string | null
+          product_name?: string | null
+        }
+        Relationships: []
+      }
+      v_chat_sales: {
+        Row: {
+          batch_code: string | null
+          batch_id: string | null
+          breadth_ft: number | null
+          category: string | null
+          created_at: string | null
+          customer_alias: string | null
+          customer_id: string | null
+          customer_type: string | null
+          has_stickering: boolean | null
+          id: string | null
+          landed_cost: number | null
+          length_ft: number | null
+          margin: number | null
+          margin_pct: number | null
+          misc_expense: number | null
+          payment_mode: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          purchase_date: string | null
+          quantity: number | null
+          revenue: number | null
+          sale_date: string | null
+          sale_price: number | null
+          slot: string | null
+          stickering_cost: number | null
+          stickering_margin: number | null
+          stickering_price: number | null
+          stickering_total: number | null
+          stone_margin: number | null
+          stone_total: number | null
+          thickness_mm: number | null
+          updated_at: string | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Relationships: []
+      }
+      v_chat_stock_lines: {
+        Row: {
+          available: number | null
+          batch_count: number | null
+          batches_with_stock: number | null
+          breadth_ft: number | null
+          category: string | null
+          length_ft: number | null
+          line_key: string | null
+          oldest_purchase_date: string | null
+          product_abbreviation: string | null
+          product_id: string | null
+          product_name: string | null
+          thickness_mm: number | null
+        }
+        Relationships: []
+      }
+      v_chat_suppliers: {
+        Row: {
+          location: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+        }
+        Insert: {
+          location?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
+        }
+        Update: {
+          location?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
         }
         Relationships: []
       }
@@ -742,6 +984,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      chat_query: { Args: { q: string }; Returns: Json }
       correct_batch: {
         Args: {
           p_batch_id: string

@@ -26,6 +26,7 @@ Data and rules (Postgres)
 - [[readable-refusals]]: every refusal reads as a business rule, never raw Postgres
 - [[public-catalog]]: what anonymous visitors can read
 - [[dashboard]]: derived figures and the two charts
+- [[chat]]: the read-only path the Overview chat uses, and what it may see
 
 App
 - [[browser-reads]]: static shells, browser cache, IndexedDB, invalidation after writes
