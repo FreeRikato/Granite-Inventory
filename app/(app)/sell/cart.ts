@@ -5,6 +5,8 @@ export type CartLine = {
   readonly batchCode: string;
   readonly productName: string;
   readonly size: string;
+  readonly lengthFt: number | null;
+  readonly breadthFt: number | null;
   readonly quantity: number;
   readonly salePrice: number;
   readonly landedCost: number;

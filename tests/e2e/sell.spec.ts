@@ -47,6 +47,7 @@ async function addLine(
 
 const BLACK_PEARL = /Black Pearl · 4×2 ft, 16mm/;
 const JET_BLACK = /Jet Black · 5×3 ft, 20mm/;
+const DOOM_STONE = /Doom Stone/;
 
 test("operator sells from the oldest batch and sees margin live, then available drops in the yard", async ({
   page,
@@ -384,4 +385,36 @@ test("the Add button opens a blank customer dialog and selects the saved custome
   await page.getByRole("button", { name: "Add customer" }).click();
   await expect(page.getByRole("combobox", { name: "Customer" })).toHaveText("Button Customer");
   await expect(page.getByLabel("Contact Number")).toHaveValue("9123456780");
+});
+
+test("a sized line shows its Area in the picker and in the order, and a Memorial line shows none", async ({
+  page,
+  signIn,
+}) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: BLACK_PEARL }).click();
+  await page.getByLabel("Quantity Sold").fill("5");
+  const pickerCard = page.getByTestId("area-card");
+  await expect(pickerCard).toHaveCount(1);
+  await expect(pickerCard).toContainText("40 sq ft");
+  await expect(pickerCard).toContainText("8 per piece");
+
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  const line = page.getByTestId("cart-line");
+  await expect(line.getByTestId("area-card")).toContainText("40 sq ft");
+  await expect(line.getByTestId("area-card")).toContainText("8 per piece");
+
+  await addLine(page, DOOM_STONE, "2", "1500");
+  await expect(page.getByTestId("cart-line")).toHaveCount(2);
+  await expect(page.getByTestId("cart-line").nth(1)).toContainText("DS-CROSS-01");
+  await expect(page.getByTestId("cart-line").nth(1).getByTestId("area-card")).toHaveCount(0);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: DOOM_STONE }).click();
+  await expect(page.getByTestId("area-card")).toHaveCount(1);
 });

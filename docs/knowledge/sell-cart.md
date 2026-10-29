@@ -3,10 +3,13 @@ code:
   - app/(app)/sell/sell-view.tsx
   - app/(app)/sell/sell-form.tsx
   - app/(app)/sell/cart.ts
+  - app/(app)/sell/area-card.tsx
+  - lib/format.ts
   - app/(app)/sell/actions.ts
   - lib/schemas/sale.ts
   - lib/rpc-args.ts
   - tests/e2e/sell.spec.ts
+  - tests/tooling/format.test.ts
   - tests/e2e/sell-and-lists.spec.ts
   - tests/e2e/responsive.spec.ts
   - tests/e2e/accessibility.spec.ts
@@ -30,6 +33,10 @@ Adding a line merges into an existing one only when the Batch, the price per pie
 Every available figure on the form is the database figure minus the pieces already in the cart: the Product option hints, the Batch list, the quantity hint and the check made when a line is added. Without it a second line could promise stone the first line already took. Choosing a Product selects its oldest Batch that still has pieces after the cart; a Batch the cart has used up stays listed at 0 available.
 
 Asking for more than a Batch has left is refused when the line is added, with the same sentence the database uses ("Only N available in batch CODE"), so the message reads the same whether the form or `record_bill` catches it. Splitting across Batches is not offered yet; the user lowers the quantity or adds the next Batch as its own line. The database stays the authority: if another sale takes the stone while the order is open, Record Sale is refused, the message shows and the cart keeps its lines ([[readable-refusals]]).
+
+## Area card
+
+A sized line shows how much stone it is, like Inward's Area: the line's total in large text ("40 sq ft" for 5 pieces of 4×2 ft) with the per piece Area under it ("8 per piece"). It appears under the quantity once a Batch is chosen and a whole quantity is typed, and again on each "This order" line, so the customer and the operator see the same figure before and after adding. `formatAreaTotal` multiplies the per piece Area by the quantity and reads both sides the way `formatArea` does (two decimal places, as the size columns store them), so the per piece figure and the total never disagree. A Memorial line has no Size, the total comes back empty and no card renders. It is information only: prices stay per piece and nothing in the margin reads it.
 
 ## Order Summary
 

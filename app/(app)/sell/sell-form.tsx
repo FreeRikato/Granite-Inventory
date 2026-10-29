@@ -29,6 +29,7 @@ import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordBillAction } from "./actions";
+import { AreaCard } from "./area-card";
 import { addLine, describeOrder, orderFigures, piecesInCart, removeLine, type CartLine } from "./cart";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
@@ -141,6 +142,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           breadth_ft: batch.breadth_ft,
           thickness_mm: batch.thickness_mm,
         }),
+        lengthFt: batch.length_ft,
+        breadthFt: batch.breadth_ft,
         quantity: line.quantity,
         salePrice: line.salePrice,
         landedCost: batch.landed_cost ?? 0,
@@ -347,6 +350,11 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               />
             </Field>
           </div>
+          {batch ? (
+            <div className="mt-4 flex">
+              <AreaCard lengthFt={batch.length_ft} breadthFt={batch.breadth_ft} quantity={Number(quantity)} />
+            </div>
+          ) : null}
         </Card>
 
         <Card>
@@ -418,9 +426,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 <li
                   key={`${l.batchId}-${l.salePrice}-${l.stickering?.cost ?? "none"}-${l.stickering?.price ?? "none"}`}
                   data-testid="cart-line"
-                  className="flex min-w-0 items-center gap-3 rounded-tile border border-border bg-card px-4 py-3"
+                  className="flex min-w-0 flex-wrap items-center gap-3 rounded-tile border border-border bg-card px-4 py-3"
                 >
-                  <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="flex min-w-40 flex-1 flex-col">
                     <span className="truncate text-sm font-semibold">
                       {l.productName} · {l.size}
                     </span>
@@ -429,6 +437,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                       {l.stickering ? ` + ${formatRupees(l.stickering.price)} stickering` : ""}
                     </span>
                   </span>
+                  <AreaCard lengthFt={l.lengthFt} breadthFt={l.breadthFt} quantity={l.quantity} />
                   <span className="shrink-0 text-sm font-semibold tabular">
                     {formatRupees(computeMargin(l).revenue)}
                   </span>

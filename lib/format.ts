@@ -43,6 +43,14 @@ export function formatArea(lengthFt: string, breadthFt: string): string {
   return length > 0 && breadth > 0 ? areaFmt.format(length * breadth) : "";
 }
 
+export function formatAreaTotal(lengthFt: string, breadthFt: string, quantity: number): string {
+  const length = toHundredths(lengthFt);
+  const breadth = toHundredths(breadthFt);
+  return length > 0 && breadth > 0 && Number.isInteger(quantity) && quantity > 0
+    ? areaFmt.format(length * breadth * quantity)
+    : "";
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
