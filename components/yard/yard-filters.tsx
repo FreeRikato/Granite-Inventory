@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
   const pathname = usePathname();
   const params = useSearchParams();
   const [text, setText] = useState(query.q);
+  const [navigating, startNavigation] = useTransition();
+  const pending = navigating || text !== query.q;
 
   const update = useCallback(
     (next: Record<string, string | null>) => {
@@ -35,7 +37,7 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
         if (v === null || v === "" || v === ALL) sp.delete(k);
         else sp.set(k, v);
       }
-      router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
+      startNavigation(() => router.replace(`${pathname}?${sp.toString()}`, { scroll: false }));
     },
     [params, pathname, router],
   );
@@ -47,7 +49,7 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
   }, [text, query.q, update]);
 
   return (
-    <div data-yard-filter-toolbar tabIndex={-1} className="flex flex-col gap-3">
+    <div data-yard-filter-toolbar data-pending={pending} tabIndex={-1} className="peer/filters flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { DataAge } from "@/components/data-age";
@@ -33,9 +33,16 @@ const GRAIN_OPTIONS = [
   { value: "month", label: "Month" },
 ] as const satisfies readonly { value: MarginGrain; label: string }[];
 
+function useShownWhileSettled<T>(value: T, settled: boolean): T {
+  const [shown, setShown] = useState(value);
+  if (settled && shown !== value) setShown(value);
+  return shown;
+}
+
 function MarginCard() {
   const [grain, setGrain] = useState<MarginGrain>("week");
-  const margin = useQuery(marginByPeriodQuery(grain));
+  const margin = useQuery({ ...marginByPeriodQuery(grain), placeholderData: keepPreviousData });
+  const shownGrain = useShownWhileSettled(grain, !margin.isPlaceholderData);
 
   return (
     <section className="rounded-card bg-card p-6 shadow-sm" data-testid="margin-card">
@@ -48,7 +55,7 @@ function MarginCard() {
       </div>
       <div className="mt-4">
         {margin.isSuccess ? (
-          <MarginBars rows={margin.data} grain={grain} />
+          <MarginBars rows={margin.data} grain={shownGrain} />
         ) : margin.isError ? (
           <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
         ) : (
@@ -73,7 +80,8 @@ const WINDOW_EMPTY_MESSAGE = {
 
 function TopCustomersCard() {
   const [range, setRange] = useState<TopCustomerWindow>("90d");
-  const customers = useQuery(topCustomersQuery(range));
+  const customers = useQuery({ ...topCustomersQuery(range), placeholderData: keepPreviousData });
+  const shownRange = useShownWhileSettled(range, !customers.isPlaceholderData);
 
   return (
     <section className="min-w-0 rounded-card bg-card p-6 shadow-sm" data-testid="top-customers-card">
@@ -83,7 +91,7 @@ function TopCustomersCard() {
       </div>
       <div className="mt-4">
         {customers.isSuccess ? (
-          <TopCustomers rows={customers.data} emptyMessage={WINDOW_EMPTY_MESSAGE[range]} />
+          <TopCustomers rows={customers.data} emptyMessage={WINDOW_EMPTY_MESSAGE[shownRange]} />
         ) : customers.isError ? (
           <p className="py-6 text-center text-sm text-destructive">
             Could not load top customers: {customers.error.message}

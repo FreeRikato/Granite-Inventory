@@ -35,6 +35,11 @@ code:
   - tests/e2e/router-cache.spec.ts
   - tests/e2e/loading.spec.ts
   - tests/e2e/offline.spec.ts
+  - tests/e2e/dashboard.spec.ts
+  - tests/e2e/yard-filter.spec.ts
+  - app/(app)/overview-view.tsx
+  - app/(app)/yard/yard-view.tsx
+  - components/yard/yard-filters.tsx
 ---
 # Browser reads and caching
 
@@ -60,6 +65,12 @@ The duplicate-phone check in `createCustomerAction` reads every customer that ha
 - Rows restored from disk come from a previous page life, however recent; a sale recorded just before a reload may not have reached the persister. So everything restored is marked stale, the screen paints from disk and every active query refetches at once.
 - `DataAge` says how old the rows on screen are ("Updated 9h ago" flips to "just now" when the refetch lands), re-rendering once a minute so the label ages with no data change. The row is always 16px tall, so the label changing never moves the page. Its clock is the current minute, a value that is the same on every read until the timer ticks, which `useSyncExternalStore` requires ([[motion]]).
 - The cache can be restored before hydration finishes, so views render the skeleton until a hydration flag flips; otherwise their rows would not match the server's skeleton. The skeleton is the route's own ([[motion]]), the same markup as its `loading.tsx` and its `Suspense` fallback, so the page leaves it once.
+
+## Switching a period
+
+The Overview Margin card (Week or Month) and Top customers card (This month, Last 90 days, All time) each key their query by the chosen period, so a switch to a period not yet cached starts a new query with no data. Both keep the previous period's rows on screen while it loads (`placeholderData: keepPreviousData`, the same as Inward's recent batches), so the card never swaps its chart for the pulse placeholder. The chart's own label and axis, and the empty message, follow the period the rows belong to (`useShownWhileSettled`), not the toggle, so a Month toggle over weekly bars never formats week starts as months.
+
+`useDeferredValue` was tried on the Yard filter and does nothing there: the filter writes the URL with `router.replace`, which Next runs inside a transition, and React does not defer a value that changes in a non-urgent render. The input already shows every keystroke because its text is local state. What the user lacks is a sign that the list is catching up, so the filter row sets `data-pending` while the typed text differs from the URL (the 250ms debounce plus the navigation) or its own `useTransition` for a select or switch is pending, and the list beneath it dims to 60% opacity over the fast motion token through a `peer` selector. Opacity is allowed under reduced motion, so the dim stays. `yard-filter.spec.ts` types ten characters quickly and expects all ten, the dim while pending and the filtered list after; a second check flips a switch, which only the transition can flag. The first records the longest interaction as an annotation (median 56 ms over five runs before and after, same as the Yard baseline).
 
 ## After a write
 

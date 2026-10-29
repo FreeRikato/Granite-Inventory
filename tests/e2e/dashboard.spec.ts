@@ -115,3 +115,60 @@ test("top customers ranks the last 90 days, switches to all time, and links to t
   await rows.first().getByTestId("top-customer-link").click();
   await expect(page).toHaveURL(new RegExp(`/customers/${murugan}$`));
 });
+
+test("switching the margin period keeps the previous chart until the new rows arrive", async ({ page, signIn }) => {
+  let release: () => void = () => {};
+  const monthHeld = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/rest/v1/rpc/margin_by_period", async (route) => {
+    if (route.request().postDataJSON()?.p_grain === "month") await monthHeld;
+    await route.continue();
+  });
+
+  await signIn("admin");
+  await page.goto("/");
+  const card = page.getByTestId("margin-card");
+  const bars = card.getByTestId("margin-bar");
+  await expect(bars).toHaveCount(12);
+
+  await card.getByRole("radio", { name: "Month" }).click();
+  await expect(card.getByRole("radio", { name: "Month" })).toHaveAttribute("aria-checked", "true");
+  await expect(card.getByRole("group", { name: "Margin by week" })).toBeVisible();
+  await expect(bars).toHaveCount(12);
+  await expect(card.locator(".animate-pulse")).toHaveCount(0);
+
+  release();
+  await expect(card.getByRole("group", { name: "Margin by month" })).toBeVisible();
+  await expect(bars).toHaveCount(12);
+  await expect(card.locator(".animate-pulse")).toHaveCount(0);
+});
+
+test("switching the top customers window keeps the previous list until the new rows arrive", async ({
+  page,
+  signIn,
+}) => {
+  let release: () => void = () => {};
+  const allHeld = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/rest/v1/rpc/top_customers", async (route) => {
+    if (route.request().postDataJSON()?.p_window === "all") await allHeld;
+    await route.continue();
+  });
+
+  await signIn("admin");
+  await page.goto("/");
+  const card = page.getByTestId("top-customers-card");
+  const rows = card.getByTestId("top-customer-row");
+  await expect(rows).toHaveCount(1);
+
+  await card.getByRole("radio", { name: "All time" }).click();
+  await expect(card.getByRole("radio", { name: "All time" })).toHaveAttribute("aria-checked", "true");
+  await expect(rows).toHaveCount(1);
+  await expect(card.locator(".animate-pulse")).toHaveCount(0);
+
+  release();
+  await expect(card.locator(".animate-pulse")).toHaveCount(0);
+  await expect(rows).toHaveCount(1);
+});

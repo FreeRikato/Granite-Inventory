@@ -81,17 +81,22 @@ export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
         <DataAge updatedAt={batches.dataUpdatedAt} fetching={batches.isFetching} />
       </div>
 
-      {groups.length === 0 ? (
-        <p className="rounded-card bg-card/60 py-8 text-center text-sm text-muted-foreground shadow-sm ring-1 ring-border">
-          {all.length === 0
-            ? "No batches in the yard yet. Log a delivery to get started."
-            : filtering
-              ? "Nothing matches these filters."
-              : "No stock in the yard right now."}
-        </p>
-      ) : (
-        <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
-      )}
+      <div
+        data-testid="yard-list"
+        className="transition-opacity duration-(--motion-fast) ease-(--motion-ease-out) peer-data-[pending=true]/filters:opacity-60"
+      >
+        {groups.length === 0 ? (
+          <p className="rounded-card bg-card/60 py-8 text-center text-sm text-muted-foreground shadow-sm ring-1 ring-border">
+            {all.length === 0
+              ? "No batches in the yard yet. Log a delivery to get started."
+              : filtering
+                ? "Nothing matches these filters."
+                : "No stock in the yard right now."}
+          </p>
+        ) : (
+          <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
+        )}
+      </div>
     </ViewReady>
   );
 }
