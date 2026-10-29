@@ -171,6 +171,15 @@ export const fastMovingQuery = queryOptions({
   queryFn: () => rows<{ label: string; units: number }>(createClient().rpc("fast_moving", { p_days: 90, p_limit: 5 })),
 });
 
+export const marginByPeriodQuery = (grain: "week" | "month") =>
+  queryOptions({
+    queryKey: ["margin-by-period", grain],
+    queryFn: () =>
+      rows<{ period_start: string; revenue: number; margin: number; margin_pct: number | null }>(
+        createClient().rpc("margin_by_period", { p_grain: grain }),
+      ),
+  });
+
 export const staleAfterDaysQuery = queryOptions({
   queryKey: ["stale-after-days"],
   queryFn: async (): Promise<number> => {

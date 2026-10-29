@@ -32,3 +32,19 @@ test("overview shows KPIs, donut, fast moving bars and the stale panel linking t
   await expect(page).toHaveURL(/\/yard\?line=.*&q=BP-OLD-01/);
   await expect(page.getByTestId("yard-batch")).toHaveCount(1);
 });
+
+test("margin card shows 12 weekly bars and switches to 12 monthly bars", async ({ page, signIn }) => {
+  await signIn("admin");
+  await page.goto("/");
+  const card = page.getByTestId("margin-card");
+  const bars = card.getByTestId("margin-bar");
+  await expect(card.getByRole("radio", { name: "Week" })).toHaveAttribute("aria-checked", "true");
+  await expect(bars).toHaveCount(12);
+  await expect(bars.last()).toHaveAttribute("data-current", "true");
+  await expect(bars.first()).toHaveAttribute("data-current", "false");
+
+  await card.getByRole("radio", { name: "Month" }).click();
+  await expect(card.getByRole("radio", { name: "Month" })).toHaveAttribute("aria-checked", "true");
+  await expect(card.getByRole("group", { name: "Margin by month" })).toBeVisible();
+  await expect(bars).toHaveCount(12);
+});

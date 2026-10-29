@@ -13,6 +13,19 @@ export function formatRupeesCompact(value: number): string {
   return formatRupees(value);
 }
 
+function trimTenths(n: number): string {
+  return n.toFixed(1).replace(/\.0$/, "");
+}
+
+export function formatRupeesAxis(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1e7) return `${sign}₹${trimTenths(abs / 1e7)}Cr`;
+  if (abs >= 1e5) return `${sign}₹${trimTenths(abs / 1e5)}L`;
+  if (abs >= 1e3) return `${sign}₹${trimTenths(abs / 1e3)}K`;
+  return formatRupees(value);
+}
+
 export function formatNumber(value: number): string {
   return inr.format(value);
 }

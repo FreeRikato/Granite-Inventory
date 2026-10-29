@@ -1,19 +1,59 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { DataAge } from "@/components/data-age";
+import { MarginBars, type MarginGrain } from "@/components/dashboard/margin-bars";
 import { MovingBars } from "@/components/dashboard/moving-bars";
+import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
 import { ViewError, ViewSkeleton } from "@/components/view-state";
 import { formatNumber, formatPercent, formatRupeesCompact, formatSize } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
-import { dashboardKpisQuery, fastMovingQuery, staleAfterDaysQuery, yardBatchesQuery } from "@/lib/query/reads";
+import {
+  dashboardKpisQuery,
+  fastMovingQuery,
+  marginByPeriodQuery,
+  staleAfterDaysQuery,
+  yardBatchesQuery,
+} from "@/lib/query/reads";
 import { cn } from "@/lib/utils";
 
 const STALE_ROWS = 4;
+
+const GRAIN_OPTIONS = [
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+] as const satisfies readonly { value: MarginGrain; label: string }[];
+
+function MarginCard() {
+  const [grain, setGrain] = useState<MarginGrain>("week");
+  const margin = useQuery(marginByPeriodQuery(grain));
+
+  return (
+    <section className="rounded-card bg-card p-6 shadow-sm lg:col-span-2" data-testid="margin-card">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-base font-bold">Margin</h2>
+          <span className="text-xs text-muted-foreground">last 12 {grain === "week" ? "weeks" : "months"}</span>
+        </div>
+        <SegmentedToggle label="Margin period" options={GRAIN_OPTIONS} value={grain} onChange={setGrain} />
+      </div>
+      <div className="mt-4">
+        {margin.isSuccess ? (
+          <MarginBars rows={margin.data} grain={grain} />
+        ) : margin.isError ? (
+          <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
+        ) : (
+          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function OverviewView() {
   const hydrated = useHydrated();
@@ -91,6 +131,10 @@ export function OverviewView() {
             </span>
           </div>
         </section>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <MarginCard />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[400px_minmax(0,1fr)]">

@@ -81,6 +81,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 | vs last month | Active stock now vs Active stock at the last day of the previous month, computed as bought-before minus sold-before that date |
 | Stock status donut | All-time: SUM(available) vs SUM(units sold) |
 | Fast vs slow moving | Units sold in the last 90 days grouped by L × B (thickness ignored), top 5 descending. Memorial shown as one bar per Product. |
+| Margin by week / month | Margin for each of the last 12 weeks (Monday start) or 12 calendar months (IST), oldest first, the current one last. Same Margin and billed formulas as MTD; Misc Expense excluded; archived Batches' Sales count. A period with no Sales shows 0 and no percentage. |
 | Stale stock panel | Batches in the Stale band with Available > 0, oldest first, top 4, link to Yard filtered by Stale |
 
 ## Yard view
