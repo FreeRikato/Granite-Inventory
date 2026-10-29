@@ -84,6 +84,105 @@
   }
 }
 
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes view-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes view-slide-in {
+  from {
+    transform: translateX(var(--view-offset));
+  }
+}
+
+@keyframes view-slide-out {
+  to {
+    transform: translateX(var(--view-offset));
+  }
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(app-sidebar),
+::view-transition-group(tab-bar) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(app-sidebar),
+::view-transition-old(tab-bar),
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(app-sidebar),
+::view-transition-new(tab-bar),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.page-fade),
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation: view-fade-out var(--motion-fast) var(--motion-ease-out) both;
+}
+
+::view-transition-new(.page-fade),
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation: view-fade-in var(--motion-base) var(--motion-ease-out) both;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.nav-forward) {
+    --view-offset: -24px;
+    animation:
+      view-fade-out var(--motion-fast) var(--motion-ease-out) both,
+      view-slide-out var(--motion-fast) var(--motion-ease-out) both;
+  }
+  ::view-transition-new(.nav-forward) {
+    --view-offset: 24px;
+    animation:
+      view-fade-in var(--motion-base) var(--motion-ease-out) both,
+      view-slide-in var(--motion-base) var(--motion-ease-out) both;
+  }
+  ::view-transition-old(.nav-back) {
+    --view-offset: 24px;
+    animation:
+      view-fade-out var(--motion-fast) var(--motion-ease-out) both,
+      view-slide-out var(--motion-fast) var(--motion-ease-out) both;
+  }
+  ::view-transition-new(.nav-back) {
+    --view-offset: -24px;
+    animation:
+      view-fade-in var(--motion-base) var(--motion-ease-out) both,
+      view-slide-in var(--motion-base) var(--motion-ease-out) both;
+  }
+}
+
+:root:has([data-offline-banner]) {
+  --toast-top: 52px;
+}
+
+:root:has([data-offline-banner]) [data-sonner-toast][data-y-position="top"][data-mounted="false"] {
+  --y: translateY(-8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    transition: opacity var(--motion-fast) var(--motion-ease-out) !important;
+  }
+}
+
 :root {
   --background: #f4f4f3;
   --foreground: #181818;

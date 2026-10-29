@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink } from "lucide-react";
+import { LinkPending } from "@/components/shell/link-pending";
+import { backTypes } from "@/components/shell/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS, SETTINGS_ITEM, isActivePath, roleLabel } from "@/lib/nav";
@@ -16,7 +18,7 @@ export function AppSidebar({ businessName, member }: Props) {
   return (
     <aside
       aria-label="Application sidebar"
-      className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 md:flex"
+      className="hidden w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-5 py-6 [view-transition-name:app-sidebar] md:flex"
     >
       <div className="flex items-center justify-between px-1">
         <span className="text-base font-bold">{businessName}</span>
@@ -38,6 +40,7 @@ export function AppSidebar({ businessName, member }: Props) {
               key={item.href}
               href={item.href}
               prefetch={item.shell ? true : undefined}
+              transitionTypes={backTypes(pathname, item.href)}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium",
@@ -48,6 +51,7 @@ export function AppSidebar({ businessName, member }: Props) {
             >
               <item.icon className="size-4" />
               {item.label}
+              <LinkPending className="ml-auto" />
             </Link>
           );
         })}
@@ -69,6 +73,7 @@ export function AppSidebar({ businessName, member }: Props) {
             <span className="truncate text-sm font-semibold">{member.name}</span>
             <span className="text-xs text-muted-foreground">{roleLabel(member.role)}</span>
           </span>
+          <LinkPending />
         </Link>
         <ThemeToggle />
       </div>

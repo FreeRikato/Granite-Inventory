@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, MoreHorizontal } from "lucide-react";
+import { LinkPending } from "@/components/shell/link-pending";
+import { backTypes } from "@/components/shell/page-transition";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { MOBILE_MORE, MOBILE_TABS, isActivePath } from "@/lib/nav";
@@ -15,7 +17,7 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] [view-transition-name:tab-bar] md:hidden"
       aria-label="Main"
     >
       {MOBILE_TABS.map((item) => (
@@ -41,6 +43,7 @@ export function MobileTabBar() {
                 key={item.href}
                 href={item.href}
                 prefetch={item.shell ? true : undefined}
+                transitionTypes={backTypes(pathname, item.href)}
                 onClick={() => setOpen(false)}
                 className={cn(
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
@@ -49,6 +52,7 @@ export function MobileTabBar() {
               >
                 <item.icon className="size-4" />
                 {item.label}
+                <LinkPending className="ml-auto" />
               </Link>
             ))}
             <form action="/auth/signout" method="post">
@@ -83,12 +87,13 @@ function TabLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium",
+        "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium",
         active ? "text-primary" : "text-muted-foreground",
       )}
     >
       {children}
       {label}
+      <LinkPending className="absolute right-3 top-2" />
     </Link>
   );
 }
