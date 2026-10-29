@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Tables } from "@/lib/database.types";
@@ -170,6 +171,34 @@ export const fastMovingQuery = queryOptions({
   queryKey: ["fast-moving", 90, 5],
   queryFn: () => rows<{ label: string; units: number }>(createClient().rpc("fast_moving", { p_days: 90, p_limit: 5 })),
 });
+
+export const marginByPeriodQuery = (grain: "week" | "month") =>
+  queryOptions({
+    queryKey: ["margin-by-period", grain],
+    queryFn: () =>
+      rows<{ period_start: string; revenue: number; margin: number; margin_pct: number | null }>(
+        createClient().rpc("margin_by_period", { p_grain: grain }),
+      ),
+  });
+
+export type TopCustomerWindow = "month" | "90d" | "all";
+
+const topCustomerProducts = z.array(z.object({ name: z.string(), pieces: z.number() }));
+
+export const topCustomersQuery = (window: TopCustomerWindow) =>
+  queryOptions({
+    queryKey: ["top-customers", window],
+    queryFn: async () => {
+      const found = await rows(createClient().rpc("top_customers", { p_window: window }));
+      return found.map((r) => ({
+        customer_id: r.customer_id,
+        customer_name: r.customer_name,
+        billed: r.billed,
+        pieces: r.pieces,
+        products: topCustomerProducts.parse(r.products),
+      }));
+    },
+  });
 
 export const staleAfterDaysQuery = queryOptions({
   queryKey: ["stale-after-days"],

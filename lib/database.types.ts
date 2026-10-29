@@ -887,6 +887,15 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
+      margin_by_period: {
+        Args: { p_grain: string }
+        Returns: {
+          margin: number
+          margin_pct: number
+          period_start: string
+          revenue: number
+        }[]
+      }
       member_role: { Args: never; Returns: string }
       preview_batch_code: {
         Args: { p_date: string; p_product_id: string }
@@ -935,6 +944,16 @@ export type Database = {
       suggest_slot: {
         Args: { p_category: string; p_length_ft: number }
         Returns: string
+      }
+      top_customers: {
+        Args: { p_limit?: number; p_window: string }
+        Returns: {
+          billed: number
+          customer_id: string
+          customer_name: string
+          pieces: number
+          products: Json
+        }[]
       }
     }
     Enums: {
