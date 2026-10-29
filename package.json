@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
     "@openuidev/react-lang": "^1.0.2",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
@@ -29,6 +30,7 @@
     "@tanstack/react-query": "^5.103.1",
     "@tanstack/react-query-persist-client": "^5.103.1",
     "@tanstack/react-virtual": "^3.14.22",
+    "ai": "^7.0.152",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "^0.2.6",
@@ -56,7 +58,6 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "ai": "^7.0.152",
     "dotenv": "^17.4.2",
     "e2e": "^0.21.3",
     "oxc-parser": "^0.151.0",

@@ -32,6 +32,7 @@ App
 - [[browser-reads]]: static shells, browser cache, IndexedDB, invalidation after writes
 - [[focus-after-write]]: where focus goes when a dialog closes after a write
 - [[auth-session]]: proxy, server client, member lookup, public env vars
+- [[chat-visuals]]: the closed set of OpenUI components a chat answer is drawn with
 - [[yard]]: derived yard view, ordering, filters in the URL
 - [[forms-and-components]]: shared form pieces, Sell and Inward details, the palette
 - [[search-select]]: the one matching rule and inline create

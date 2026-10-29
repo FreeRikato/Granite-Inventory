@@ -3,11 +3,17 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createParser } from "@openuidev/react-lang";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { componentPrompt } from "@/lib/chat/library-prompt";
+import { buildSystemPrompt, CHART_EXAMPLE } from "@/lib/chat/system-prompt";
 import { chatLibrary } from "@/lib/chat/library";
 import { renderers } from "@/components/chat/visuals/renderers";
 import { MovingBars } from "@/components/dashboard/moving-bars";
 
+const chartProps = z.object({
+  labels: z.array(z.string()),
+  series: z.array(z.object({ name: z.string(), values: z.array(z.number()) })),
+});
 const parser = createParser(chatLibrary.toJSONSchema(), "Stack");
 
 function render(node: ReactNode, customers: { id: string; name: string }[] = []) {
@@ -42,6 +48,24 @@ describe("parsing a reply", () => {
     expect(children).toHaveLength(1);
     expect(children).toMatchObject([{ typeName: "BarChart" }]);
     expect(result.meta.errors.map((e) => e.code)).toEqual(["unknown-component"]);
+  });
+});
+
+describe("the chart example in the system prompt", () => {
+  it("parses into the chart and the sentence it shows, with every series as long as the labels", () => {
+    const result = parser.parse(CHART_EXAMPLE);
+    expect(result.meta.errors).toEqual([]);
+    expect(result.meta.orphaned).toEqual([]);
+    expect(result.root?.props.children).toMatchObject([{ typeName: "BarChart" }, { typeName: "Text" }]);
+    const [chartNode] = z.array(z.object({ props: z.unknown() })).parse(result.root?.props.children);
+    const chart = chartProps.parse(chartNode.props);
+    expect(chart.series.length).toBeLessThanOrEqual(4);
+    for (const series of chart.series) expect(series.values).toHaveLength(chart.labels.length);
+  });
+
+  it("is in the prompt the model gets", () => {
+    const prompt = buildSystemPrompt({ views: [], today: "2026-10-29", components: componentPrompt() });
+    expect(prompt).toContain(CHART_EXAMPLE.split("\n").join("\n  "));
   });
 });
 

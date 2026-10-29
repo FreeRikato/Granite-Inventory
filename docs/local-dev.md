@@ -65,7 +65,10 @@ Create `.env.local` (gitignored) in the primary checkout with the values from `s
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<PUBLISHABLE_KEY from supabase status>
 SUPABASE_SECRET_KEY=<SECRET_KEY from supabase status>   # server-only, tests and seeding
+OPENROUTER_API_KEY=<from ~/.secrets.env>                # server-only, optional; the Overview chat answers 503 without it
 ```
+
+`pnpm test` never reads `OPENROUTER_API_KEY` and never calls OpenRouter: the chat tests use a mock model. Only the opt-in chat eval makes live calls.
 
 ## Seeded data
 
