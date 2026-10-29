@@ -27,6 +27,7 @@
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@openuidev/lang-core": "1.0.2",
     "@openuidev/react-lang": "^1.0.2",
+    "@shadcn/react": "^0.3.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/query-async-storage-persister": "^5.103.1",

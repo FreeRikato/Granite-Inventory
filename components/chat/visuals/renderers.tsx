@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useContext, type ReactNode } from "react";
 import { Bar, BarChart as RBarChart, CartesianGrid, Line, LineChart as RLineChart, XAxis } from "recharts";
 import {
   ChartContainer,
@@ -10,9 +10,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RankedBarList } from "@/components/dashboard/moving-bars";
 import { DonutRing, Legend } from "@/components/dashboard/stock-donut";
 import { formatNumber, formatRupeesCompact } from "@/lib/format";
+import { AnswerStreamingContext } from "./answer-streaming";
 import { useDealias } from "./use-dealias";
 import type { LeafProps, Renderers } from "./define";
 
@@ -54,6 +56,11 @@ function WrappedTick({ x, y, payload }: { x?: number; y?: number; payload?: { va
   );
 }
 
+function SeriesChartSlot({ children }: { readonly children: ReactNode }) {
+  if (useContext(AnswerStreamingContext)) return <Skeleton className="aspect-video w-full" />;
+  return <div className="animate-in fade-in duration-(--motion-fast)">{children}</div>;
+}
+
 function Axes() {
   return (
     <>
@@ -67,7 +74,7 @@ function Axes() {
 
 export const renderers: Renderers = {
   Stack: ({ props, renderNode }) => (
-    <div className="flex flex-col gap-4">
+    <div data-slot="answer-stack" className="flex flex-col gap-4">
       {props.children.map((child, index) => (
         <Fragment key={index}>{renderNode(child)}</Fragment>
       ))}
@@ -114,34 +121,38 @@ export const renderers: Renderers = {
   BarChart: ({ props }) => {
     const { config, data, count } = seriesChart(props, useDealias());
     return (
-      <ChartContainer config={config} className="aspect-video w-full">
-        <RBarChart data={data}>
-          <Axes />
-          {Array.from({ length: count }, (_, i) => (
-            <Bar key={i} dataKey={`s${i}`} fill={`var(--color-s${i})`} radius={4} isAnimationActive={false} />
-          ))}
-        </RBarChart>
-      </ChartContainer>
+      <SeriesChartSlot>
+        <ChartContainer config={config} className="aspect-video w-full">
+          <RBarChart data={data}>
+            <Axes />
+            {Array.from({ length: count }, (_, i) => (
+              <Bar key={i} dataKey={`s${i}`} fill={`var(--color-s${i})`} radius={4} isAnimationActive={false} />
+            ))}
+          </RBarChart>
+        </ChartContainer>
+      </SeriesChartSlot>
     );
   },
   LineChart: ({ props }) => {
     const { config, data, count } = seriesChart(props, useDealias());
     return (
-      <ChartContainer config={config} className="aspect-video w-full">
-        <RLineChart data={data}>
-          <Axes />
-          {Array.from({ length: count }, (_, i) => (
-            <Line
-              key={i}
-              dataKey={`s${i}`}
-              stroke={`var(--color-s${i})`}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
-        </RLineChart>
-      </ChartContainer>
+      <SeriesChartSlot>
+        <ChartContainer config={config} className="aspect-video w-full">
+          <RLineChart data={data}>
+            <Axes />
+            {Array.from({ length: count }, (_, i) => (
+              <Line
+                key={i}
+                dataKey={`s${i}`}
+                stroke={`var(--color-s${i})`}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            ))}
+          </RLineChart>
+        </ChartContainer>
+      </SeriesChartSlot>
     );
   },
   Table: ({ props }) => {
@@ -149,11 +160,11 @@ export const renderers: Renderers = {
     const shown = props.rows.slice(0, MAX_TABLE_ROWS);
     return (
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm">
           <thead className="text-xs text-muted-foreground">
             <tr>
               {props.columns.map((c, i) => (
-                <th key={i} className="py-2 pr-4 font-medium">
+                <th key={i} className="py-2 pr-4 font-medium wrap-break-word">
                   {dealias(c)}
                 </th>
               ))}
@@ -163,7 +174,7 @@ export const renderers: Renderers = {
             {shown.map((row, r) => (
               <tr key={r}>
                 {row.map((cell, c) => (
-                  <td key={c} className="py-2 pr-4 tabular">
+                  <td key={c} className="py-2 pr-4 tabular wrap-break-word">
                     {typeof cell === "number" ? formatNumber(cell) : dealias(cell)}
                   </td>
                 ))}

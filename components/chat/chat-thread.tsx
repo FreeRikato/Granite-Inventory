@@ -1,12 +1,22 @@
 "use client";
 
 import "./no-devtools";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Plus, SendHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Input } from "@/components/ui/input";
+import { Message } from "@/components/ui/message";
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import { useOnline } from "@/lib/use-online";
 import { AssistantAnswer, PhaseLine } from "./assistant-answer";
 import { NO_ANSWER_TEXT, chatErrorText, endedWithoutAnswer } from "./chat-error";
@@ -43,17 +53,12 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
   });
   const online = useOnline();
   const [draft, setDraft] = useState("");
-  const bottom = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
   const phase = chatPhase(messages, status);
 
   useEffect(() => {
     if (status === "ready") void (messages.length > 0 ? saveChatHistory(email, messages) : clearChatHistory(email));
   }, [email, messages, status]);
-
-  useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end" });
-  }, [messages, error]);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -82,42 +87,51 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
           </Button>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4" aria-live="polite">
-        {messages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Ask about stock, sales or margin, for example "which supplier has the most stale batches?"
-          </p>
-        ) : null}
-        {messages.map((message, index) =>
-          message.role === "user" ? (
-            <p
-              key={message.id}
-              data-testid="chat-user-message"
-              className="max-w-[85%] self-end rounded-card bg-secondary px-3 py-2 text-sm"
-            >
-              {textOf(message).join(" ")}
-            </p>
-          ) : (
-            <AssistantAnswer
-              key={message.id}
-              message={message}
-              settled={status === "ready" || index < messages.length - 1}
-            />
-          ),
-        )}
-        {phase ? <PhaseLine phase={phase} /> : null}
-        {endedWithoutAnswer(messages, status) ? (
-          <p data-testid="chat-no-answer" className="text-sm text-muted-foreground">
-            {NO_ANSWER_TEXT}
-          </p>
-        ) : null}
-        {error ? (
-          <p role="alert" data-testid="chat-error" className="text-sm text-stale">
-            {chatErrorText(error)}
-          </p>
-        ) : null}
-        <div ref={bottom} />
-      </div>
+      <MessageScrollerProvider autoScroll>
+        <MessageScroller className="flex-1">
+          <MessageScrollerViewport className="px-4 py-4">
+            {messages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Ask about stock, sales or margin, for example "which supplier has the most stale batches?"
+              </p>
+            ) : null}
+            <MessageScrollerContent className="gap-4">
+              {messages.map((message, index) =>
+                message.role === "user" ? (
+                  <MessageScrollerItem
+                    key={message.id}
+                    messageId={message.id}
+                    scrollAnchor
+                    className="animate-in fade-in motion-enter"
+                  >
+                    <Message align="end">
+                      <Bubble variant="secondary" align="end" className="max-w-[85%]">
+                        <BubbleContent data-testid="chat-user-message" className="rounded-card">
+                          {textOf(message).join(" ")}
+                        </BubbleContent>
+                      </Bubble>
+                    </Message>
+                  </MessageScrollerItem>
+                ) : (
+                  <AssistantAnswer key={message.id} message={message} settled={!busy || index < messages.length - 1} />
+                ),
+              )}
+              {phase ? <PhaseLine phase={phase} /> : null}
+              {endedWithoutAnswer(messages, status) ? (
+                <p data-testid="chat-no-answer" className="text-sm text-muted-foreground">
+                  {NO_ANSWER_TEXT}
+                </p>
+              ) : null}
+              {error ? (
+                <p role="alert" data-testid="chat-error" className="text-sm text-stale">
+                  {chatErrorText(error)}
+                </p>
+              ) : null}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton data-testid="chat-jump-latest" />
+        </MessageScroller>
+      </MessageScrollerProvider>
       <form onSubmit={submit} className="flex flex-col gap-2 border-t border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Input

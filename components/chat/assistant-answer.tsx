@@ -1,49 +1,49 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo } from "react";
 import type { UIMessage } from "ai";
-import type { ParseResult } from "@openuidev/lang-core";
 import { Renderer } from "@openuidev/react-lang";
+import { cn } from "cn";
+import { Message, MessageContent } from "@/components/ui/message";
+import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { chatLibrary } from "@/lib/chat/library";
 import { answerSource } from "./chat-answer";
 import { PHASE_TEXT, type ChatPhase } from "./chat-phase";
+import { AnswerStreamingContext } from "./visuals/answer-streaming";
 
 type Props = { readonly message: UIMessage; readonly settled: boolean };
 
-export function PhaseLine({ phase }: { readonly phase: ChatPhase }) {
+export function PhaseLine({ phase, className }: { readonly phase: ChatPhase; readonly className?: string }) {
   return (
     <p
       data-testid="chat-phase"
-      className="animate-[motion-fade_1.2s_ease-in-out_infinite_alternate] text-sm text-muted-foreground"
+      className={cn(
+        "animate-[motion-fade_1.2s_ease-in-out_infinite_alternate] text-sm text-muted-foreground",
+        className,
+      )}
     >
       {PHASE_TEXT[phase]}
     </p>
   );
 }
 
-function holdsNode(value: unknown): boolean {
-  if (typeof value !== "object" || value === null) return false;
-  if ("typeName" in value) return true;
-  return Object.values(value).some(holdsNode);
-}
-
-function hasRenderedNode(result: ParseResult | null): boolean {
-  return holdsNode(result?.root?.props);
-}
-
 export const AssistantAnswer = memo(function AssistantAnswer({ message, settled }: Props) {
-  const [rendered, setRendered] = useState(false);
   const source = answerSource(message, settled);
   if (!source) return null;
   return (
-    <div data-testid="chat-assistant-message">
-      <Renderer
-        response={source}
-        library={chatLibrary}
-        isStreaming={!settled}
-        onParseResult={(result) => setRendered(hasRenderedNode(result))}
-      />
-      {rendered || settled ? null : <PhaseLine phase="writing" />}
-    </div>
+    <MessageScrollerItem messageId={message.id} className="animate-in fade-in motion-enter">
+      <Message>
+        <MessageContent>
+          <div data-testid="chat-assistant-message" className="group/answer">
+            <AnswerStreamingContext value={!settled}>
+              <Renderer response={source} library={chatLibrary} isStreaming={!settled} />
+            </AnswerStreamingContext>
+            {settled ? null : (
+              <PhaseLine phase="writing" className="group-has-[[data-slot=answer-stack]>*]/answer:hidden" />
+            )}
+          </div>
+        </MessageContent>
+      </Message>
+    </MessageScrollerItem>
   );
 });
