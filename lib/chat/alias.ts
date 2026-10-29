@@ -31,3 +31,7 @@ export function createDealiaser(customers: readonly NamedCustomer[]): (text: str
   const names = new Map(customers.map((c) => [customerAlias(c.id), c.name]));
   return (text) => text.replace(aliasPattern, (alias) => names.get(alias) ?? alias);
 }
+
+export function maskAliases(text: string, replacement: string): string {
+  return text.replace(aliasPattern, () => replacement);
+}

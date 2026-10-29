@@ -31,7 +31,7 @@ Because both libraries come from the same function, the prompt the model reads a
 
 ## The dashboard draws RankedBars and Donut
 
-`RankedBars` is `RankedBarList` from `components/dashboard/moving-bars.tsx`, the same list `MovingBars` draws, and `Donut` is `DonutRing` and `Legend` from `components/dashboard/stock-donut.tsx`. The chat only maps the model's rows into them (de-aliasing the labels), so a restyle of the dashboard restyles the chat. A test renders both and compares the markup.
+`RankedBars` is `RankedBarList` from `components/dashboard/moving-bars.tsx`, the same list `MovingBars` draws, and `Donut` is `DonutRing` and `Legend` from `components/dashboard/stock-donut.tsx`. The chat only maps the model's rows into them (de-aliasing the labels), so a restyle of the dashboard restyles the chat. A test renders both and compares the markup. Rows are keyed by position, because masked labels are all `...` or all "a customer" and two customers can share a name, so a label key would give several rows one key and React would render duplicates; the rows hold no state, so position is a safe key.
 
 A donut slice is keyed `s0`, `s1`, and so on, never by its label. `ChartContainer` writes each key into a `<style>` block as `--color-<key>`, so a label from the model (or from a customer name) used as the key could close the rule and add its own CSS.
 
@@ -51,7 +51,7 @@ The OpenUI parser does not enforce array length, so `.max(4)` on a schema would 
 
 ## Aliases become names in the browser
 
-The model only sees `C-xxxxxx` aliases ([[chat]]). Every component that shows text passes it through `useDealias`, which builds one lookup from the cached `customersQuery` ([[browser-reads]]) and swaps `C-` plus six hex characters for the customer name. An alias with no match stays as written, so a customer added since the list was cached still reads as an alias instead of disappearing. Numbers are never swapped, only text.
+The model only sees `C-xxxxxx` aliases ([[chat]]). Every component that shows text passes it through `useDealias`, which builds one lookup from the cached `customersQuery` ([[browser-reads]]) and swaps `C-` plus six hex characters for the customer name. An alias with no match stays as written, so a customer added since the list was cached still reads as an alias instead of disappearing. A raw code is never painted before that list is known: while `customersQuery` has no data, `maskAliases` shows `...` (three periods) in its place, in text, table cells, chart labels and series names alike, and swaps to the name when the list arrives; if the read fails after its retries, it shows "a customer" instead. `AskProvider` prefetches the list so the placeholder is rarely seen. Numbers are never swapped, only text.
 
 ## The dev inspector is off
 

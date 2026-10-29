@@ -30,7 +30,7 @@ export function AskPanel() {
       data-state={panel}
       data-ask-open={open ? "" : undefined}
       inert={!open}
-      className="fixed inset-0 z-[45] flex flex-col bg-card shadow-sm transition-[transform,opacity] duration-(--motion-base) ease-(--motion-ease-out) starting:transform-[translateX(100%)] starting:opacity-0 data-[state=closed]:transform-[translateX(100%)] data-[state=closed]:opacity-0 data-[state=closed]:ease-(--motion-ease-in) motion-reduce:transition-[opacity] xl:left-auto xl:w-[380px] xl:border-l xl:border-border"
+      className="fixed inset-x-0 top-0 z-[45] flex h-dvh flex-col bg-card pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-sm transition-[transform,opacity] duration-(--motion-base) ease-(--motion-ease-out) starting:transform-[translateX(100%)] starting:opacity-0 data-[state=closed]:transform-[translateX(100%)] data-[state=closed]:opacity-0 motion-reduce:transition-[opacity] xl:left-auto xl:w-[380px] xl:border-l xl:border-border"
     >
       <ChatThread />
     </aside>

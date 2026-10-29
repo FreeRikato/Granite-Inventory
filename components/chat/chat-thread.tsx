@@ -20,6 +20,8 @@ import { AssistantAnswer, PhaseLine } from "./assistant-answer";
 import { useAskPanel, useAskThread } from "./ask-provider";
 import { NO_ANSWER_TEXT, chatErrorText, endedWithoutAnswer } from "./chat-error";
 
+const TOUCH_POINTER = "(pointer: coarse)";
+
 function textOf(message: UIMessage): string[] {
   return message.parts.flatMap((part) => (part.type === "text" && part.text ? [part.text] : []));
 }
@@ -33,7 +35,7 @@ export function ChatThread() {
   const busy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (panel === "open") inputRef.current?.focus({ preventScroll: true });
+    if (panel === "open" && !window.matchMedia(TOUCH_POINTER).matches) inputRef.current?.focus({ preventScroll: true });
   }, [panel]);
 
   function submit(event: React.FormEvent) {

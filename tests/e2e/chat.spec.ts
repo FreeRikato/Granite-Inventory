@@ -998,7 +998,7 @@ test("with reduced motion Ask fades and does not slide", async ({ page, signIn }
 test("Escape closes Ask and returns focus to the Ask button, and the live region announces phases and Answer ready only", async ({
   page,
   signIn,
-}) => {
+}, testInfo) => {
   const panel = page.getByTestId("chat-panel");
   const slow = await serveSlowAnswer();
   try {
@@ -1010,6 +1010,7 @@ test("Escape closes Ask and returns focus to the Ask button, and the live region
     await expect(live).toHaveAttribute("role", "status");
     await expect(live).toBeEmpty();
     const input = panel.getByRole("textbox", { name: "Ask a question" });
+    if (testInfo.project.name === "mobile") await input.focus();
     await expect(input).toBeFocused();
     await page.keyboard.type("abc");
     await expect(input).toHaveValue("abc");
@@ -1082,4 +1083,272 @@ test("the saved thread is read before the input opens and nothing deletes it on 
   await expect(input).toBeEnabled();
   await expect(panel.getByTestId("chat-user-message")).toHaveText(QUESTION);
   expect(await page.evaluate(() => Reflect.get(window, "deleted"))).toEqual([]);
+});
+
+test("a streaming answer re-renders the thread but not the Ask button or the panel frame", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  const slow = await serveScript([300, ...longAnswer]);
+  try {
+    await page.route("**/api/chat", (route) => route.continue({ url: slow.url }));
+    await page.addInitScript(() => {
+      const renders: Record<string, number> = {};
+      Object.assign(window, { renders });
+      const PERFORMED_WORK = 1;
+      type Fiber = {
+        child: Fiber | null;
+        sibling: Fiber | null;
+        return: Fiber | null;
+        type?: { name?: string };
+        flags: number;
+      };
+      let previous = new Set<Fiber>();
+      const countRenders = (root: Fiber) => {
+        const current = new Set<Fiber>();
+        let fiber: Fiber | null = root;
+        while (fiber) {
+          current.add(fiber);
+          const name = typeof fiber.type === "function" ? fiber.type.name : "";
+          if (name && fiber.flags & PERFORMED_WORK && !previous.has(fiber)) renders[name] = (renders[name] ?? 0) + 1;
+          if (fiber.child) fiber = fiber.child;
+          else {
+            while (fiber && !fiber.sibling) fiber = fiber.return;
+            fiber = fiber ? fiber.sibling : null;
+          }
+        }
+        previous = current;
+      };
+      Object.assign(window, {
+        __REACT_DEVTOOLS_GLOBAL_HOOK__: {
+          supportsFiber: true,
+          renderers: new Map(),
+          inject: () => 1,
+          onCommitFiberUnmount: () => {},
+          onPostCommitFiberRoot: () => {},
+          checkDCE: () => {},
+          onCommitFiberRoot: (_id: number, root: { current: Fiber }) => countRenders(root.current),
+        },
+      });
+    });
+    await signIn("operator");
+    await page.goto("/");
+    await openPanel(page);
+    await page.evaluate(() => {
+      for (const key of Object.keys(Reflect.get(window, "renders")))
+        Reflect.deleteProperty(Reflect.get(window, "renders"), key);
+    });
+    await ask(page, "anything");
+    await expect(panel.getByText("Line 29", { exact: true })).toBeVisible();
+    const renders: Record<string, number> = await page.evaluate(() => ({ ...Reflect.get(window, "renders") }));
+    expect(renders.ChatThread ?? 0).toBeGreaterThan(10);
+    expect(renders.AskButton ?? 0).toBeLessThanOrEqual(1);
+    expect(renders.AskPanel ?? 0).toBeLessThanOrEqual(1);
+  } finally {
+    await slow.close();
+  }
+});
+
+test("a saved thread survives a failed read of the store", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await ask(page, QUESTION);
+  await expect(panel.locator("[data-slot='chart']")).toBeVisible();
+  await expect.poll(() => storedThread(page, "operator@test.local")).toBeDefined();
+
+  await page.addInitScript(() => {
+    const deleted: unknown[] = [];
+    Object.assign(window, { deleted, failReads: true });
+    const remove = IDBObjectStore.prototype.delete;
+    IDBObjectStore.prototype.delete = function (key) {
+      deleted.push(key);
+      return remove.call(this, key);
+    };
+    const read = IDBObjectStore.prototype.get;
+    IDBObjectStore.prototype.get = function (key) {
+      if (Reflect.get(window, "failReads") && typeof key === "string" && key.startsWith("granite-chat:")) {
+        throw new Error("read failed");
+      }
+      return read.call(this, key);
+    };
+  });
+  await page.reload();
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+  await openPanel(page);
+  await expect(panel.getByRole("textbox", { name: "Ask a question" })).toBeEnabled();
+  await expect(panel.getByTestId("chat-user-message")).toHaveCount(0);
+  expect(await page.evaluate(() => Reflect.get(window, "deleted"))).toEqual([]);
+  await page.evaluate(() => Object.assign(window, { failReads: false }));
+  expect(await storedThread(page, "operator@test.local")).toBeDefined();
+});
+
+test("the first answer that names a customer never shows a C- code on a cold cache", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  await signIn("operator");
+  await page.route("**/rest/v1/customers*", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await route.continue();
+  });
+  const customersRead = page.waitForResponse((response) => response.url().includes("/rest/v1/customers"), {
+    timeout: 5_000,
+  });
+  await page.goto("/");
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    Reflect.set(window, "aliasSeen", seen);
+    const scan = () => {
+      const match = document.querySelector("[data-testid=chat-panel]")?.textContent?.match(/\bC-[0-9a-f]{6}\b/);
+      if (match) seen.push(match[0]);
+    };
+    new MutationObserver(scan).observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+  await openPanel(page);
+  await (await customersRead).finished();
+
+  await ask(page, QUESTION);
+  await expect(panel.getByText(`${CUSTOMER} bought the most Black Pearl`)).toBeVisible();
+  expect(await page.evaluate(() => Reflect.get(window, "aliasSeen"))).toEqual([]);
+});
+
+test("opening Ask at 1440px lays out main once, at the start of the slide", async ({ page, signIn }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "needs the docked panel");
+  await page.setViewportSize({ width: WIDE_WIDTH, height: 900 });
+  await signIn("operator");
+  await page.goto("/");
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+  await page.evaluate(() => {
+    const main = document.querySelector("main");
+    if (!main) throw new Error("no main");
+    const widths: number[] = [];
+    let last = -1;
+    Reflect.set(window, "mainWidths", widths);
+    new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        const previous = last;
+        last = width;
+        if (previous < 0 || Math.abs(width - previous) < 1) continue;
+        widths.push(Math.round(width));
+      }
+    }).observe(main);
+  });
+
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await page.getByTestId("chat-panel").evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+  const opened: number[] = await page.evaluate(() => Reflect.get(window, "mainWidths"));
+  expect(opened, JSON.stringify(opened)).toHaveLength(1);
+});
+
+test("on a phone the panel clears the safe areas, keeps the input in view and does not open the keyboard", async ({
+  page,
+  context,
+  signIn,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "needs a touch device");
+  const TOP_INSET = 47;
+  const BOTTOM_INSET = 34;
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: TOP_INSET, bottom: BOTTOM_INSET } });
+  const panel = page.getByTestId("chat-panel");
+  await signIn("operator");
+  await page.goto("/");
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+  await openPanel(page);
+
+  const input = panel.getByRole("textbox", { name: "Ask a question" });
+  await expect(page.locator("meta[name=viewport]")).toHaveAttribute(
+    "content",
+    /viewport-fit=cover.*interactive-widget=resizes-content/,
+  );
+  await expect(input).toBeEnabled();
+  await expect(input).not.toBeFocused();
+  const header = await panel.getByRole("heading", { name: "Ask" }).boundingBox();
+  expect(header?.y ?? 0).toBeGreaterThanOrEqual(TOP_INSET);
+
+  const keyboardOpenHeight = 420;
+  const viewport = page.viewportSize();
+  await page.setViewportSize({ width: viewport?.width ?? 412, height: keyboardOpenHeight });
+  const field = await input.boundingBox();
+  expect((field?.y ?? 0) + (field?.height ?? 0)).toBeLessThanOrEqual(keyboardOpenHeight - BOTTOM_INSET);
+  const shrunk = await panel.boundingBox();
+  expect(shrunk?.height).toBe(keyboardOpenHeight);
+  expect((await panel.getByRole("heading", { name: "Ask" }).boundingBox())?.y ?? 0).toBeGreaterThanOrEqual(TOP_INSET);
+});
+
+const ALIAS_FRAMES = "aliasFrames";
+
+async function sampleAliasFrames(page: Page): Promise<void> {
+  await page.evaluate((key) => {
+    const frames: string[] = [];
+    Object.assign(window, { [key]: frames });
+    const sample = () => {
+      const text = document.querySelector("[data-testid='chat-panel']")?.textContent ?? "";
+      if (/\bC-[0-9a-f]{6}\b/.test(text)) frames.push(text);
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }, ALIAS_FRAMES);
+}
+
+async function aliasAnswer(): Promise<Chunk[]> {
+  const [row] = await sql<{ id: string }>(`select id from public.customers where name = '${CUSTOMER}'`);
+  const alias = `C-${row.id.slice(0, 6)}`;
+  return textChunks(
+    [
+      "root = Stack([intro, c, t])",
+      `intro = Text("${alias} leads")`,
+      `c = BarChart(["${alias}"], [{name: "${alias}", values: [5]}])`,
+      `t = Table(["Customer"], [["${alias}"]])`,
+    ].join("\n"),
+  );
+}
+
+test("a customer code is never painted: a placeholder holds its place until the customers list arrives", async ({
+  page,
+  signIn,
+}) => {
+  const panel = page.getByTestId("chat-panel");
+  const chunks = await aliasAnswer();
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/rest/v1/customers*", async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.route("**/api/chat", (route) => route.fulfill(streamResponse(chunks)));
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await sampleAliasFrames(page);
+  await ask(page, "top customer");
+  await expect(panel.getByText("... leads")).toBeVisible();
+  await expect(panel.getByRole("cell", { name: "..." })).toBeVisible();
+  await expect(panel.locator("[data-slot='chart']")).toContainText("...");
+  await page.waitForTimeout(300);
+  release();
+  await expect(panel.getByText(`${CUSTOMER} leads`)).toBeVisible();
+  await expect(panel.getByRole("cell", { name: CUSTOMER })).toBeVisible();
+  await expect(panel.locator("[data-slot='chart']")).toContainText(CUSTOMER);
+  await expect(panel).not.toContainText("...");
+  expect(await page.evaluate((key) => Reflect.get(window, key), ALIAS_FRAMES)).toEqual([]);
+});
+
+test("when the customers read fails the answer says a customer and never shows the code", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  const chunks = await aliasAnswer();
+  await page.route("**/rest/v1/customers*", (route) => route.abort());
+  await page.route("**/api/chat", (route) => route.fulfill(streamResponse(chunks)));
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await sampleAliasFrames(page);
+  await ask(page, "top customer");
+  await expect(panel.getByText("... leads")).toBeVisible();
+  await expect(panel.getByText("a customer leads")).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByRole("cell", { name: "a customer" })).toBeVisible();
+  await expect(panel.locator("[data-slot='chart']")).toContainText("a customer");
+  expect(await page.evaluate((key) => Reflect.get(window, key), ALIAS_FRAMES)).toEqual([]);
 });

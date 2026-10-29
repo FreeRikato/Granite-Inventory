@@ -12,9 +12,11 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useMember } from "@/components/shell/member-provider";
+import { customersQuery } from "@/lib/query/reads";
 import { answerSource } from "./chat-answer";
 import { clearChatHistory, loadChatHistory, saveChatHistory } from "./chat-history";
 import { PHASE_TEXT, chatPhase, type ChatPhase } from "./chat-phase";
@@ -52,11 +54,16 @@ export function AskProvider({ children }: { readonly children: ReactNode }) {
   const [historyReady, setHistoryReady] = useState(false);
   const [finishedId, setFinishedId] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const queryClient = useQueryClient();
   const { messages, sendMessage, setMessages, stop, status, error, clearError } = useChat({
     transport,
     throttle: STREAM_THROTTLE_MS,
     onFinish: ({ message }) => setFinishedId(answerSource(message, true) ? message.id : null),
   });
+
+  useEffect(() => {
+    void queryClient.prefetchQuery(customersQuery);
+  }, [queryClient]);
 
   useEffect(() => {
     let current = true;

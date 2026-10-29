@@ -1,4 +1,4 @@
-import { createElement, type ReactNode } from "react";
+import { Children, createElement, isValidElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createParser } from "@openuidev/react-lang";
@@ -8,7 +8,7 @@ import { componentPrompt } from "@/lib/chat/library-prompt";
 import { buildSystemPrompt, CHART_EXAMPLE } from "@/lib/chat/system-prompt";
 import { chatLibrary } from "@/lib/chat/library";
 import { renderers } from "@/components/chat/visuals/renderers";
-import { MovingBars } from "@/components/dashboard/moving-bars";
+import { MovingBars, RankedBarList } from "@/components/dashboard/moving-bars";
 
 const chartProps = z.object({
   labels: z.array(z.string()),
@@ -137,6 +137,37 @@ describe("renderers", () => {
       createElement(MovingBars, { rows: rows.map((r) => ({ label: r.label, units: r.value })) }),
     );
     expect(dashboard.replace(' aria-label="Units sold by size"', "")).toBe(chat);
+  });
+
+  it.each([
+    ["pending", "..."],
+    ["failed", "a customer"],
+  ] as const)("masks every code in RankedBars while the customers read is %s, one row each", (read, masked) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retryOnMount: false } } });
+    if (read === "failed") {
+      const query = client.getQueryCache().build(client, { queryKey: ["customers"] });
+      query.setState({ ...query.state, status: "error", error: new Error("offline") });
+    }
+    const rows = ["C-aaaaaa", "C-bbbbbb", "C-cccccc"].map((label, i) => ({ label, value: 30 - i }));
+    const html = renderToStaticMarkup(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(renderers.RankedBars, { props: { rows }, renderNode }),
+      ),
+    );
+    expect(html.match(/<li/g)).toHaveLength(3);
+    expect(html, html).toContain(`>${masked}<`);
+    expect(html.match(new RegExp(`>${masked}<`, "g"))).toHaveLength(3);
+    expect(html).not.toContain("C-");
+  });
+
+  it("gives RankedBarList rows with equal labels distinct keys", () => {
+    const rows = [1, 2, 3].map((value) => ({ label: "...", value }));
+    const keys = Children.toArray(RankedBarList({ rows }).props.children)
+      .filter(isValidElement)
+      .map((row) => row.key);
+    expect(new Set(keys).size).toBe(rows.length);
   });
 
   it("writes a Metric in rupees or as a plain number", () => {
