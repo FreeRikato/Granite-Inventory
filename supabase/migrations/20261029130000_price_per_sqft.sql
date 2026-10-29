@@ -52,8 +52,11 @@ begin
     raise exception 'Size must include length, breadth and thickness together'
       using errcode = 'check_violation';
   end if;
-  if coalesce(p_length_ft * p_breadth_ft, 1) * p_unit_purchase_price
-    + coalesce(p_freight_cost, 0) / p_initial_units >= 1e10 then
+  if round(
+    coalesce(round(p_length_ft, 2) * round(p_breadth_ft, 2), 1) * p_unit_purchase_price
+      + coalesce(p_freight_cost, 0) / p_initial_units,
+    2
+  ) >= 1e10 then
     raise exception 'Landed Cost per piece is too large' using errcode = 'check_violation';
   end if;
   if p_slot is not null and length(trim(p_slot)) > 20 then
@@ -185,8 +188,7 @@ select
   s.id as supplier_id, s.name as supplier_name,
   b.stack_number,
   b.archived_at,
-  round(coalesce(b.length_ft * b.breadth_ft, 1) * b.initial_units * b.unit_purchase_price, 2) + b.freight_cost
-    as total_cost
+  b.initial_units * b.landed_cost as total_cost
 from public.batches b
 join public.variants v on v.id = b.variant_id
 join public.products p on p.id = v.product_id

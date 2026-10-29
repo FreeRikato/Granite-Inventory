@@ -38,6 +38,18 @@ describe("v_batches: total_cost", () => {
     expect(await costs(batch.data?.id ?? "")).toEqual({ landed_cost: 1200, total_cost: 12000 });
   });
 
+  it("is always the pieces times the Landed Cost shown beside it", async () => {
+    const batch = await createBatch(operator, {
+      productId,
+      supplierId,
+      length: 2.33,
+      breadth: 3.1,
+      units: 1000,
+      unitPrice: 200.123,
+    });
+    expect(await costs(batch.data?.id ?? "")).toEqual({ landed_cost: 1445.49, total_cost: 1445490 });
+  });
+
   it("is the pieces times the per piece price for Doom Stones", async () => {
     const memorialId = await createProduct(operator, { name: "Doom Stone", abbreviation: "DS", category: "MEMORIAL" });
     const batch = await createBatch(operator, {
@@ -86,6 +98,18 @@ describe("v_batches: total_cost", () => {
       breadth: 100,
       units: 1,
       unitPrice: 1e7,
+    });
+    expect(batch.error?.message).toBe("Landed Cost per piece is too large");
+  });
+
+  it("refuses a price that only reaches the limit once rounded to paise", async () => {
+    const memorialId = await createProduct(operator, { name: "Doom Stone", abbreviation: "DS", category: "MEMORIAL" });
+    const batch = await createBatch(operator, {
+      productId: memorialId,
+      supplierId,
+      length: null,
+      units: 1,
+      unitPrice: 9999999999.996,
     });
     expect(batch.error?.message).toBe("Landed Cost per piece is too large");
   });

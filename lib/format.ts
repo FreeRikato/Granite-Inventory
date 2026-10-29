@@ -19,9 +19,14 @@ export function formatNumber(value: number): string {
 
 const areaFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 4 });
 
+function toHundredths(value: string): number {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? Math.round(Number(`${parsed}e2`)) / 100 : Number.NaN;
+}
+
 export function formatArea(lengthFt: string, breadthFt: string): string {
-  const length = Number.parseFloat(lengthFt);
-  const breadth = Number.parseFloat(breadthFt);
+  const length = toHundredths(lengthFt);
+  const breadth = toHundredths(breadthFt);
   return length > 0 && breadth > 0 ? areaFmt.format(length * breadth) : "";
 }
 

@@ -25,6 +25,11 @@ describe("formatArea", () => {
     expect(formatArea("2.33", "3.1")).toBe("7.223");
   });
 
+  it("rounds each side to two places the way the size columns store it", () => {
+    expect(formatArea("2.335", "3")).toBe("7.02");
+    expect(formatArea("2.333", "3.1")).toBe("7.223");
+  });
+
   it("stays empty until both sides are above zero", () => {
     expect(formatArea("", "2")).toBe("");
     expect(formatArea("6", "0")).toBe("");
