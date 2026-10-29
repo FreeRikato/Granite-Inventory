@@ -5,6 +5,7 @@ import { formatRupees, relativeDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { ViewReady } from "@/components/view-state";
+import { rowStateClass } from "@/lib/query/row-style";
 import { CustomerActions } from "./customer-actions";
 import { type SaleEditLists } from "./sale-actions";
 import { SalesRows } from "./sales-rows";
@@ -41,7 +42,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
 
   return (
     <ViewReady>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className={`flex flex-wrap items-start justify-between gap-4 ${rowStateClass}`}>
         <div className="flex items-center gap-4">
           <span className="flex size-12 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
             {initialsOf(customer.name ?? "")}

@@ -33,6 +33,17 @@ code:
   - components/ui/sonner.tsx
   - app/(app)/customers/customer-list.tsx
   - tests/e2e/navigation.spec.ts
+  - lib/query/row-style.ts
+  - lib/query/row-state.tsx
+  - components/confirm-delete.tsx
+  - components/yard/batch-card.tsx
+  - components/yard/batch-actions.tsx
+  - app/(app)/inward/recent-batches.tsx
+  - app/(app)/sell/sell-form.tsx
+  - app/(app)/customers/[id]/sales-rows.tsx
+  - app/(app)/customers/[id]/sale-actions.tsx
+  - app/(app)/customers/[id]/customer-actions.tsx
+  - tests/e2e/write-motion.spec.ts
 ---
 # Motion
 
@@ -103,6 +114,22 @@ The old and new page must have the same viewport size: Chrome aborts a transitio
 ## Pending links
 
 `LinkPending` is the one tiny client component for every link that navigates (`useLinkStatus`): sidebar and More sheet links, the tab bar, the Settings link and customer rows. It always renders a 16px slot, so nothing shifts, and puts a `Spinner` in it only while the link is pending. The spinner appears on the tap itself, before the destination has any response, and is a `status` role so a screen reader hears "Loading". On a customer row the slot overlays the avatar. Under reduced motion the spinner pulses rather than turns (see above).
+
+## Rows after a write
+
+A row that a write removes goes through three states, held by `RowMark`, a hidden `data-row-state` element inside the row: `idle`, `pending` (the server has not answered) and `leaving` (it has). The row styles itself from it with `rowStateClass` (`lib/query/row-style.ts`, `has-[[data-row-state=...]]` on the row element), so the actions component that owns the write does not need a handle on the row. `rowStateClass` lives in a file without `"use client"` because the customer page, a server component, reads it too.
+
+- `pending`: the row dims to 40% over the fast token and the delete button swaps its trash icon for the `Spinner` (`ConfirmDelete` takes `pending`). The dim is stronger than the 60% an archived or sold out Batch already has, so a pending delete of an archived Batch still reads as different. Nothing else changes, so no layout moves.
+- `leaving`: the server confirmed. The row fades to 0 over the fast token on the ease-out curve, `useRowRemoval` waits `EXIT_MS` (150ms, the fast token) and only then calls the caller's `onRemoved`, which drops the Batch from the cached Yard rows (deleting a Batch) or invalidates the reads (`afterWrite`), so the row leaves the DOM once, not frame by frame.
+- On a refusal the state returns to `idle`, the row stays and a toast gives the server's reason. A request that throws (a dropped connection) takes the same path with the error's message and also refetches the write's reads, since the server may have applied it: `useRowRemoval` and the Record Sale submit catch it. Left uncaught, the throw inside a transition goes to the nearest error boundary, and the page was replaced by Next's default error screen, which also lost a Sell order. Deleting a Sale was checked for the other worry, a row that unmounts before it fades: the server action's `revalidatePath` does not remove it early, and `write-motion.spec.ts` samples the row's opacity to prove it reaches 0 before the row leaves.
+
+The collapse is a single removal, not an animation of height: animating `grid-template-rows`, `height` or `max-height` re-lays-out every sibling on every frame, and the rule here is opacity and transform only. The cost is one step where the rows below move up, after the row is already invisible. Under reduced motion the fade stays (opacity is allowed), so nothing differs.
+
+Used by: deleting a Batch (Yard card and Inward recent batches), deleting a Sale (customer page row), deleting a customer (the page header dims and fades, then `router.push` hands over to the page transition) and recording a Sale (the cart lines dim with a spinner on each Remove button, then fade, then the cart clears).
+
+Archiving a Batch is not in this list: it is optimistic ([[browser-reads]]), so the card changes at once and there is no pending state to show.
+
+A cart line fades in on `animate-in fade-in motion-enter` when added. Removing a line marks it `leaving` at once and the totals, the order count and the available figures are computed without it from that moment; the line itself is taken out of the list after `EXIT_MS`. Add to order is disabled in that window, because a line re-added with the same Batch, price and stickering would otherwise be removed by the pending timer. New rows in Inward's recent batches fade in the same way.
 
 ## Toasts and the offline banner
 

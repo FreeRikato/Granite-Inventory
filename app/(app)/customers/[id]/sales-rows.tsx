@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatPercent, formatRupees, formatSize } from "@/lib/format";
+import { rowStateClass } from "@/lib/query/row-style";
 import { cn } from "@/lib/utils";
 import { SaleActions, type SaleEditLists } from "./sale-actions";
 
@@ -97,6 +98,7 @@ function SaleRow({
     <tr
       className={cn(
         "block border-t border-border py-2.5 sm:table-row sm:py-0",
+        rowStateClass,
         nested && "bg-muted/40 [&>td:first-child]:pl-6",
       )}
       data-testid="sale-row"

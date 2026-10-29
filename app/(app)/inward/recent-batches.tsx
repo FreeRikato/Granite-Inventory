@@ -1,6 +1,7 @@
 import { Archive } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { rowStateClass } from "@/lib/query/row-style";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRupees, formatSize } from "@/lib/format";
 import { slotLabel, stackLabel } from "@/lib/domain";
@@ -54,7 +55,11 @@ export function RecentBatches({ batches, editLists, showArchived, onShowArchived
               {batches.map((b) => (
                 <tr
                   key={b.id ?? b.batch_code}
-                  className={cn("group border-t border-border", b.archived_at && "opacity-60")}
+                  className={cn(
+                    "group animate-in border-t border-border fade-in motion-enter",
+                    rowStateClass,
+                    b.archived_at && "opacity-60",
+                  )}
                   data-testid="batch-row"
                 >
                   <td className="py-2.5 pr-4 font-mono text-xs">

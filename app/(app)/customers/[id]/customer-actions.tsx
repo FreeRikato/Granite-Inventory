@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAfterWrite } from "@/lib/query/provider";
+import { RowMark, useRowRemoval } from "@/lib/query/row-state";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,24 +31,23 @@ type Props = {
 export function CustomerActions({ customer, canDelete }: Props) {
   const router = useRouter();
   const afterWrite = useAfterWrite();
-  const [pending, startTransition] = useTransition();
+  const removal = useRowRemoval("delete-customer");
   const [draft, setDraft] = useState<CustomerDraft | null>(null);
 
   function remove() {
-    startTransition(async () => {
-      const result = await deleteCustomerAction(customer.id);
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Customer deleted");
-      afterWrite("delete-customer");
-      router.push("/customers");
-    });
+    removal.remove(
+      () => deleteCustomerAction(customer.id),
+      "Customer deleted",
+      () => {
+        afterWrite("delete-customer");
+        router.push("/customers");
+      },
+    );
   }
 
   return (
     <div className="flex items-center gap-2">
+      <RowMark state={removal.state} />
       {!customer.is_walk_in ? (
         <Button
           variant="outline"
@@ -65,8 +66,8 @@ export function CustomerActions({ customer, canDelete }: Props) {
       {canDelete ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" className="bg-card text-stale" disabled={pending}>
-              <Trash2 className="size-4" /> Delete
+            <Button variant="outline" className="bg-card text-stale" disabled={removal.pending}>
+              {removal.pending ? <Spinner aria-hidden /> : <Trash2 className="size-4" />} Delete
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>

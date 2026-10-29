@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
+import { RowMark, useRowRemoval } from "@/lib/query/row-state";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -43,24 +44,21 @@ export type SaleEditLists = {
 export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lists: SaleEditLists }) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
-  const [pending, startTransition] = useTransition();
+  const removal = useRowRemoval("delete-sale");
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   function remove() {
-    startTransition(async () => {
-      const result = await deleteSaleAction(sale.id ?? "");
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Sale deleted, pieces returned to the batch");
-      afterWrite("delete-sale");
-    });
+    removal.remove(
+      () => deleteSaleAction(sale.id ?? ""),
+      "Sale deleted, pieces returned to the batch",
+      () => afterWrite("delete-sale"),
+    );
   }
 
   return (
     <div className="flex justify-end gap-2">
+      <RowMark state={removal.state} />
       <Button
         ref={triggerRef}
         variant="outline"
@@ -75,7 +73,8 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         title="Delete this sale?"
         description={`${sale.quantity} piece(s) go back to batch ${sale.batch_code}.`}
         onConfirm={remove}
-        disabled={pending}
+        disabled={removal.pending}
+        pending={removal.pending}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent

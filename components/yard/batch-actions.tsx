@@ -1,7 +1,11 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAfterSettled, useAfterWrite } from "@/lib/query/provider";
+import { yardBatchesQuery } from "@/lib/query/reads";
+import { RowMark, useRowRemoval } from "@/lib/query/row-state";
+import { messageOf } from "@/lib/action-result";
 import { Archive, ArchiveRestore, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -27,40 +31,68 @@ type EditableBatch = Omit<Tables<"v_batches">, "total_cost">;
 
 type Props = { readonly batch: EditableBatch; readonly lists: EditLists; readonly iconOnly?: boolean };
 
+const RECENT_BATCHES_KEY = ["recent-batches"];
+
 export function BatchActions({ batch, lists, iconOnly }: Props) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
-  const [pending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
+  const removal = useRowRemoval("delete-batch");
+  const [archiving, startArchive] = useTransition();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const busy = removal.pending || archiving;
 
   function remove() {
-    startTransition(async () => {
-      const result = await deleteBatchAction(batch.id ?? "");
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success(`Batch ${batch.batch_code} deleted`);
-      afterWrite("delete-batch");
-    });
+    removal.remove(
+      () => deleteBatchAction(batch.id ?? ""),
+      `Batch ${batch.batch_code} deleted`,
+      () => {
+        queryClient.setQueryData(yardBatchesQuery.queryKey, withoutBatch);
+        queryClient.setQueriesData<Tables<"v_batches">[]>({ queryKey: RECENT_BATCHES_KEY }, withoutBatch);
+        afterWrite("delete-batch");
+      },
+    );
+  }
+
+  function withoutBatch<Row extends { id: string | null }>(rows: Row[] | undefined) {
+    return rows?.filter((row) => row.id !== batch.id);
   }
 
   function toggleArchive() {
-    const archiving = !batch.archived_at;
-    startTransition(async () => {
-      const result = await archiveBatchAction(batch.id ?? "", archiving);
-      if (!result.ok) {
+    const archivedAt = batch.archived_at ? null : new Date().toISOString();
+    const setArchivedAt = (value: string | null) => {
+      const mark = <Row extends { id: string | null }>(rows: Row[] | undefined) =>
+        rows?.map((row) => (row.id === batch.id ? { ...row, archived_at: value } : row));
+      queryClient.setQueryData(yardBatchesQuery.queryKey, mark);
+      queryClient.setQueriesData<Tables<"v_batches">[]>({ queryKey: RECENT_BATCHES_KEY }, mark);
+    };
+    startArchive(async () => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: yardBatchesQuery.queryKey }),
+        queryClient.cancelQueries({ queryKey: RECENT_BATCHES_KEY }),
+      ]);
+      setArchivedAt(archivedAt);
+      try {
+        const result = await archiveBatchAction(batch.id ?? "", archivedAt !== null);
+        if (result.ok) {
+          toast.success(`Batch ${batch.batch_code} ${archivedAt ? "archived" : "unarchived"}`);
+          return;
+        }
+        setArchivedAt(batch.archived_at);
         toast.error(result.error);
-        return;
+      } catch (error) {
+        setArchivedAt(batch.archived_at);
+        toast.error(messageOf(error));
+      } finally {
+        afterWrite("archive-batch");
       }
-      toast.success(`Batch ${batch.batch_code} ${archiving ? "archived" : "unarchived"}`);
-      afterWrite("archive-batch");
     });
   }
 
   return (
     <>
+      <RowMark state={removal.state} />
       <Button
         ref={triggerRef}
         variant={iconOnly ? "ghost" : "outline"}
@@ -77,7 +109,7 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
         size={iconOnly ? "icon" : "sm"}
         className={iconOnly ? "size-8" : "h-9 bg-card"}
         onClick={toggleArchive}
-        disabled={pending}
+        disabled={busy}
         aria-label={`${batch.archived_at ? "Unarchive" : "Archive"} ${batch.batch_code}`}
       >
         {batch.archived_at ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
@@ -88,7 +120,8 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
           title={`Delete batch ${batch.batch_code}?`}
           description="This batch is archived and has no sales. It will be removed for good."
           onConfirm={remove}
-          disabled={pending}
+          disabled={busy}
+          pending={removal.pending}
           iconLabel={iconOnly ? `Delete ${batch.batch_code}` : undefined}
         />
       ) : null}
