@@ -38,6 +38,7 @@ App
 - [[forms-and-components]]: shared form pieces, Sell and Inward details, the palette
 - [[search-select]]: the one matching rule and inline create
 - [[theming]]: dark mode and the per-device tint
+- [[motion]]: duration and curve tokens, reduced motion, loading primitives
 
 Working on the repo
 - [[testing]]: seam and e2e suites, the test login, hydration guards, what each odd spec proves
