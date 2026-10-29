@@ -1,9 +1,7 @@
 "use client";
 
-import "./no-devtools";
-import { useEffect, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { useEffect, useRef, useState } from "react";
+import type { UIMessage } from "ai";
 import { Plus, SendHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -19,58 +17,31 @@ import {
 } from "@/components/ui/message-scroller";
 import { useOnline } from "@/lib/use-online";
 import { AssistantAnswer, PhaseLine } from "./assistant-answer";
+import { useAskPanel, useAskThread } from "./ask-provider";
 import { NO_ANSWER_TEXT, chatErrorText, endedWithoutAnswer } from "./chat-error";
-import { clearChatHistory, loadChatHistory, saveChatHistory } from "./chat-history";
-import { chatPhase } from "./chat-phase";
-import { withoutEarlierQueryRows } from "./request-messages";
-
-const STREAM_THROTTLE_MS = 50;
-
-const transport = new DefaultChatTransport({
-  api: "/api/chat",
-  prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: withoutEarlierQueryRows(messages) } }),
-});
-
-type Props = { readonly email: string; readonly onClose: () => void };
-
-export function ChatThread({ email, onClose }: Props) {
-  const [history, setHistory] = useState<UIMessage[] | null>(null);
-  useEffect(() => {
-    void loadChatHistory(email).then(setHistory);
-  }, [email]);
-  return history ? <ChatSession email={email} history={history} onClose={onClose} /> : null;
-}
 
 function textOf(message: UIMessage): string[] {
   return message.parts.flatMap((part) => (part.type === "text" && part.text ? [part.text] : []));
 }
 
-function ChatSession({ email, history, onClose }: Props & { readonly history: UIMessage[] }) {
-  const { messages, sendMessage, setMessages, stop, status, error, clearError } = useChat({
-    messages: history,
-    transport,
-    throttle: STREAM_THROTTLE_MS,
-  });
+export function ChatThread() {
+  const { messages, sendMessage, status, error, phase, historyReady, announcement, newChat } = useAskThread();
+  const { panel, close } = useAskPanel();
   const online = useOnline();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
   const busy = status === "submitted" || status === "streaming";
-  const phase = chatPhase(messages, status);
 
   useEffect(() => {
-    if (status === "ready") void (messages.length > 0 ? saveChatHistory(email, messages) : clearChatHistory(email));
-  }, [email, messages, status]);
+    if (panel === "open") inputRef.current?.focus({ preventScroll: true });
+  }, [panel]);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const text = draft.trim();
     setDraft("");
     void sendMessage({ text });
-  }
-
-  function newChat() {
-    void stop();
-    clearError();
-    setMessages([]);
+    inputRef.current?.focus({ preventScroll: true });
   }
 
   return (
@@ -82,7 +53,7 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
             <Plus />
             New chat
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={close}>
             <X />
           </Button>
         </div>
@@ -138,9 +109,9 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
             aria-label="Ask a question"
             placeholder="Ask about your stock and sales"
             value={draft}
-            disabled={!online}
+            disabled={!online || !historyReady}
             onChange={(event) => setDraft(event.target.value)}
-            autoFocus
+            ref={inputRef}
             className="h-10"
           />
           <Button type="submit" size="icon-lg" aria-label="Send" disabled={!online || busy || !draft.trim()}>
@@ -149,6 +120,9 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
         </div>
         {online ? null : <p className="text-xs text-muted-foreground">You are offline, chat needs a connection</p>}
       </form>
+      <p role="status" data-testid="chat-live" className="sr-only">
+        {announcement}
+      </p>
     </>
   );
 }

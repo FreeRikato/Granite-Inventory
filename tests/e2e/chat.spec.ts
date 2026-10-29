@@ -20,7 +20,9 @@ test.beforeEach(async () => {
 
 async function openPanel(page: Page) {
   await page.getByRole("button", { name: "Ask", exact: true }).click();
-  await expect(page.getByTestId("chat-panel")).toBeVisible();
+  const panel = page.getByTestId("chat-panel");
+  await expect(panel).toBeVisible();
+  await panel.evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
 }
 
 async function storedThread(page: Page, email: string): Promise<unknown> {
@@ -337,6 +339,7 @@ test("a turn that ends on tool calls that returned nothing says so in the thread
     "I could not finish that answer. Try asking a narrower question.",
   );
   await expect(panel.getByTestId("chat-error")).toHaveCount(0);
+  await expect(panel.getByTestId("chat-live")).toBeEmpty();
 });
 
 test("a turn that ends on raw tool-call text shows the rows it found as a table", async ({ page, signIn }) => {
@@ -517,6 +520,25 @@ test("a finished answer that drew nothing does not keep a phase line", async ({ 
   await expect(panel.getByRole("button", { name: "Send" })).toBeDisabled();
   await expect(panel.getByTestId("chat-user-message")).toHaveCount(1);
   await expect(panel.getByTestId("chat-phase")).toHaveCount(0);
+});
+
+test("a stream that fails after drawing part of an answer does not announce Answer ready", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  await page.route("**/api/chat", (route) =>
+    route.fulfill(
+      streamResponse([
+        ...textChunks('root = Stack([a])\na = Text("Half an answer")\n'),
+        { type: "error", errorText: "boom" },
+      ]),
+    ),
+  );
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await ask(page, "anything");
+  await expect(panel.getByText("Half an answer")).toBeVisible();
+  await expect(panel.getByTestId("chat-error")).toBeVisible();
+  await expect(panel.getByTestId("chat-live")).toBeEmpty();
 });
 
 type Script = ReadonlyArray<Chunk | number>;
@@ -890,4 +912,174 @@ test("a streaming chart holds a placeholder at its final size and mounts once wi
   } finally {
     await slow.close();
   }
+});
+
+const askButton = (page: Page) => page.getByRole("button", { name: "Ask", exact: true });
+
+test("closing Ask mid-stream does not stop the answer, and reopening 5s later shows it with one request", async ({
+  page,
+  signIn,
+}) => {
+  const panel = page.getByTestId("chat-panel");
+  const slow = await serveScript(longAnswer);
+  try {
+    let calls = 0;
+    await page.route("**/api/chat", (route) => {
+      calls += 1;
+      return route.continue({ url: slow.url });
+    });
+    await signIn("operator");
+    await page.goto("/");
+    await openPanel(page);
+    await ask(page, "stale by supplier");
+    await expect(panel.getByText("Line 0", { exact: true })).toBeVisible();
+
+    await expect(page.locator("[data-ask-open]")).toHaveCount(1);
+    await panel.getByRole("button", { name: "Close" }).click();
+    await expect(panel).toHaveAttribute("inert", "");
+    await expect(page.locator("[data-ask-open]")).toHaveCount(0);
+    await page.waitForTimeout(5000);
+
+    await askButton(page).click();
+    await expect(panel).not.toHaveAttribute("inert");
+    await expect(page.locator("[data-ask-open]")).toHaveCount(1);
+    await expect(panel.getByText(`Line ${LONG_LINES - 1}`, { exact: true })).toBeVisible();
+    await expect(panel.getByTestId("chat-user-message")).toHaveText("stale by supplier");
+    await expect(panel.getByTestId("chat-phase")).toHaveCount(0);
+    expect(calls).toBe(1);
+  } finally {
+    await slow.close();
+  }
+});
+
+test("Ask slides in over 200ms on transform and opacity, and its first frame already holds the header and input", async ({
+  page,
+  signIn,
+}) => {
+  const panel = page.getByTestId("chat-panel");
+  await signIn("operator");
+  await page.goto("/");
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+
+  const firstFrame = await askButton(page).evaluate(async (button) => {
+    if (button instanceof HTMLElement) button.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const panelEl = document.querySelector("[data-testid='chat-panel']");
+    return {
+      header: panelEl?.querySelector("h2")?.textContent ?? null,
+      input: panelEl?.querySelector("input[aria-label='Ask a question']") !== null,
+      transform: panelEl ? getComputedStyle(panelEl).transform : null,
+    };
+  });
+  expect(firstFrame.header).toBe("Ask");
+  expect(firstFrame.input).toBe(true);
+  expect(firstFrame.transform).not.toBe("none");
+
+  const transition = await panel.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { property: style.transitionProperty, duration: style.transitionDuration };
+  });
+  expect(transition).toEqual({ property: "transform, opacity", duration: "0.2s" });
+
+  await panel.getByRole("button", { name: "Close" }).click();
+  await expect(panel).toHaveAttribute("inert", "");
+  await expect.poll(() => panel.evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
+});
+
+test("with reduced motion Ask fades and does not slide", async ({ page, signIn }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  const property = await page.getByTestId("chat-panel").evaluate((el) => getComputedStyle(el).transitionProperty);
+  expect(property).toBe("opacity");
+});
+
+test("Escape closes Ask and returns focus to the Ask button, and the live region announces phases and Answer ready only", async ({
+  page,
+  signIn,
+}) => {
+  const panel = page.getByTestId("chat-panel");
+  const slow = await serveSlowAnswer();
+  try {
+    await page.route("**/api/chat", (route) => route.continue({ url: slow.url }));
+    await signIn("operator");
+    await page.goto("/");
+    await openPanel(page);
+    const live = panel.getByTestId("chat-live");
+    await expect(live).toHaveAttribute("role", "status");
+    await expect(live).toBeEmpty();
+    const input = panel.getByRole("textbox", { name: "Ask a question" });
+    await expect(input).toBeFocused();
+    await page.keyboard.type("abc");
+    await expect(input).toHaveValue("abc");
+    await expect(panel).not.toHaveAttribute("inert");
+    await input.fill("");
+
+    await page.evaluate(() => {
+      const heard = new Set<string>();
+      Object.assign(window, { heard });
+      new MutationObserver(() => {
+        const text = document.querySelector("[data-testid='chat-live']")?.textContent?.trim();
+        if (text) heard.add(text);
+      }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
+    await ask(page, "stale by supplier");
+    await expect(panel.getByText("Slow answer shown")).toBeVisible();
+    await expect(live).toHaveText("Answer ready");
+    const heard: string[] = await page.evaluate(() => [...Reflect.get(window, "heard")]);
+    expect(heard).toEqual(["Thinking...", "Querying your data...", "Writing the answer...", "Answer ready"]);
+
+    await expect(input).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(panel).toHaveAttribute("inert", "");
+    await expect(askButton(page)).toBeFocused();
+    await expect(askButton(page)).toHaveAttribute("aria-expanded", "false");
+  } finally {
+    await slow.close();
+  }
+});
+
+test("the saved thread is read before the input opens and nothing deletes it on the way", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await ask(page, QUESTION);
+  await expect(panel.locator("[data-slot='chart']")).toBeVisible();
+  await expect.poll(() => storedThread(page, "operator@test.local")).toBeDefined();
+
+  await page.addInitScript(() => {
+    const deleted: unknown[] = [];
+    Object.assign(window, { deleted });
+    const remove = IDBObjectStore.prototype.delete;
+    IDBObjectStore.prototype.delete = function (key) {
+      deleted.push(key);
+      return remove.call(this, key);
+    };
+    const read = IDBObjectStore.prototype.get;
+    IDBObjectStore.prototype.get = function (key) {
+      const request = read.call(this, key);
+      if (typeof key !== "string" || !key.startsWith("granite-chat:")) return request;
+      return new Proxy(request, {
+        set(target, property, value) {
+          if (property !== "onsuccess") return Reflect.set(target, property, value);
+          target.onsuccess = (event) => setTimeout(() => value.call(target, event), 1500);
+          return true;
+        },
+        get(target, property) {
+          const value = Reflect.get(target, property);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+    };
+  });
+  await page.reload();
+  await expect(page.getByTestId("kpi-active")).toBeVisible();
+  await openPanel(page);
+  const input = panel.getByRole("textbox", { name: "Ask a question" });
+  await expect(input).toBeDisabled();
+  await expect(input).toBeEnabled();
+  await expect(panel.getByTestId("chat-user-message")).toHaveText(QUESTION);
+  expect(await page.evaluate(() => Reflect.get(window, "deleted"))).toEqual([]);
 });
