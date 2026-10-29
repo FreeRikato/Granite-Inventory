@@ -10,8 +10,19 @@ code:
   - app/(app)/sell/page.tsx
   - app/(app)/customers/page.tsx
   - app/(app)/inward/page.tsx
+  - app/(app)/customers/customers-view.tsx
+  - app/(app)/yard/loading.tsx
+  - app/(app)/sell/loading.tsx
+  - app/(app)/inward/loading.tsx
+  - app/(app)/customers/[id]/loading.tsx
   - components/data-age.tsx
   - components/view-state.tsx
+  - components/skeletons/overview-skeleton.tsx
+  - components/skeletons/yard-skeleton.tsx
+  - components/skeletons/sell-skeleton.tsx
+  - components/skeletons/inward-skeleton.tsx
+  - components/skeletons/customers-skeleton.tsx
+  - tests/e2e/route-cls.spec.ts
   - components/shell/member-provider.tsx
   - components/shell/offline-notice.tsx
   - lib/use-online.ts
@@ -47,8 +58,8 @@ The duplicate-phone check in `createCustomerAction` reads every customer that ha
 - The query cache is persisted to IndexedDB, so the next open (a reload, the next morning) paints the last known rows before Supabase answers. Rows older than a day are dropped rather than shown, and `gcTime` must be at least that long or the persister has nothing to restore. The persister writes at most once a second.
 - The persisted cache is keyed by the signed-in member's email: two accounts on one device never see each other's rows, and signing in as someone else starts empty.
 - Rows restored from disk come from a previous page life, however recent; a sale recorded just before a reload may not have reached the persister. So everything restored is marked stale, the screen paints from disk and every active query refetches at once.
-- `DataAge` says how old the rows on screen are ("Updated 9h ago" flips to "just now" when the refetch lands), re-rendering once a minute so the label ages with no data change.
-- The cache can be restored before hydration finishes, so views render the skeleton until a hydration flag flips; otherwise their rows would not match the server's skeleton.
+- `DataAge` says how old the rows on screen are ("Updated 9h ago" flips to "just now" when the refetch lands), re-rendering once a minute so the label ages with no data change. The row is always 16px tall, so the label changing never moves the page. Its clock is the current minute, a value that is the same on every read until the timer ticks, which `useSyncExternalStore` requires ([[motion]]).
+- The cache can be restored before hydration finishes, so views render the skeleton until a hydration flag flips; otherwise their rows would not match the server's skeleton. The skeleton is the route's own ([[motion]]), the same markup as its `loading.tsx` and its `Suspense` fallback, so the page leaves it once.
 
 ## After a write
 
@@ -58,7 +69,7 @@ Every write goes through a server action. Afterwards the caller invalidates both
 
 - The app layout resolves the signed-in Team Member once per document load and hands it to client pages through `MemberProvider`. It reads the session and the business name in parallel, so a hard load pays for the slower of the two instead of their sum. Both run as the user, so a non-member's settings read returns null under RLS and nothing renders before the redirect ([[auth-session]]).
 - The command palette loads its data (pages, Stock Lines, Customers) on first open through the browser client. The data is small and RLS applies as usual. A Stock Line opens the yard filtered to it.
-- `view-state.tsx` is the shared skeleton and error line for these pages.
+- `view-state.tsx` holds the shared pieces for these pages: the busy wrapper a skeleton sits in, the fade-in wrapper loaded content enters through, and the error line.
 
 ## What the specs prove
 
@@ -66,6 +77,7 @@ Every write goes through a server action. Afterwards the caller invalidates both
 - `router-cache.spec.ts`: a sidebar click reaches the server as an RSC fetch (header `rsc: 1`). Prefetches carry `next-router-prefetch` and are not counted. The point is whether a revisit re-renders on the server or is served from the router cache.
 - `persisted-reads.spec.ts`: holds every Supabase read and expects rows to arrive from disk anyway, and a refresh to follow however recent the disk copy is.
 - `loading.spec.ts`: either the route placeholder carries the title (a cold navigation) or the prefetched shell already painted the real heading and only the rows area is busy. Both keep the destination title on screen while loading. It waits for Overview's own rows before observing, so the first busy element seen belongs to the navigation.
+- `route-cls.spec.ts`: each page's cold load shows its own skeleton and no other (a parent `loading.tsx` painting the wrong one is the failure it catches), the content enters with the 200ms fade, layout shift stays within 0.02, the data age row keeps one height across a reload that paints from the disk cache, and a clock that moves on every read does not break `DataAge`.
 
 Related: [[yard]], [[testing]].
 

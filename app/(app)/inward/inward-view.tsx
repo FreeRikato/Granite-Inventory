@@ -1,18 +1,19 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
 import { Notice } from "@/components/notice";
 import { useMember } from "@/components/shell/member-provider";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import { slotChoices } from "@/lib/domain";
 import { useHydrated } from "@/lib/query/provider";
 import { productsQuery, recentBatchesQuery, recentStacksQuery, suppliersQuery } from "@/lib/query/reads";
 import { InwardForm } from "./inward-form";
 import { RecentBatches } from "./recent-batches";
 
-export function InwardView() {
+export function InwardView({ skeleton }: { readonly skeleton: ReactNode }) {
   const isAdmin = useMember().role === "ADMIN";
   const hydrated = useHydrated();
   const products = useQuery(productsQuery);
@@ -24,7 +25,7 @@ export function InwardView() {
   if (!hydrated || !products.isSuccess || !suppliers.isSuccess || !recent.isSuccess || !stacks.isSuccess) {
     const failed = [products, suppliers, recent, stacks].find((q) => q.isError);
     if (failed?.isError) return <ViewError what="the inward form" message={failed.error.message} />;
-    return <ViewSkeleton />;
+    return skeleton;
   }
 
   const fetching = products.isFetching || suppliers.isFetching || recent.isFetching || stacks.isFetching;
@@ -36,7 +37,7 @@ export function InwardView() {
   );
 
   return (
-    <>
+    <ViewReady>
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
@@ -62,6 +63,6 @@ export function InwardView() {
             : null
         }
       />
-    </>
+    </ViewReady>
   );
 }

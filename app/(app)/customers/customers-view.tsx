@@ -1,19 +1,20 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import { useHydrated } from "@/lib/query/provider";
 import { customerListQuery } from "@/lib/query/reads";
 import { CustomerList } from "./customer-list";
 
-export function CustomersView() {
+export function CustomersView({ skeleton }: { readonly skeleton: ReactNode }) {
   const hydrated = useHydrated();
   const list = useQuery(customerListQuery);
 
   if (!hydrated || !list.isSuccess) {
     if (list.isError) return <ViewError what="the customers" message={list.error.message} />;
-    return <ViewSkeleton />;
+    return skeleton;
   }
 
   const customers = list.data;
@@ -21,7 +22,7 @@ export function CustomersView() {
   const trusts = customers.filter((c) => c.customer_type === "TRUST").length;
 
   return (
-    <>
+    <ViewReady>
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={list.dataUpdatedAt} fetching={list.isFetching} />
       </div>
@@ -33,6 +34,6 @@ export function CustomersView() {
           { label: "Trusts", value: trusts },
         ]}
       />
-    </>
+    </ViewReady>
   );
 }

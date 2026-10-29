@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import { MovingBars } from "@/components/dashboard/moving-bars";
 import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import { formatNumber, formatPercent, formatRupeesCompact, formatSize } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
@@ -95,7 +96,7 @@ function TopCustomersCard() {
   );
 }
 
-export function OverviewView() {
+export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
   const hydrated = useHydrated();
   const kpis = useQuery(dashboardKpisQuery);
   const moving = useQuery(fastMovingQuery);
@@ -105,7 +106,7 @@ export function OverviewView() {
   if (!hydrated || !kpis.isSuccess || !moving.isSuccess || !batches.isSuccess) {
     const failed = [kpis, moving, batches].find((q) => q.isError);
     if (failed?.isError) return <ViewError what="the overview" message={failed.error.message} />;
-    return <ViewSkeleton />;
+    return skeleton;
   }
 
   const k = kpis.data;
@@ -121,7 +122,7 @@ export function OverviewView() {
   const change = lastMonth > 0 ? ((active - lastMonth) / lastMonth) * 100 : null;
 
   return (
-    <>
+    <ViewReady>
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
@@ -239,6 +240,6 @@ export function OverviewView() {
           </ul>
         )}
       </section>
-    </>
+    </ViewReady>
   );
 }

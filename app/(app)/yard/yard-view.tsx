@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
@@ -13,7 +14,7 @@ import { YardFilters } from "@/components/yard/yard-filters";
 import { slotChoices, slotLabel, stackLabel } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import {
   WINDOW_AFTER,
   chunkStacks,
@@ -24,7 +25,7 @@ import {
   type YardBatch,
 } from "@/lib/yard";
 
-export function YardView() {
+export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
   const params = useSearchParams();
   const raw: Record<string, string> = Object.fromEntries(params.entries());
   const query = parseYardQuery(raw);
@@ -37,7 +38,7 @@ export function YardView() {
   const options = useMemo(() => filterOptions(batches.data ?? []), [batches.data]);
 
   if (!hydrated || batches.isPending) {
-    return <ViewSkeleton />;
+    return skeleton;
   }
   if (batches.isError) {
     return <ViewError what="the yard" message={batches.error.message} />;
@@ -67,7 +68,7 @@ export function YardView() {
   const slotOptions = slots.map((slot) => ({ value: slot, label: slotLabel(slot) }));
 
   return (
-    <>
+    <ViewReady>
       <YardFilters
         query={query}
         slots={slotOptions}
@@ -91,7 +92,7 @@ export function YardView() {
       ) : (
         <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
       )}
-    </>
+    </ViewReady>
   );
 }
 

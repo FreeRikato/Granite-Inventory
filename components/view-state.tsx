@@ -1,10 +1,15 @@
-export function ViewSkeleton() {
+import type { ReactNode } from "react";
+
+export function ViewSkeleton({ children }: { readonly children: ReactNode }) {
   return (
     <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-7">
-      <div className="h-48 rounded-card bg-card shadow-sm" />
-      <div className="h-64 rounded-card bg-card shadow-sm" />
+      {children}
     </div>
   );
+}
+
+export function ViewReady({ children }: { readonly children: ReactNode }) {
+  return <div className="flex animate-in flex-col gap-7 fade-in motion-enter">{children}</div>;
 }
 
 export function ViewError({ what, message }: { readonly what: string; readonly message: string }) {
