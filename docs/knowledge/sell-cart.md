@@ -4,6 +4,7 @@ code:
   - app/(app)/sell/sell-form.tsx
   - app/(app)/sell/cart.ts
   - app/(app)/sell/area-card.tsx
+  - app/(app)/sell/split-dialog.tsx
   - lib/format.ts
   - app/(app)/sell/actions.ts
   - lib/schemas/sale.ts
@@ -32,7 +33,13 @@ Adding a line merges into an existing one only when the Batch, the price per pie
 
 Every available figure on the form is the database figure minus the pieces already in the cart: the Product option hints, the Batch list, the quantity hint and the check made when a line is added. Without it a second line could promise stone the first line already took. Choosing a Product selects its oldest Batch that still has pieces after the cart; a Batch the cart has used up stays listed at 0 available.
 
-Asking for more than a Batch has left is refused when the line is added, with the same sentence the database uses ("Only N available in batch CODE"), so the message reads the same whether the form or `record_bill` catches it. Splitting across Batches is not offered yet; the user lowers the quantity or adds the next Batch as its own line. The database stays the authority: if another sale takes the stone while the order is open, Record Sale is refused, the message shows and the cart keeps its lines ([[readable-refusals]]).
+Asking for more than the chosen Batch has left (after the cart) opens the split modal instead of refusing. The database stays the authority: if another sale takes the stone while the order is open, Record Sale is refused, the message shows and the cart keeps its lines ([[readable-refusals]]).
+
+## Splitting across Batches
+
+The modal lists the Stock Line's Batches oldest first, each with what is available after the cart and a count field. The counts start filled oldest first from the oldest Batch whatever Batch was chosen: asking 20 with 14 in the oldest and 30 in the next prefills 14 and 6, and the running total reads "20 of 20". Add is enabled only when every count is a whole number from 0 up to that row's available and the counts sum to the quantity asked, so 15 and 5 or 14.5 and 5.5 or -5 and 25 all leave it disabled even though they add to 20. A Batch the cart has used up stays listed at 0 available, which is how asking for one more piece after taking all 14 takes it from the next Batch.
+
+Add creates one cart line per Batch with a non-zero count, all at the price and stickering entered, and each goes through the merge rule above, so a Batch already in the cart at the same price just gains pieces. When every Batch together holds less than the quantity, no modal opens and the form says "Only N in stock", N being what is left across the Batches after the cart. Closing the modal adds nothing and keeps the fields as typed; focus returns to "Add to order", or to the Product select once Add has cleared the form and disabled that button. The list scrolls inside the modal and the count fields have a fixed width, so the modal fits a 390px screen.
 
 ## Area card
 

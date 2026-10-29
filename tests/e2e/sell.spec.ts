@@ -175,7 +175,7 @@ test("pieces already in the order are taken off every available figure and canno
   await page.getByLabel("Quantity Sold").fill("3");
   await page.getByLabel("Stone Sale Price (₹)").fill("2600");
   await page.getByRole("button", { name: "Add to order" }).click();
-  await expect(page.getByText("Only 2 available in batch JB-FIVE-01")).toBeVisible();
+  await expect(page.getByText("Only 2 in stock")).toBeVisible();
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
 
   await page.getByRole("button", { name: "Remove Jet Black JB-FIVE-01" }).click();
@@ -297,7 +297,7 @@ test("a deep-linked batch remains selected over the FIFO default", async ({ page
   await expect(fifo.nth(1)).toHaveAttribute("aria-checked", "true");
 });
 
-test("selling more than a batch holds is refused when adding to the order", async ({ page, signIn }) => {
+test("selling more than the stock line holds is refused when adding to the order", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/sell");
   await page.getByRole("combobox", { name: "Customer" }).click();
@@ -308,7 +308,8 @@ test("selling more than a batch holds is refused when adding to the order", asyn
   await page.getByLabel("Quantity Sold").fill("7");
   await page.getByLabel("Stone Sale Price (₹)").fill("2600");
   await page.getByRole("button", { name: "Add to order" }).click();
-  await expect(page.getByText(/Only 6 available in batch JB-FIVE-01/)).toBeVisible();
+  await expect(page.getByText("Only 6 in stock")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByTestId("cart-line")).toHaveCount(0);
 });
 
@@ -368,7 +369,7 @@ test("a refusal clears as soon as the quantity is fixed", async ({ page, signIn 
 
   await page.getByLabel("Quantity Sold").fill("99");
   await page.getByRole("button", { name: "Add to order" }).click();
-  const refusal = page.getByText(/Only \d+ available in batch BP-OLD-01/);
+  const refusal = page.getByText("Only 14 in stock");
   await expect(refusal).toBeVisible();
 
   await page.getByLabel("Quantity Sold").fill("1");
@@ -417,4 +418,149 @@ test("a sized line shows its Area in the picker and in the order, and a Memorial
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: DOOM_STONE }).click();
   await expect(page.getByTestId("area-card")).toHaveCount(1);
+});
+
+async function seedSplitStock() {
+  await sql(`update public.batches set initial_units = 14, units_sold = 0 where batch_code = 'BP-OLD-01'`);
+  await sql(`update public.batches set initial_units = 30, units_sold = 0 where batch_code = 'BP-NEW-01'`);
+}
+
+async function askForBlackPearl(page: Page, quantity: string, options: { batchCode?: string; price?: string } = {}) {
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: BLACK_PEARL }).click();
+  if (options.batchCode) {
+    await page.getByTestId("fifo-batch").filter({ hasText: options.batchCode }).click();
+  }
+  await page.getByLabel("Quantity Sold").fill(quantity);
+  await page.getByLabel("Stone Sale Price (₹)").fill(options.price ?? "1650");
+  await page.getByRole("button", { name: "Add to order" }).click();
+}
+
+test("asking for more than the selected batch holds splits the quantity across batches in a modal", async ({
+  page,
+  signIn,
+}) => {
+  await seedSplitStock();
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: BLACK_PEARL }).click();
+  await page.getByLabel("Quantity Sold").fill("20");
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
+  await page.getByLabel("Stickering Cost (₹)").fill("100");
+  await page.getByLabel("Stickering Price (₹)").fill("250");
+  await page.getByRole("button", { name: "Add to order" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Split 20 pieces across batches" });
+  await expect(dialog).toBeVisible();
+  const rows = dialog.getByTestId("split-row");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText("BP-OLD-01");
+  await expect(rows.nth(0)).toContainText("14 available");
+  await expect(rows.nth(1)).toContainText("BP-NEW-01");
+  await expect(rows.nth(1)).toContainText("30 available");
+  const oldCount = dialog.getByLabel("Take from BP-OLD-01");
+  const newCount = dialog.getByLabel("Take from BP-NEW-01");
+  await expect(oldCount).toHaveValue("14");
+  await expect(newCount).toHaveValue("6");
+  const total = dialog.getByTestId("split-total");
+  const add = dialog.getByRole("button", { name: "Add", exact: true });
+  await expect(total).toHaveText("20 of 20");
+  await expect(add).toBeEnabled();
+  await expect(add).toHaveCSS("opacity", "1");
+
+  await newCount.fill("5");
+  await expect(total).toHaveText("19 of 20");
+  await expect(add).toBeDisabled();
+  await expect(add).toHaveCSS("opacity", "0.5");
+
+  await newCount.fill("6");
+  await expect(add).toBeEnabled();
+  await expect(add).toHaveCSS("opacity", "1");
+  await add.click();
+
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const lines = page.getByTestId("cart-line");
+  await expect(lines).toHaveCount(2);
+  await expect(lines.nth(0)).toContainText("BP-OLD-01 · 14 × ₹1,650 + ₹250 stickering");
+  await expect(lines.nth(1)).toContainText("BP-NEW-01 · 6 × ₹1,650 + ₹250 stickering");
+  await expect(page.getByTestId("order-count")).toHaveText("2 lines · 20 pieces");
+  const product = page.getByRole("combobox", { name: "Product" });
+  await expect.poll(() => product.evaluate((element) => document.activeElement === element)).toBe(true);
+});
+
+test("a quantity the selected batch covers adds with no modal", async ({ page, signIn }) => {
+  await seedSplitStock();
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await askForBlackPearl(page, "14");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByTestId("cart-line")).toHaveCount(1);
+  await expect(page.getByTestId("cart-line")).toContainText("BP-OLD-01 · 14 × ₹1,650");
+});
+
+test("pieces already in the order count against the split and a request beyond all stock is refused", async ({
+  page,
+  signIn,
+}) => {
+  await seedSplitStock();
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await askForBlackPearl(page, "14", { batchCode: "BP-OLD-01" });
+  await expect(page.getByTestId("cart-line")).toHaveCount(1);
+
+  await askForBlackPearl(page, "1", { batchCode: "BP-OLD-01" });
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByTestId("split-row")).toHaveCount(2);
+  await expect(dialog.getByTestId("split-row").nth(0)).toContainText("0 available");
+  await expect(dialog.getByTestId("split-total")).toHaveText("1 of 1");
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByTestId("cart-line")).toHaveCount(2);
+  await expect(page.getByTestId("cart-line").nth(1)).toContainText("BP-NEW-01 · 1 × ₹1,650");
+
+  await askForBlackPearl(page, "30");
+  await expect(page.getByText("Only 29 in stock")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByTestId("cart-line")).toHaveCount(2);
+});
+
+test("closing the split modal adds nothing and returns focus to Add to order", async ({ page, signIn }) => {
+  await seedSplitStock();
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await askForBlackPearl(page, "20");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const trigger = page.getByRole("button", { name: "Add to order" });
+  await expect.poll(() => trigger.evaluate((element) => document.activeElement === element)).toBe(true);
+  await expect(page.getByTestId("cart-line")).toHaveCount(0);
+  await expect(page.getByLabel("Quantity Sold")).toHaveValue("20");
+});
+
+test("the split modal lists only the batches that still have stock", async ({ page, signIn }) => {
+  await seedSplitStock();
+  await sql(`update public.batches set units_sold = initial_units where batch_code = 'BP-OLD-01'`);
+  await sql(`insert into public.batches (batch_code, variant_id, supplier_id, purchase_date, length_ft, breadth_ft,
+      thickness_mm, slot, stack_number, initial_units, units_sold, unit_purchase_price, freight_cost)
+    select 'BP-MID-01', variant_id, supplier_id, purchase_date - 40, length_ft, breadth_ft, thickness_mm, slot,
+      stack_number, 5, 0, unit_purchase_price, freight_cost from public.batches where batch_code = 'BP-NEW-01'`);
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Walk-in Customer/);
+
+  await askForBlackPearl(page, "33");
+  const rows = page.getByRole("dialog").getByTestId("split-row");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText("BP-MID-01");
+  await expect(rows.nth(1)).toContainText("BP-NEW-01");
 });

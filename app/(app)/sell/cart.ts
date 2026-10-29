@@ -38,6 +38,20 @@ export function piecesInCart(cart: readonly CartLine[], batchId: string | null):
   return cart.reduce((sum, line) => (line.batchId === batchId ? sum + line.quantity : sum), 0);
 }
 
+export function prefillSplit(availables: readonly number[], quantity: number): readonly number[] {
+  let left = quantity;
+  return availables.map((available) => {
+    const take = Math.min(available, left);
+    left -= take;
+    return take;
+  });
+}
+
+export function splitCovers(availables: readonly number[], takes: readonly number[], quantity: number): boolean {
+  const withinStock = takes.every((take, i) => Number.isInteger(take) && take >= 0 && take <= (availables[i] ?? 0));
+  return withinStock && takes.reduce((sum, take) => sum + take, 0) === quantity;
+}
+
 export function orderFigures(cart: readonly CartLine[]): MarginBreakdown {
   const lines = cart.map(computeMargin);
   const sum = (pick: (m: MarginBreakdown) => number) => lines.reduce((total, m) => total + pick(m), 0);

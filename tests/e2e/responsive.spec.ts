@@ -176,3 +176,50 @@ test("mobile customers list fits a 375px screen with a thousand stress-like cust
   await expect(page.getByTestId("customer-row")).toHaveCount(1001);
   await expectNoHorizontalPageScroll(page);
 });
+
+test("mobile sell cart lines, area cards and split modal fit a 390px screen", async ({ page, signIn, isMobile }) => {
+  test.skip(!isMobile, "responsive behavior is covered by the mobile project");
+  await resetDomainData();
+  await seedYard();
+  await sql(`update public.batches set initial_units = 14, units_sold = 0 where batch_code = 'BP-OLD-01'`);
+  await sql(`update public.batches set initial_units = 30, units_sold = 0 where batch_code = 'BP-NEW-01'`);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.locator("#customer").click();
+  await page.getByRole("option", { name: /Walk-in Customer/ }).click();
+  await page.locator("#line").click();
+  await page.getByRole("option", { name: /Black Pearl/ }).click();
+  await page.getByLabel("Quantity Sold").fill("5");
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  await expect(page.getByTestId("cart-line")).toHaveCount(1);
+  await expectReachableOnMobile(page, page.getByTestId("cart-line").first().getByTestId("area-card"));
+  await expectNoHorizontalPageScroll(page);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: /Black Pearl/ }).click();
+  await page.getByLabel("Quantity Sold").fill("20");
+  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByRole("button", { name: "Add to order" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByTestId("split-row")).toHaveCount(2);
+  await expectReachableOnMobile(page, dialog);
+  for (const box of [dialog, dialog.getByRole("list"), ...(await dialog.getByTestId("split-row").all())]) {
+    await expectReachableOnMobile(page, box);
+    const dimensions = await measure(box);
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+  }
+  await expectReachableOnMobile(page, dialog.getByRole("button", { name: "Add", exact: true }));
+  await expectNoHorizontalPageScroll(page);
+
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByTestId("cart-line")).toHaveCount(2);
+  for (const line of await page.getByTestId("cart-line").all()) {
+    await expectReachableOnMobile(page, line.getByTestId("area-card"));
+    await expectReachableOnMobile(page, line.getByRole("button", { name: /^Remove / }));
+  }
+  await expectNoHorizontalPageScroll(page);
+});

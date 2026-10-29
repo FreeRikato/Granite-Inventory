@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,13 +24,14 @@ import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSize, todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
 import { computeMargin, marginHealth } from "@/lib/margin";
-import { billLineSchema } from "@/lib/schemas/sale";
+import { billLineSchema, type BillLineInput } from "@/lib/schemas/sale";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordBillAction } from "./actions";
 import { AreaCard } from "./area-card";
 import { addLine, describeOrder, orderFigures, piecesInCart, removeLine, type CartLine } from "./cart";
+import { SplitDialog } from "./split-dialog";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
 type Line = Tables<"v_stock_lines">;
@@ -76,6 +77,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [stickeringPrice, setStickeringPrice] = useState("");
   const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
   const [cart, setCart] = useState<readonly CartLine[]>([]);
+  const [split, setSplit] = useState<BillLineInput | null>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
   const addRefusal = useRefusal([
     cart,
     lineKey,
@@ -128,29 +131,49 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       return;
     }
     const line = parsed.data;
-    if (line.quantity > remaining(batch)) {
-      addRefusal.refuse(`Only ${remaining(batch)} available in batch ${batch.batch_code}`);
+    if (line.quantity <= remaining(batch)) {
+      addToCart(cartLineFor(batch, line, line.quantity));
       return;
     }
-    setCart(
-      addLine(cart, {
-        batchId: line.batchId,
-        batchCode: batch.batch_code ?? "",
-        productName: batch.product_name ?? "",
-        size: formatSize({
-          length_ft: batch.length_ft,
-          breadth_ft: batch.breadth_ft,
-          thickness_mm: batch.thickness_mm,
-        }),
-        lengthFt: batch.length_ft,
-        breadthFt: batch.breadth_ft,
-        quantity: line.quantity,
-        salePrice: line.salePrice,
-        landedCost: batch.landed_cost ?? 0,
-        stickering: line.hasStickering ? { cost: line.stickeringCost, price: line.stickeringPrice } : null,
-      }),
-    );
+    const stock = lineBatches.reduce((sum, b) => sum + remaining(b), 0);
+    if (line.quantity > stock) {
+      addRefusal.refuse(`Only ${stock} in stock`);
+      return;
+    }
+    setSplit(line);
+  }
+
+  function cartLineFor(b: Batch, line: BillLineInput, pieces: number): CartLine {
+    return {
+      batchId: b.id ?? "",
+      batchCode: b.batch_code ?? "",
+      productName: b.product_name ?? "",
+      size: formatSize({ length_ft: b.length_ft, breadth_ft: b.breadth_ft, thickness_mm: b.thickness_mm }),
+      lengthFt: b.length_ft,
+      breadthFt: b.breadth_ft,
+      quantity: pieces,
+      salePrice: line.salePrice,
+      landedCost: b.landed_cost ?? 0,
+      stickering: line.hasStickering ? { cost: line.stickeringCost, price: line.stickeringPrice } : null,
+    };
+  }
+
+  function addToCart(...added: readonly CartLine[]) {
+    setCart(added.reduce(addLine, cart));
     resetLineFields();
+  }
+
+  function confirmSplit(takes: readonly number[]) {
+    if (!split) return;
+    const added = lineBatches.flatMap((b, i) => ((takes[i] ?? 0) > 0 ? [cartLineFor(b, split, takes[i] ?? 0)] : []));
+    setSplit(null);
+    addToCart(...added);
+  }
+
+  function returnFocusAfterSplit(event: Event) {
+    event.preventDefault();
+    const target = addButtonRef.current?.disabled === false ? addButtonRef.current : document.getElementById("line");
+    target?.focus();
   }
 
   function submit(event: React.FormEvent) {
@@ -330,7 +353,6 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 inputMode="numeric"
                 min="1"
                 step="1"
-                max={batch ? remaining(batch) : undefined}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="h-11"
@@ -404,7 +426,14 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               {addRefusal.error}
             </Notice>
           ) : null}
-          <Button type="button" variant="secondary" disabled={!batch} onClick={addToOrder} className="h-11 w-full">
+          <Button
+            ref={addButtonRef}
+            type="button"
+            variant="secondary"
+            disabled={!batch || pending}
+            onClick={addToOrder}
+            className="h-11 w-full"
+          >
             Add to order
           </Button>
         </div>
@@ -510,6 +539,18 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           {pending ? "Recording..." : cart.length > 1 ? `Record Sale (${cart.length} lines)` : "Record Sale"}
         </Button>
       </aside>
+
+      <SplitDialog
+        quantity={split?.quantity ?? null}
+        rows={lineBatches.map((b) => ({
+          batchId: b.id ?? "",
+          batchCode: b.batch_code ?? "",
+          available: remaining(b),
+        }))}
+        onConfirm={confirmSplit}
+        onClose={() => setSplit(null)}
+        onCloseAutoFocus={returnFocusAfterSplit}
+      />
 
       <CustomerDialog
         draft={newCustomer}

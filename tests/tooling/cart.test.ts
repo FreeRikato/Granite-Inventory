@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { addLine, describeOrder, orderFigures, piecesInCart, removeLine, type CartLine } from "@/app/(app)/sell/cart";
+import {
+  addLine,
+  describeOrder,
+  orderFigures,
+  piecesInCart,
+  prefillSplit,
+  removeLine,
+  splitCovers,
+  type CartLine,
+} from "@/app/(app)/sell/cart";
 
 function line(overrides: Partial<CartLine> = {}): CartLine {
   return {
@@ -65,6 +74,42 @@ describe("removeLine and piecesInCart", () => {
     expect(piecesInCart(cart, "batch-old")).toBe(5);
     expect(piecesInCart(cart, "batch-new")).toBe(4);
     expect(piecesInCart(cart, null)).toBe(0);
+  });
+});
+
+describe("prefillSplit", () => {
+  it("fills the oldest batch first and puts the rest on the next", () => {
+    expect(prefillSplit([14, 30], 20)).toEqual([14, 6]);
+  });
+
+  it("takes only what the first batch needs when it covers the quantity", () => {
+    expect(prefillSplit([14, 30], 10)).toEqual([10, 0]);
+  });
+
+  it("takes nothing from a sold-out batch", () => {
+    expect(prefillSplit([0, 30], 1)).toEqual([0, 1]);
+    expect(prefillSplit([5, 30], 33)).toEqual([5, 28]);
+  });
+});
+
+describe("splitCovers", () => {
+  it("accepts counts that add up to the quantity within each batch's stock", () => {
+    expect(splitCovers([14, 30], [14, 6], 20)).toBe(true);
+    expect(splitCovers([14, 30], [0, 20], 20)).toBe(true);
+  });
+
+  it("refuses counts that add up to less or more", () => {
+    expect(splitCovers([14, 30], [14, 5], 20)).toBe(false);
+    expect(splitCovers([14, 30], [14, 7], 20)).toBe(false);
+  });
+
+  it("refuses a count above a batch's stock even when the sum is right", () => {
+    expect(splitCovers([14, 30], [15, 5], 20)).toBe(false);
+  });
+
+  it("refuses negative and fractional counts even when the sum is right", () => {
+    expect(splitCovers([14, 30], [-5, 25], 20)).toBe(false);
+    expect(splitCovers([14, 30], [13.5, 6.5], 20)).toBe(false);
   });
 });
 
