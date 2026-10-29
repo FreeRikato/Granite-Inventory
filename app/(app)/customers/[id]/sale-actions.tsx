@@ -119,9 +119,9 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
     hasStickering: sale.has_stickering ?? false,
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
     stickeringPrice: sale.stickering_price?.toString() ?? "0",
-    miscExpense: sale.misc_expense?.toString() ?? "0",
   });
   const { error, refuse, clear } = useRefusal(form);
+  const billed = sale.bill_id !== null;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const current = lists.batches.find((b) => b.id === sale.batch_id);
@@ -146,44 +146,54 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Sale Date" htmlFor="es-date">
-          <Input
-            id="es-date"
-            type="date"
-            max={todayIso()}
-            value={form.saleDate}
-            onChange={(e) => set("saleDate", e.target.value)}
-          />
-        </Field>
-        <Field label="Payment Mode" htmlFor="es-payment">
-          <Select
-            value={form.paymentMode}
-            onValueChange={(v) => {
-              if (isPaymentMode(v)) set("paymentMode", v);
-            }}
-          >
-            <SelectTrigger id="es-payment" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAYMENT_MODES.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {PAYMENT_MODE_LABEL[m]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Customer" htmlFor="es-customer">
-          <SearchSelect
-            id="es-customer"
-            className="h-9"
-            options={lists.customers.map((c) => ({ value: c.id, label: c.name, hint: c.phone ?? undefined }))}
-            value={form.customerId}
-            onChange={(v) => set("customerId", v)}
-            placeholder="Customer"
-          />
-        </Field>
+        {billed ? (
+          <>
+            <BilledValue id="es-date" label="Sale Date" value={sale.sale_date ? formatDate(sale.sale_date) : ""} />
+            <BilledValue id="es-payment" label="Payment Mode" value={PAYMENT_MODE_LABEL[form.paymentMode]} />
+            <BilledValue id="es-customer" label="Customer" value={sale.customer_name ?? ""} />
+          </>
+        ) : (
+          <>
+            <Field label="Sale Date" htmlFor="es-date">
+              <Input
+                id="es-date"
+                type="date"
+                max={todayIso()}
+                value={form.saleDate}
+                onChange={(e) => set("saleDate", e.target.value)}
+              />
+            </Field>
+            <Field label="Payment Mode" htmlFor="es-payment">
+              <Select
+                value={form.paymentMode}
+                onValueChange={(v) => {
+                  if (isPaymentMode(v)) set("paymentMode", v);
+                }}
+              >
+                <SelectTrigger id="es-payment" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_MODES.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {PAYMENT_MODE_LABEL[m]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Customer" htmlFor="es-customer">
+              <SearchSelect
+                id="es-customer"
+                className="h-9"
+                options={lists.customers.map((c) => ({ value: c.id, label: c.name, hint: c.phone ?? undefined }))}
+                value={form.customerId}
+                onChange={(v) => set("customerId", v)}
+                placeholder="Customer"
+              />
+            </Field>
+          </>
+        )}
         <Field label="Batch" htmlFor="es-batch">
           <SearchSelect
             id="es-batch"
@@ -199,7 +209,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
           />
         </Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Quantity" htmlFor="es-qty">
           <Input
             id="es-qty"
@@ -218,16 +228,6 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
             step="1"
             value={form.salePrice}
             onChange={(e) => set("salePrice", e.target.value)}
-          />
-        </Field>
-        <Field label="Misc Expense (₹)" htmlFor="es-misc">
-          <Input
-            id="es-misc"
-            type="number"
-            min="0"
-            step="1"
-            value={form.miscExpense}
-            onChange={(e) => set("miscExpense", e.target.value)}
           />
         </Field>
       </div>
@@ -277,5 +277,13 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
         </Button>
       </div>
     </form>
+  );
+}
+
+function BilledValue({ id, label, value }: { id: string; label: string; value: string }) {
+  return (
+    <Field label={label} htmlFor={id} hint="Set by the bill">
+      <Input id={id} readOnly value={value} className="bg-muted" />
+    </Field>
   );
 }

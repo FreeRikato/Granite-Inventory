@@ -156,6 +156,61 @@ export type Database = {
           },
         ]
       }
+      bills: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          payment_mode: string
+          sale_date: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          payment_mode: string
+          sale_date: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          payment_mode?: string
+          sale_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -222,6 +277,7 @@ export type Database = {
       sales: {
         Row: {
           batch_id: string
+          bill_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string
@@ -241,6 +297,7 @@ export type Database = {
         }
         Insert: {
           batch_id: string
+          bill_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id: string
@@ -260,6 +317,7 @@ export type Database = {
         }
         Update: {
           batch_id?: string
+          bill_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string
@@ -304,6 +362,13 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "v_yard_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
             referencedColumns: ["id"]
           },
           {
@@ -611,6 +676,7 @@ export type Database = {
         Row: {
           batch_code: string | null
           batch_id: string | null
+          bill_id: string | null
           breadth_ft: number | null
           category: string | null
           created_at: string | null
@@ -625,7 +691,6 @@ export type Database = {
           length_ft: number | null
           margin: number | null
           margin_pct: number | null
-          misc_expense: number | null
           notes: string | null
           payment_mode: string | null
           product_abbreviation: string | null
@@ -649,7 +714,15 @@ export type Database = {
           variant_id: string | null
           variant_name: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_stock_lines: {
         Row: {
@@ -794,7 +867,6 @@ export type Database = {
           p_batch_id: string
           p_customer_id: string
           p_has_stickering?: boolean
-          p_misc_expense?: number
           p_notes?: string
           p_payment_mode: string
           p_quantity: number
@@ -806,6 +878,7 @@ export type Database = {
         }
         Returns: {
           batch_id: string
+          bill_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string
@@ -901,12 +974,20 @@ export type Database = {
         Args: { p_date: string; p_product_id: string }
         Returns: string
       }
+      record_bill: {
+        Args: {
+          p_customer_id: string
+          p_lines: Json
+          p_payment_mode: string
+          p_sale_date: string
+        }
+        Returns: Json
+      }
       record_sale: {
         Args: {
           p_batch_id: string
           p_customer_id: string
           p_has_stickering?: boolean
-          p_misc_expense?: number
           p_notes?: string
           p_payment_mode: string
           p_quantity: number
@@ -917,6 +998,7 @@ export type Database = {
         }
         Returns: {
           batch_id: string
+          bill_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string

@@ -35,8 +35,9 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 ## Selling
 
-- One Sale = one Batch. Multi-batch purchases are recorded as multiple Sales.
-- Sale Price, Stickering Cost and Stickering Price are per piece; totals are derived from quantity. Misc Expense is a single amount per Sale, excluded from Margin.
+- One Sale = one Batch. Multi-batch purchases are recorded as multiple Sales, grouped by a Bill.
+- A Bill (`bills`: customer, sale date, payment mode, audit columns, no money) groups the Sales of one purchase through a nullable `sales.bill_id`; Sales recorded before Bills keep null. `record_bill(customer, sale date, payment mode, lines)` takes lines of {batch_id, quantity, sale_price, has_stickering, stickering_cost, stickering_price} as jsonb, runs every line through the same per-Sale rules as `record_sale`, and saves all lines or none. Quantities on the same Batch across lines are checked against its Available one line after another, so together they cannot exceed it. Zero lines is refused. A Sale on a Bill keeps the Bill's customer, sale date and payment mode: `correct_sale` refuses changing any of the three on it, and the Edit sale dialog shows them read-only; quantity, price, stickering and Batch stay editable. Bills have a select policy for members and no write policy; only `record_bill` writes them. `v_sales` exposes `bill_id`.
+- Sale Price, Stickering Cost and Stickering Price are per piece; totals are derived from quantity.
 - Margin = qty × (sale_price − landed_cost) + qty × (stickering_price − stickering_cost). Margin % = margin / (qty × (sale_price + stickering_price)).
 - FIFO Listing shows Batches of the chosen Stock Line with Available > 0, oldest first, with Ageing Band. Any Batch may be picked; nothing is blocked or confirmed.
 - Payment Mode enum: CASH, UPI, BANK_TRANSFER. All Sales are considered paid. No credit or dues.
@@ -77,12 +78,12 @@ This is the first iteration after one rough call with the client. Expect heavy c
 |---|---|
 | Active stock | SUM(available) over Batches that are not archived |
 | Total inventory value | SUM(available × landed_cost) over Batches that are not archived |
-| MTD Revenue | SUM(qty × sale_price + qty × stickering_price) for Sales in the current calendar month (IST). Misc Expense excluded. |
+| MTD Revenue | SUM(qty × sale_price + qty × stickering_price) for Sales in the current calendar month (IST). |
 | MTD Margin | SUM(margin) for the month; % = margin / MTD Revenue |
 | vs last month | Active stock now vs Active stock at the last day of the previous month, computed as bought-before minus sold-before that date |
 | Stock status donut | All-time: SUM(available) vs SUM(units sold) |
 | Fast vs slow moving | Units sold in the last 90 days grouped by L × B (thickness ignored), top 5 descending. Memorial shown as one bar per Product. |
-| Margin by week / month | Margin for each of the last 12 weeks (Monday start) or 12 calendar months (IST), oldest first, the current one last. Same Margin and billed formulas as MTD; Misc Expense excluded; archived Batches' Sales count. A period with no Sales shows 0 and no percentage. |
+| Margin by week / month | Margin for each of the last 12 weeks (Monday start) or 12 calendar months (IST), oldest first, the current one last. Same Margin and billed formulas as MTD; archived Batches' Sales count. A period with no Sales shows 0 and no percentage. |
 | Top customers | The 5 Customers with the highest billed total (stone plus Stickering) in the chosen window: this month (IST), last 90 days (default) or all time. Each shows the billed amount, a bar scaled to the top Customer and their top 3 Products by pieces, then "+N more". The Walk-in Customer is ranked like any other; archived Batches' Sales count. |
 | Stale stock panel | Batches in the Stale band with Available > 0, oldest first, top 4, link to Yard filtered by Stale |
 
@@ -104,7 +105,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 ## Explicitly out of Phase 1
 
 - Credit sales and dues
-- Multi-batch Sales or receipts
+- Receipts or invoices printed from a Bill
 - Photos in the catalog
 - Merge tool for duplicate Products or Customers
 - Audit log

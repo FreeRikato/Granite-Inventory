@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatArea, formatRupees, formatRupeesAxis, formatRupeesCompact } from "@/lib/format";
+import { formatArea, formatAreaTotal, formatRupees, formatRupeesAxis, formatRupeesCompact } from "@/lib/format";
 
 describe("formatRupees", () => {
   it("puts the sign of a negative amount before the symbol", () => {
@@ -51,5 +51,19 @@ describe("formatArea", () => {
     expect(formatArea("", "2")).toBe("");
     expect(formatArea("6", "0")).toBe("");
     expect(formatArea("abc", "2")).toBe("");
+  });
+});
+
+describe("formatAreaTotal", () => {
+  it("multiplies the per piece area by the quantity", () => {
+    expect(formatAreaTotal("4", "2", 5)).toBe("40");
+    expect(formatAreaTotal("4.25", "2.75", 3)).toBe("35.0625");
+  });
+
+  it("stays empty without a size or a whole number of pieces above zero", () => {
+    expect(formatAreaTotal("", "", 5)).toBe("");
+    expect(formatAreaTotal("4", "2", 0)).toBe("");
+    expect(formatAreaTotal("4", "2", 2.5)).toBe("");
+    expect(formatAreaTotal("4", "2", Number.NaN)).toBe("");
   });
 });
