@@ -100,3 +100,33 @@ export function recordSale(db: Db, input: SaleInput) {
     p_stickering_price: input.stickering?.price ?? 0,
   });
 }
+
+export type BillLineInput = {
+  batchId: string;
+  quantity?: number;
+  salePrice?: number;
+  stickering?: { cost: number; price: number };
+};
+
+export type BillInput = {
+  customerId: string;
+  saleDate?: string;
+  paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
+  lines: readonly BillLineInput[];
+};
+
+export function recordBill(db: Db, input: BillInput) {
+  return db.rpc("record_bill", {
+    p_customer_id: input.customerId,
+    p_sale_date: input.saleDate ?? today(),
+    p_payment_mode: input.paymentMode ?? "CASH",
+    p_lines: input.lines.map((line) => ({
+      batch_id: line.batchId,
+      quantity: line.quantity ?? 1,
+      sale_price: line.salePrice ?? 1650,
+      has_stickering: line.stickering !== undefined,
+      stickering_cost: line.stickering?.cost ?? 0,
+      stickering_price: line.stickering?.price ?? 0,
+    })),
+  });
+}
