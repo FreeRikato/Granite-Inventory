@@ -4,16 +4,17 @@ import "./no-devtools";
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { Renderer } from "@openuidev/react-lang";
 import { Plus, SendHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { chatLibrary } from "@/lib/chat/library";
 import { useOnline } from "@/lib/use-online";
-import { answerSource } from "./chat-answer";
+import { AssistantAnswer, PhaseLine } from "./assistant-answer";
 import { NO_ANSWER_TEXT, chatErrorText, endedWithoutAnswer } from "./chat-error";
 import { clearChatHistory, loadChatHistory, saveChatHistory } from "./chat-history";
+import { chatPhase } from "./chat-phase";
 import { withoutEarlierQueryRows } from "./request-messages";
+
+const STREAM_THROTTLE_MS = 50;
 
 const transport = new DefaultChatTransport({
   api: "/api/chat",
@@ -38,11 +39,13 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
   const { messages, sendMessage, setMessages, stop, status, error, clearError } = useChat({
     messages: history,
     transport,
+    throttle: STREAM_THROTTLE_MS,
   });
   const online = useOnline();
   const [draft, setDraft] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
+  const phase = chatPhase(messages, status);
 
   useEffect(() => {
     if (status === "ready") void (messages.length > 0 ? saveChatHistory(email, messages) : clearChatHistory(email));
@@ -95,16 +98,14 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
               {textOf(message).join(" ")}
             </p>
           ) : (
-            <div key={message.id} data-testid="chat-assistant-message">
-              <Renderer
-                response={answerSource(message, status === "ready" || index < messages.length - 1)}
-                library={chatLibrary}
-                isStreaming={status === "streaming" && index === messages.length - 1}
-              />
-            </div>
+            <AssistantAnswer
+              key={message.id}
+              message={message}
+              settled={status === "ready" || index < messages.length - 1}
+            />
           ),
         )}
-        {status === "submitted" ? <p className="text-sm text-muted-foreground">Thinking...</p> : null}
+        {phase ? <PhaseLine phase={phase} /> : null}
         {endedWithoutAnswer(messages, status) ? (
           <p data-testid="chat-no-answer" className="text-sm text-muted-foreground">
             {NO_ANSWER_TEXT}

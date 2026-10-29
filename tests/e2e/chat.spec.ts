@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import type { Page } from "@playwright/test";
 import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
@@ -418,4 +419,102 @@ test("the second question is sent without the rows of the first answer's query",
   expect(bodies[1]).toContain("second question");
   expect(bodies[1]).not.toContain("EARLIER-ROW");
   expect(bodies[1]).not.toContain("tool-run_query");
+});
+
+const STAGE_MS = 700;
+
+async function serveSlowAnswer(): Promise<{ readonly url: string; readonly close: () => Promise<void> }> {
+  const server = createServer((request, response) => {
+    request.resume();
+    response.writeHead(200, {
+      "content-type": "text/event-stream",
+      "x-vercel-ai-ui-message-stream": "v1",
+      "access-control-allow-origin": "*",
+    });
+    const send = (chunk: Chunk) => response.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    const pause = () => new Promise((resolve) => setTimeout(resolve, STAGE_MS));
+    void (async () => {
+      send({ type: "start" });
+      await pause();
+      send({ type: "tool-input-available", toolCallId: "slow-1", toolName: "run_query", input: { sql: "select 1" } });
+      await pause();
+      send({ type: "tool-output-available", toolCallId: "slow-1", output: [{ marker: "ROW" }] });
+      await pause();
+      send({ type: "text-start", id: "t" });
+      send({ type: "text-delta", id: "t", delta: "Let me put that" });
+      await pause();
+      send({ type: "text-delta", id: "t", delta: " together.\nroot = Stack([a])\n" });
+      await pause();
+      send({ type: "text-delta", id: "t", delta: 'a = Text("Slow answer shown")\n' });
+      send({ type: "text-end", id: "t" });
+      send({ type: "finish" });
+      response.end("data: [DONE]\n\n");
+    })();
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const port = typeof address === "object" && address ? address.port : 0;
+  return {
+    url: `http://127.0.0.1:${port}/`,
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
+}
+
+type Frame = { readonly phase: string | null; readonly content: number };
+
+test("from send until the answer renders the assistant row shows each phase and is never empty", async ({
+  page,
+  signIn,
+}) => {
+  const panel = page.getByTestId("chat-panel");
+  const slow = await serveSlowAnswer();
+  try {
+    await page.route("**/api/chat", (route) => route.continue({ url: slow.url }));
+    await signIn("operator");
+    await page.goto("/");
+    await openPanel(page);
+
+    await page.evaluate(() => {
+      const frames: object[] = [];
+      Object.assign(window, { phaseFrames: frames });
+      const sample = () => {
+        const phase = document.querySelector("[data-testid='chat-phase']")?.textContent ?? null;
+        const content = [...document.querySelectorAll("[data-testid='chat-assistant-message']")].filter((el) =>
+          [...el.children].some((child) => !child.matches("[data-testid='chat-phase']") && child.textContent?.trim()),
+        ).length;
+        frames.push({ phase, content });
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+
+    await ask(page, "stale by supplier");
+    await expect(panel.getByText("Slow answer shown")).toBeVisible();
+    await page.waitForTimeout(200);
+
+    const frames: Frame[] = await page.evaluate(() => Reflect.get(window, "phaseFrames"));
+    const afterSend = frames.slice(frames.findIndex((frame) => frame.phase !== null));
+    const firstContent = afterSend.findIndex((frame) => frame.content > 0);
+
+    expect(new Set(afterSend.slice(0, firstContent).map((frame) => frame.phase))).toEqual(
+      new Set(["Thinking...", "Querying your data...", "Writing the answer..."]),
+    );
+    expect(afterSend.slice(0, firstContent).filter((frame) => frame.phase === null)).toEqual([]);
+    expect(afterSend.slice(firstContent).filter((frame) => frame.phase !== null)).toEqual([]);
+    await expect(panel.getByTestId("chat-phase")).toHaveCount(0);
+  } finally {
+    await slow.close();
+  }
+});
+
+test("a finished answer that drew nothing does not keep a phase line", async ({ page, signIn }) => {
+  const panel = page.getByTestId("chat-panel");
+  await page.route("**/api/chat", (route) => route.fulfill(streamResponse(textChunks("root = Stack([missing])"))));
+  await signIn("operator");
+  await page.goto("/");
+  await openPanel(page);
+  await ask(page, "anything");
+  await expect(panel.getByRole("button", { name: "Send" })).toBeDisabled();
+  await expect(panel.getByTestId("chat-user-message")).toHaveCount(1);
+  await expect(panel.getByTestId("chat-phase")).toHaveCount(0);
 });

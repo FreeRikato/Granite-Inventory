@@ -20,9 +20,12 @@ code:
   - components/chat/chat-history.ts
   - components/chat/chat-error.ts
   - components/chat/chat-answer.ts
+  - components/chat/chat-phase.ts
+  - components/chat/assistant-answer.tsx
   - components/chat/visuals/renderers.tsx
   - components/chat/request-messages.ts
   - tests/tooling/chat-thread.test.ts
+  - tests/tooling/chat-phase.test.ts
   - tests/tooling/chat-library.test.ts
   - components/chat/no-devtools.ts
   - lib/use-online.ts
@@ -137,6 +140,14 @@ The panel is unmounted when closed, so the input is focused each time it opens. 
 `ChatThread` loads the saved thread, then mounts `ChatSession`, which runs `useChat` against `/api/chat`. Member messages show as typed. `answerSource` (`chat-answer.ts`) picks what goes to `Renderer`: the last text part that holds an OpenUI answer, because the model may write a sentence before a tool call, a junk reply on the forced step must not hide a valid chart from an earlier step, and raw `<tool_call>` text must never be shown. A part holds an answer when a line starts with `root =`: a single fenced block (with any or no language tag) is unwrapped first, and any prose before the `root =` line is dropped, because models often wrap the answer in a code fence with a sentence before it. A fence holding junk has no such line, so it falls to the table or the fallback line. When a settled turn has no such part but a `run_query` returned rows, the panel builds an answer itself: a Text "Here is the data I found." and a Table of the last query that returned rows (columns in first-seen order, `null` as empty, other non-text values as JSON), so the member still gets the data; `Table` shows 50 rows and de-aliases like any other. A turn that is still streaming, or ended in an error, gets no such table. With no model answer and no rows, the panel shows "I could not finish that answer. Try asking a narrower question." (`endedWithoutAnswer`); a turn that errored shows its error instead.
 
 In the 380px panel a grouped `BarChart` showed 3 of 5 product names, because Recharts hides x-axis ticks that would overlap. The chat charts set `interval={0}` and draw each label on its own wrapped lines (a word is cut at 9 characters with an ellipsis), so every bar is named; `tests/e2e/chat.spec.ts` counts the five labels in the panel. Aliases become names inside the components ([[chat-visuals]]).
+
+### What the panel shows while an answer is coming
+
+From send until the answer draws, the assistant row is never empty. `chatPhase(messages, status)` (`chat-phase.ts`) is pure and says what the model is doing: `thinking` after send and between steps (no part yet, an unwritten gap after a finished or failed query), `querying` while any `run_query` part has no output, `writing` while the last part is text with no `root =` line yet, and `null` when the turn is not running or the answer has a `root =` line. It looks only at the newest message and ignores `step-start` parts. A worked example: send, "Thinking..."; the `run_query` call arrives, "Querying your data..."; the rows come back, "Thinking..." again; the model writes "Let me put that together.", "Writing the answer..."; the `root =` line arrives and the phase line goes.
+
+One gap `chatPhase` cannot see: the `root =` line usually arrives before the components it names (`root = Stack([a])`, then `a = Text(...)` a moment later), and until a child is defined the renderer draws an empty Stack. `AssistantAnswer` watches the renderer's parse result and keeps the "Writing the answer..." line inside its row until the tree holds a first node (`hasRenderedNode`), so the row is not blank in that gap. Once the turn has settled the line never shows, so an answer that draws nothing stays quiet and `endedWithoutAnswer` decides what to say. The line shimmers by pulsing opacity with the `motion-fade` keyframe from `globals.css` ([[motion]]); no shimmer utility exists in the project, and opacity is the only property motion may animate.
+
+Each assistant answer is a memoised `AssistantAnswer` keyed on its message and a `settled` flag. `useChat` replaces only the message that is streaming and keeps the objects of the others, so settled answers get equal props and skip rendering while a new one arrives. `useChat` is given `throttle: 50`, about 20 updates a second; the `experimental_throttle` option is deprecated in this version of `@ai-sdk/react` and `throttle` replaces it. An assistant message with no answer to show renders nothing, not an empty `div`.
 
 History is saved per member under `granite-chat:<email>` in IndexedDB (idb-keyval) once the status is `ready`, so a streaming answer is not written on every chunk. A new chat empties the thread and the effect deletes the key. A saved thread is checked with `safeValidateUIMessages` when loaded; anything that does not pass is treated as empty rather than crashing the panel. The key holds the model's text with aliases, never names.
 
