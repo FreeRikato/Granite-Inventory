@@ -3,7 +3,6 @@ export type SaleFigures = {
   readonly salePrice: number;
   readonly landedCost: number;
   readonly stickering: { readonly cost: number; readonly price: number } | null;
-  readonly miscExpense: number;
 };
 
 export type MarginBreakdown = {

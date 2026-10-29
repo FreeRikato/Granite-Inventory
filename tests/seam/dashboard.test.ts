@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { ensureTestUsers, resetDomainData, signedInClient, type Db } from "./harness";
+import { ensureTestUsers, resetDomainData, signedInClient, sql, type Db } from "./harness";
 import { createBatch, createCustomer, createProduct, createSupplier, recordSale } from "./fixtures";
 
 function istToday(): Date {
@@ -71,8 +71,9 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
       quantity: 2,
       salePrice: 2500,
       saleDate: iso(today),
-      misc: 500,
     });
+
+    await sql(`update public.sales set misc_expense = 500 where batch_id = $1`, [b.data?.id ?? ""]);
 
     const { data: k } = await operator.from("v_dashboard_kpis").select("*").single();
     expect(k?.active_stock).toBe(20);
