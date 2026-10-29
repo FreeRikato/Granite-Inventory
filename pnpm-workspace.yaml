@@ -1,5 +1,5 @@
 allowBuilds:
-  '@openuidev/lang-core': false
+  "@openuidev/lang-core": false
   esbuild: true
   sharp: false
   unrs-resolver: false

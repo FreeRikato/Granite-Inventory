@@ -13,6 +13,7 @@ code:
   - tests/e2e/settings.spec.ts
   - tests/tooling/comments.test.ts
   - tests/tooling/format.test.ts
+  - tests/eval/chat.eval.ts
 ---
 # Testing
 
@@ -37,6 +38,10 @@ rm -rf "$L"
 ```
 
 Findings land in `.e2e/report.json` with screenshots under `.e2e/results/`. Ticket 11 came from these runs.
+
+## Live eval
+
+`tests/eval/chat.eval.ts` sends real questions to the live chat model and is not part of `pnpm test`. `pnpm eval:chat` sets `CHAT_EVAL=1`, which makes `vitest.config.ts` collect only `tests/eval`; it needs `OPENROUTER_API_KEY` in the environment (source `~/.secrets.env`) and holds the shared-DB lock like any seam run. A full run is about 30 of the account's 50 free requests per day, so it is a manual check, never CI. Details in [[chat]].
 
 ## Seam harness
 

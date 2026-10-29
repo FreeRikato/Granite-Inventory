@@ -12,6 +12,7 @@
     "comments": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/comments.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "eval:chat": "CHAT_EVAL=1 vitest run",
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",

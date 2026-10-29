@@ -8,6 +8,7 @@ code:
   - lib/chat/library.tsx
   - lib/chat/library-prompt.ts
   - lib/chat/alias.ts
+  - components/chat/no-devtools.ts
   - pnpm-workspace.yaml
   - tests/tooling/chat-library.test.ts
   - tests/tooling/chat-alias.test.ts
@@ -21,7 +22,9 @@ The model answers in OpenUI Lang and the browser draws it with a closed set of c
 `buildChatLibrary` in `define.ts` holds every schema and description. It takes the renderers as an argument:
 
 - `lib/chat/library.tsx` passes the real React renderers for the panel's `Renderer`.
-- `lib/chat/library-prompt.ts` passes renderers that draw nothing and returns the component part of the system prompt. It imports only `define.ts`, so the route handler can use it without pulling in Recharts or a client boundary. `@openuidev/react-lang` itself has no `"use client"`, so it loads in Node.
+- `lib/chat/library-prompt.ts` passes renderers that draw nothing and returns the component part of the system prompt. It imports only `define.ts`, so the route handler can use it without pulling in Recharts or a client boundary.
+
+`define.ts` takes `createLibrary` and `defineComponent` from `@openuidev/lang-core` and only imports types from `@openuidev/react-lang`. The route handler runs in Next's server layer, which loads React's server build without `createContext`, and `@openuidev/react-lang` calls `createContext` when it loads, so a runtime import of it there crashes. Only the browser (`Renderer` in `chat-thread.tsx`) loads react-lang at runtime. `@openuidev/lang-core` is a direct dependency pinned to the version react-lang uses, so the two cannot disagree on the library shape.
 
 Because both libraries come from the same function, the prompt the model reads and the schemas the renderer parses cannot drift. A test compares the two prompts.
 
@@ -40,6 +43,10 @@ The OpenUI parser does not enforce array length, so `.max(4)` on a schema would 
 ## Aliases become names in the browser
 
 The model only sees `C-xxxxxx` aliases ([[chat]]). Every component that shows text passes it through `useDealias`, which builds one lookup from the cached `customersQuery` ([[browser-reads]]) and swaps `C-` plus six hex characters for the customer name. An alias with no match stays as written, so a customer added since the list was cached still reads as an alias instead of disappearing. Numbers are never swapped, only text.
+
+## The dev inspector is off
+
+`@openuidev/react-lang` mounts a floating inspector over the bottom-right corner under `next dev`, which covers the Send button. `components/chat/no-devtools.ts` sets the library's own `Symbol.for("openui.devtools.autoMount")` flag before the library loads, and `chat-thread.tsx` imports it first ([[chat]]).
 
 ## No install telemetry
 
