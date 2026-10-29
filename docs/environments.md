@@ -43,7 +43,11 @@ production project's values, Preview carries staging's.
 NEXT_PUBLIC_SUPABASE_URL              https://<ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  sb_publishable_...
 SUPABASE_SECRET_KEY                   sb_secret_...   (server only)
+OPENROUTER_API_KEY                    sk-or-...       (server only, the Overview chat)
 ```
+
+Without `OPENROUTER_API_KEY` the chat answers "Chat is not set up yet" and nothing else in the
+app is affected. The key is one OpenRouter account's: the primary model (`deepseek/deepseek-v4.1-flash-1017`) is paid, so it draws on the account's credit, and the free fallback (`google/gemma-4-31b-it:free`) is capped at 50 requests a day for all members together. Staging and production may share it.
 
 `E2E_TEST_LOGIN` is never set on either; the test-login route exists only on a local dev
 server.

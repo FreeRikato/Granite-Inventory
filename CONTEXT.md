@@ -149,3 +149,13 @@ _Avoid_: Pile, lot, Batch (for the pile)
 **Doom Stone**:
 A Memorial Product: headstones and crosses in standard shapes, tracked by unit count with no Size.
 _Avoid_: Memorial stone, grave stone
+
+### Chat
+
+**Chat**:
+The Ask panel on Overview. A Team Member types a question in plain words and a model answers with text and charts, reading only the chat views through a read-only role. It can never change data.
+_Avoid_: Assistant, bot, AI
+
+**Customer alias**:
+How a Customer appears to the model: `C-` followed by the first six characters of the Customer's id, such as C-3f9a2b. Names and phones never reach the model; the browser swaps an alias back to the name for display.
+_Avoid_: Customer code, pseudonym

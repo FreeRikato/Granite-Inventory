@@ -26,11 +26,13 @@ Data and rules (Postgres)
 - [[readable-refusals]]: every refusal reads as a business rule, never raw Postgres
 - [[public-catalog]]: what anonymous visitors can read
 - [[dashboard]]: derived figures and the two charts
+- [[chat]]: the read-only path the Overview chat uses, and what it may see
 
 App
 - [[browser-reads]]: static shells, browser cache, IndexedDB, invalidation after writes
 - [[focus-after-write]]: where focus goes when a dialog closes after a write
 - [[auth-session]]: proxy, server client, member lookup, public env vars
+- [[chat-visuals]]: the closed set of OpenUI components a chat answer is drawn with
 - [[yard]]: derived yard view, ordering, filters in the URL
 - [[sell-cart]]: the order built on Sell Stone and recorded as one Bill
 - [[forms-and-components]]: shared form pieces, Sell and Inward details, the palette

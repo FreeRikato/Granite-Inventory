@@ -102,6 +102,12 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Mobile (< 768 px): tab bar Overview · Inward · Sell · Yard · More; More sheet holds Customers, Public Link, Settings, Sign out. No palette.
 - Customers has a detail page (name, phone, type, list of Sales). "Last purchase" is derived from Sales.
 
+## Chat
+
+- The Ask panel on Overview answers questions about stock and sales in text and charts. Both roles can use it. It reads, never writes.
+- The model sees the `v_chat_*` views only: batches, stock lines, sales, customers, KPIs, products and suppliers. Never Team Member emails, notes, settings, or any Customer name or phone; Customers appear as a Customer alias.
+- Each question returns at most 500 rows.
+
 ## Explicitly out of Phase 1
 
 - Credit sales and dues
@@ -111,4 +117,4 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - Audit log
 - Offline mode or service worker
 - Cost hiding for Yard Operators
-- AI assistant, seasonal comparison, WhatsApp Business API
+- AI assistant beyond the read-only data chat, seasonal comparison, WhatsApp Business API

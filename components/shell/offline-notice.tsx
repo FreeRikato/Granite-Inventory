@@ -1,14 +1,10 @@
 "use client";
 
 import { WifiOff } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useOnline } from "@/lib/use-online";
 
 export function OfflineNotice() {
-  const online = useSyncExternalStore(
-    subscribeConnection,
-    () => navigator.onLine,
-    () => true,
-  );
+  const online = useOnline();
   return (
     <div role="status" data-testid="offline-status">
       {online ? null : (
@@ -19,13 +15,4 @@ export function OfflineNotice() {
       )}
     </div>
   );
-}
-
-function subscribeConnection(notify: () => void): () => void {
-  window.addEventListener("online", notify);
-  window.addEventListener("offline", notify);
-  return () => {
-    window.removeEventListener("online", notify);
-    window.removeEventListener("offline", notify);
-  };
 }

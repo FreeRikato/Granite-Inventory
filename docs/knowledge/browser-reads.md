@@ -14,6 +14,7 @@ code:
   - components/view-state.tsx
   - components/shell/member-provider.tsx
   - components/shell/offline-notice.tsx
+  - lib/use-online.ts
   - components/shell/command-palette.tsx
   - app/(app)/customers/actions.ts
   - tests/seam/paged-reads.test.ts
@@ -70,6 +71,6 @@ Related: [[yard]], [[testing]].
 
 ## Offline
 
-`OfflineNotice` sits in the app layout and shows a fixed "You are offline" bar while `navigator.onLine` is false, so a stale page painted from the disk cache is never mistaken for live data. It follows the browser's `online` and `offline` events.
+`OfflineNotice` sits in the app layout and shows a fixed "You are offline" bar while `useOnline` (`lib/use-online.ts`, shared with the Ask panel's input) says `navigator.onLine` is false, so a stale page painted from the disk cache is never mistaken for live data. It follows the browser's `online` and `offline` events.
 
 The `role="status"` container is always mounted and only its child bar comes and goes, because a screen reader announces changes inside a live region that is already in the page, not one that mounts together with its text.

@@ -9,6 +9,35 @@ const config = {
   sold: { label: "Sold to date", color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
+type Slice = { readonly key: string; readonly value: number; readonly fill: string };
+
+const EMPTY_RING: readonly Slice[] = [{ key: "sold", value: 1, fill: "var(--color-sold)" }];
+
+export function DonutRing({ config, data }: { readonly config: ChartConfig; readonly data: readonly Slice[] }) {
+  return (
+    <ChartContainer config={config} className="aspect-square h-[150px] w-[150px]">
+      <PieChart>
+        <Pie
+          data={[...data]}
+          dataKey="value"
+          nameKey="key"
+          innerRadius={52}
+          outerRadius={72}
+          startAngle={90}
+          endAngle={-270}
+          strokeWidth={2}
+          stroke="var(--card)"
+          isAnimationActive={false}
+        >
+          {data.map((d) => (
+            <Cell key={d.key} fill={d.fill} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  );
+}
+
 export function StockDonut({ active, sold }: { readonly active: number; readonly sold: number }) {
   const total = active + sold;
   const pct = total === 0 ? 0 : Math.round((active / total) * 100);
@@ -20,26 +49,7 @@ export function StockDonut({ active, sold }: { readonly active: number; readonly
   return (
     <div className="flex items-center gap-6">
       <div className="relative size-[150px] shrink-0">
-        <ChartContainer config={config} className="aspect-square h-[150px] w-[150px]">
-          <PieChart>
-            <Pie
-              data={total === 0 ? [{ key: "sold", value: 1, fill: "var(--color-sold)" }] : data}
-              dataKey="value"
-              nameKey="key"
-              innerRadius={52}
-              outerRadius={72}
-              startAngle={90}
-              endAngle={-270}
-              strokeWidth={2}
-              stroke="var(--card)"
-              isAnimationActive={false}
-            >
-              {data.map((d) => (
-                <Cell key={d.key} fill={d.fill} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+        <DonutRing config={config} data={total === 0 ? EMPTY_RING : data} />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold tabular" data-testid="active-pct">
             {pct}%
@@ -55,7 +65,7 @@ export function StockDonut({ active, sold }: { readonly active: number; readonly
   );
 }
 
-function Legend({ color, label, value }: { color: string; label: string; value: string }) {
+export function Legend({ color, label, value }: { color: string; label: string; value: string }) {
   return (
     <div className="grid grid-cols-[10px_1fr] gap-x-2.5">
       <span className="row-span-2 mt-1.5 size-2.5 rounded-full" style={{ background: color }} aria-hidden />
