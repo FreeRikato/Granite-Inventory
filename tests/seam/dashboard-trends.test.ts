@@ -144,3 +144,154 @@ describe("dashboard trends: margin_by_period", () => {
     expect(anon.data).toBeNull();
   });
 });
+
+describe("dashboard trends: top_customers", () => {
+  let operator: Db;
+  let blackGalaxyBatch: string;
+  let blackGalaxyBatchTwo: string;
+  let tanBrownBatch: string;
+  let whiteBatch: string;
+  let absoluteBlackBatch: string;
+
+  beforeAll(async () => {
+    await ensureTestUsers();
+    operator = await signedInClient("operator");
+  });
+
+  async function insertSale(input: {
+    customerId: string;
+    batchId: string;
+    quantity: number;
+    salePrice: number;
+    daysAgo?: number;
+    stickeringPrice?: number;
+  }) {
+    const saleDate = iso(new Date(istToday().getTime() - (input.daysAgo ?? 0) * DAY_MS));
+    await sql(
+      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, has_stickering, stickering_cost, stickering_price, payment_mode)
+       values ($1, $2, $3, $4, $5, $6, $7, 0, $8, 'CASH')`,
+      [
+        saleDate,
+        input.batchId,
+        input.customerId,
+        input.quantity,
+        input.salePrice,
+        LANDED_COST,
+        input.stickeringPrice !== undefined,
+        input.stickeringPrice ?? 0,
+      ],
+    );
+  }
+
+  beforeEach(async () => {
+    await resetDomainData();
+    const supplierId = await createSupplier(operator, "Madurai Quarry");
+    const purchaseDate = iso(new Date(istToday().getTime() - 500 * DAY_MS));
+    const blackGalaxy = await createProduct(operator, { name: "Black Galaxy", abbreviation: "BG" });
+    const tanBrown = await createProduct(operator, { name: "Tan Brown", abbreviation: "TB" });
+    const white = await createProduct(operator, { name: "Kashmir White", abbreviation: "KW" });
+    const absoluteBlack = await createProduct(operator, { name: "Absolute Black", abbreviation: "AB" });
+    const batch = async (productId: string, stackNumber: string) =>
+      (await createBatch(operator, { productId, supplierId, units: 500, unitPrice: 1000, purchaseDate, stackNumber }))
+        .data?.id ?? "";
+    blackGalaxyBatch = await batch(blackGalaxy, "1");
+    blackGalaxyBatchTwo = await batch(blackGalaxy, "2");
+    tanBrownBatch = await batch(tanBrown, "1");
+    whiteBatch = await batch(white, "1");
+    absoluteBlackBatch = await batch(absoluteBlack, "1");
+  });
+
+  it("ranks the top 5 by billed with stickering included, and applies the month, 90 day and all windows", async () => {
+    const names = ["Anand", "Balu", "Chitra", "Dev", "Eswar", "Farook"];
+    const ids: string[] = [];
+    for (const name of names) ids.push(await createCustomer(operator, { name }));
+    const [anand, balu, chitra, dev, eswar, farook] = ids;
+
+    await insertSale({ customerId: balu, batchId: blackGalaxyBatch, quantity: 20, salePrice: 1500 });
+    await insertSale({
+      customerId: anand,
+      batchId: blackGalaxyBatch,
+      quantity: 10,
+      salePrice: 1000,
+      stickeringPrice: 200,
+    });
+    await insertSale({ customerId: chitra, batchId: blackGalaxyBatch, quantity: 4, salePrice: 1000 });
+    await insertSale({ customerId: dev, batchId: blackGalaxyBatch, quantity: 3, salePrice: 1000 });
+    await insertSale({ customerId: eswar, batchId: blackGalaxyBatch, quantity: 2, salePrice: 1000 });
+    await insertSale({ customerId: farook, batchId: blackGalaxyBatch, quantity: 1, salePrice: 1000 });
+    await insertSale({ customerId: farook, batchId: blackGalaxyBatch, quantity: 50, salePrice: 1000, daysAgo: 91 });
+
+    const { data: ninety } = await operator.rpc("top_customers", { p_window: "90d" });
+    expect(ninety).toHaveLength(5);
+    expect(ninety?.map((r) => [r.customer_name, r.billed])).toEqual([
+      ["Balu", 30000],
+      ["Anand", 12000],
+      ["Chitra", 4000],
+      ["Dev", 3000],
+      ["Eswar", 2000],
+    ]);
+
+    const { data: all } = await operator.rpc("top_customers", { p_window: "all", p_limit: 10 });
+    expect(all?.[0]).toMatchObject({ customer_name: "Farook", billed: 51000, pieces: 51 });
+    expect(all?.map((r) => r.customer_name)).toEqual(["Farook", "Balu", "Anand", "Chitra", "Dev", "Eswar"]);
+  });
+
+  it("leaves a sale from before this IST month out of the month window", async () => {
+    const [anand, balu] = [
+      await createCustomer(operator, { name: "Anand" }),
+      await createCustomer(operator, { name: "Balu" }),
+    ];
+    const today = istToday();
+    const daysIntoMonth = Math.round((today.getTime() - firstOfMonth(today).getTime()) / DAY_MS);
+    await insertSale({ customerId: anand, batchId: blackGalaxyBatch, quantity: 1, salePrice: 1000 });
+    await insertSale({
+      customerId: balu,
+      batchId: blackGalaxyBatch,
+      quantity: 9,
+      salePrice: 1000,
+      daysAgo: daysIntoMonth + 1,
+    });
+
+    const { data: month } = await operator.rpc("top_customers", { p_window: "month" });
+    expect(month?.map((r) => r.customer_name)).toEqual(["Anand"]);
+
+    const { data: all } = await operator.rpc("top_customers", { p_window: "all" });
+    expect(all?.map((r) => r.customer_name)).toEqual(["Balu", "Anand"]);
+  });
+
+  it("lists each Product once, summed across Batches, by pieces then name, and ranks the Walk-in Customer", async () => {
+    const [{ id: walkIn }] = await sql<{ id: string }>(`select id from public.customers where is_walk_in`);
+    const anand = await createCustomer(operator, { name: "Anand" });
+
+    await insertSale({ customerId: walkIn, batchId: blackGalaxyBatch, quantity: 30, salePrice: 1000 });
+    await insertSale({ customerId: walkIn, batchId: blackGalaxyBatchTwo, quantity: 90, salePrice: 1000 });
+    await insertSale({ customerId: walkIn, batchId: tanBrownBatch, quantity: 60, salePrice: 1000 });
+    await insertSale({ customerId: walkIn, batchId: whiteBatch, quantity: 40, salePrice: 1000 });
+    await insertSale({ customerId: walkIn, batchId: absoluteBlackBatch, quantity: 40, salePrice: 1000 });
+    await insertSale({ customerId: anand, batchId: whiteBatch, quantity: 1, salePrice: 1000 });
+
+    const { data } = await operator.rpc("top_customers", { p_window: "90d" });
+    expect(data?.[0]).toMatchObject({
+      customer_id: walkIn,
+      billed: 260000,
+      pieces: 260,
+      products: [
+        { name: "Black Galaxy", pieces: 120 },
+        { name: "Tan Brown", pieces: 60 },
+        { name: "Absolute Black", pieces: 40 },
+        { name: "Kashmir White", pieces: 40 },
+      ],
+    });
+    expect(data?.[0]?.customer_name).toBeTruthy();
+    expect(data?.[1]).toMatchObject({ customer_name: "Anand", products: [{ name: "Kashmir White", pieces: 1 }] });
+  });
+
+  it("rejects an unknown window and refuses anon", async () => {
+    const bad = await operator.rpc("top_customers", { p_window: "year" });
+    expect(bad.error?.message).toMatch(/unknown window/i);
+
+    const anon = await anonClient().rpc("top_customers", { p_window: "90d" });
+    expect(anon.error).not.toBeNull();
+    expect(anon.data).toBeNull();
+  });
+});

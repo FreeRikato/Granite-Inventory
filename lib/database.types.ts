@@ -945,6 +945,16 @@ export type Database = {
         Args: { p_category: string; p_length_ft: number }
         Returns: string
       }
+      top_customers: {
+        Args: { p_limit?: number; p_window: string }
+        Returns: {
+          billed: number
+          customer_id: string
+          customer_name: string
+          pieces: number
+          products: Json
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

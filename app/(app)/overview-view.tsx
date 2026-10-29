@@ -10,6 +10,7 @@ import { MarginBars, type MarginGrain } from "@/components/dashboard/margin-bars
 import { MovingBars } from "@/components/dashboard/moving-bars";
 import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
+import { TopCustomers } from "@/components/dashboard/top-customers";
 import { ViewError, ViewSkeleton } from "@/components/view-state";
 import { formatNumber, formatPercent, formatRupeesCompact, formatSize } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
@@ -18,7 +19,9 @@ import {
   fastMovingQuery,
   marginByPeriodQuery,
   staleAfterDaysQuery,
+  topCustomersQuery,
   yardBatchesQuery,
+  type TopCustomerWindow,
 } from "@/lib/query/reads";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +37,7 @@ function MarginCard() {
   const margin = useQuery(marginByPeriodQuery(grain));
 
   return (
-    <section className="rounded-card bg-card p-6 shadow-sm lg:col-span-2" data-testid="margin-card">
+    <section className="rounded-card bg-card p-6 shadow-sm" data-testid="margin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h2 className="text-base font-bold">Margin</h2>
@@ -47,6 +50,43 @@ function MarginCard() {
           <MarginBars rows={margin.data} grain={grain} />
         ) : margin.isError ? (
           <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
+        ) : (
+          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+        )}
+      </div>
+    </section>
+  );
+}
+
+const WINDOW_OPTIONS = [
+  { value: "month", label: "This month" },
+  { value: "90d", label: "Last 90 days" },
+  { value: "all", label: "All time" },
+] as const satisfies readonly { value: TopCustomerWindow; label: string }[];
+
+const WINDOW_EMPTY_MESSAGE = {
+  month: "No sales this month.",
+  "90d": "No sales in the last 90 days.",
+  all: "No sales yet.",
+} as const satisfies Record<TopCustomerWindow, string>;
+
+function TopCustomersCard() {
+  const [range, setRange] = useState<TopCustomerWindow>("90d");
+  const customers = useQuery(topCustomersQuery(range));
+
+  return (
+    <section className="min-w-0 rounded-card bg-card p-6 shadow-sm" data-testid="top-customers-card">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-bold">Top customers</h2>
+        <SegmentedToggle label="Top customers window" options={WINDOW_OPTIONS} value={range} onChange={setRange} />
+      </div>
+      <div className="mt-4">
+        {customers.isSuccess ? (
+          <TopCustomers rows={customers.data} emptyMessage={WINDOW_EMPTY_MESSAGE[range]} />
+        ) : customers.isError ? (
+          <p className="py-6 text-center text-sm text-destructive">
+            Could not load top customers: {customers.error.message}
+          </p>
         ) : (
           <div className="h-64 animate-pulse rounded-lg bg-muted" />
         )}
@@ -135,6 +175,7 @@ export function OverviewView() {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <MarginCard />
+        <TopCustomersCard />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[400px_minmax(0,1fr)]">
