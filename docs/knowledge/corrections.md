@@ -15,6 +15,8 @@ code:
   - app/(app)/inward/recent-batches.tsx
   - app/(app)/inward/inward-view.tsx
   - app/(app)/customers/[id]/sale-actions.tsx
+  - app/(app)/customers/[id]/sales-rows.tsx
+  - tests/e2e/corrections.spec.ts
   - tests/seam/corrections.test.ts
 ---
 # Corrections
@@ -37,7 +39,7 @@ The correction functions share the readable validation path of new writes ([[rea
 
 ## UI
 
-The Admin edit and delete live on the yard card (`batch-actions.tsx`), the Recent batches table on Inward and the customer detail page (`sale-actions.tsx`). On Recent batches the same actions render as pencil and trash icons at the row's right edge; on desktop they appear on hover or keyboard focus, on mobile (no hover) they are always shown. The actions header cell is `relative` so its screen-reader-only label stays inside the table's horizontal scroll area; without it the absolutely positioned label widens the whole page on mobile. Archive and Unarchive sit next to Edit in both places. Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view.
+The Admin edit and delete live on the yard card (`batch-actions.tsx`), the Recent batches table on Inward and the customer detail page (`sale-actions.tsx`). On the customer page, the lines of a Bill keep their own Edit and Delete under the opened Bill row ([[sales-and-stock-lines]]). The Edit sale dialog of a billed line shows Sale Date, Payment Mode and Customer read-only ("Set by the bill"), matching the `correct_sale` refusal; a line with no Bill keeps them editable. On Recent batches the same actions render as pencil and trash icons at the row's right edge; on desktop they appear on hover or keyboard focus, on mobile (no hover) they are always shown. The actions header cell is `relative` so its screen-reader-only label stays inside the table's horizontal scroll area; without it the absolutely positioned label widens the whole page on mobile. Archive and Unarchive sit next to Edit in both places. Both hand focus back through [[focus-after-write]], because a save can move the edited row out of view.
 
 On Inward, Admins also get Edit, Archive and Delete on each Supplier and Product option inside the picker ([[search-select]]). Edit reuses the Add dialog with the row's values (an edit never re-suggests the abbreviation); Delete asks first and shows the database's refusal, which suggests archiving, if a Batch still uses the row. The form keeps its own copy of both lists (so a just-added row is selectable at once), so these actions update that copy and clear the selection when the selected row goes away. The Sale edit dialog offers the current batch plus any with stock, so a sale can move to the right pile.
 

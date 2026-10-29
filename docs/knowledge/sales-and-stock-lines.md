@@ -9,7 +9,9 @@ code:
   - lib/whatsapp.ts
   - app/(app)/customers/actions.ts
   - app/(app)/customers/[id]/page.tsx
+  - app/(app)/customers/[id]/sales-rows.tsx
   - tests/e2e/customers.spec.ts
+  - tests/e2e/corrections.spec.ts
 ---
 # Sales and Stock Lines
 
@@ -20,6 +22,10 @@ A Sale takes pieces from exactly one Batch ([ADR 0002](../adr/0002-sale-is-one-b
 A Bill groups the Sales of one purchase: `bills` holds customer, sale date and payment mode, and `sales.bill_id` points at it (null for Sales recorded before Bills, and for `record_sale`). A Bill carries no money, so totals are always derived from its Sales and cannot disagree with them. Like `sales`, `bills` has a select policy for members and no write policy; only `record_bill` creates one.
 
 `record_bill` takes its lines as jsonb and hands each to `private.record_sale_line`, the same function `record_sale` uses, so the Batch lock, archived refusal, input validation, availability check and Landed Cost snapshot exist once. It locks every line's Batch up front in id order, so two Bills sharing Batches in opposite orders cannot deadlock. Lines then run one after another inside the function's single transaction: a second line on the same Batch sees the first line's decrement, which is how quantities across lines are summed against Available, and any failure rolls the Bill and every earlier Sale back ([[readable-refusals]]). It refuses zero lines, and a missing or future date or a bad payment mode through `private.validate_bill_header`, before inserting anything, so those refusals read like `record_sale`'s and not like the `bills` table constraints, and returns the Bill and its Sales as one jsonb value.
+
+## The customer page groups Sales by Bill
+
+The page reads `v_sales` for the customer as before and `sales-rows.tsx` groups the rows by `bill_id` in the browser. A Bill becomes one collapsed row showing the date, the item count ("2 items", "1 item" for a one-line Bill) and the sum of its lines' totals; opening it lists the lines as the usual rows, each with its own Edit and Delete for Admins. A Sale with a null `bill_id` renders as a single row exactly as before. The Bill row takes the place of its newest line, so Bills and single Sales stay in date order together. Grouping needs no query of its own because a Bill holds no money and no fields beyond what its Sales already carry. Deleting the last line leaves no row to show because `delete_sale` removes the Bill with it ([[corrections]]).
 
 ## Stock Lines
 
