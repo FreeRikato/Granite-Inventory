@@ -40,6 +40,7 @@ export function CustomerActions({ customer, canDelete }: Props) {
         return;
       }
       toast.success("Customer deleted");
+      afterWrite("delete-customer");
       router.push("/customers");
     });
   }
@@ -87,7 +88,7 @@ export function CustomerActions({ customer, canDelete }: Props) {
         onSaved={() => {
           setDraft(null);
           toast.success("Customer updated");
-          afterWrite();
+          afterWrite("edit-customer");
         }}
       />
     </div>

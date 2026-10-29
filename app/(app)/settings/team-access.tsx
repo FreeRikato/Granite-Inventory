@@ -42,7 +42,7 @@ export function TeamAccess({ members, currentEmail }: Props) {
       toast.success(success);
       setOpen(false);
       setDraft({ email: "", name: "", role: "YARD_OPERATOR" });
-      afterWrite();
+      afterWrite("team-access");
     });
   }
 

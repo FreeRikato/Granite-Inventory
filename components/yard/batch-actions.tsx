@@ -42,7 +42,7 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
         return;
       }
       toast.success(`Batch ${batch.batch_code} deleted`);
-      afterWrite();
+      afterWrite("delete-batch");
     });
   }
 
@@ -55,7 +55,7 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
         return;
       }
       toast.success(`Batch ${batch.batch_code} ${archiving ? "archived" : "unarchived"}`);
-      afterWrite();
+      afterWrite("archive-batch");
     });
   }
 
@@ -129,8 +129,9 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
               lists={lists}
               onDone={() => {
                 setOpen(false);
-                afterWrite();
+                afterWrite("correct-batch");
               }}
+              onCancel={() => setOpen(false)}
             />
           ) : null}
         </DialogContent>
@@ -139,7 +140,17 @@ export function BatchActions({ batch, lists, iconOnly }: Props) {
   );
 }
 
-function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: EditLists; onDone: () => void }) {
+function BatchEditForm({
+  batch,
+  lists,
+  onDone,
+  onCancel,
+}: {
+  batch: EditableBatch;
+  lists: EditLists;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -328,7 +339,7 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
         </Notice>
       ) : null}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onDone}>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={pending}>

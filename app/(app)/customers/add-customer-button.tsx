@@ -19,7 +19,7 @@ export function AddCustomerButton() {
         onClose={() => setDraft(null)}
         onSaved={() => {
           setDraft(null);
-          afterWrite();
+          afterWrite("add-customer");
         }}
       />
     </>

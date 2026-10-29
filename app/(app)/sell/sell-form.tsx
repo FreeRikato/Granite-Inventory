@@ -200,7 +200,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       toast.success(`Sale recorded: ${cart.map((l) => `${l.quantity} from ${l.batchCode}`).join(", ")}`);
       setCart([]);
       resetLineFields();
-      afterWrite();
+      afterWrite("record-sale");
     });
   }
 
@@ -559,7 +559,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           setAddedCustomers((prev) => [...prev, c]);
           setCustomerId(c.id);
           setNewCustomer(null);
-          afterWrite();
+          afterWrite("add-customer");
         }}
       />
     </form>

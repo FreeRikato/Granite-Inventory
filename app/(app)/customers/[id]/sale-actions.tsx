@@ -55,7 +55,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         return;
       }
       toast.success("Sale deleted, pieces returned to the batch");
-      afterWrite();
+      afterWrite("delete-sale");
     });
   }
 
@@ -97,8 +97,9 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
               lists={lists}
               onDone={() => {
                 setOpen(false);
-                afterWrite();
+                afterWrite("correct-sale");
               }}
+              onCancel={() => setOpen(false)}
             />
           ) : null}
         </DialogContent>
@@ -107,7 +108,17 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
   );
 }
 
-function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditLists; onDone: () => void }) {
+function SaleEditForm({
+  sale,
+  lists,
+  onDone,
+  onCancel,
+}: {
+  sale: Sale;
+  lists: SaleEditLists;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState({
     batchId: sale.batch_id ?? "",
@@ -269,7 +280,7 @@ function SaleEditForm({ sale, lists, onDone }: { sale: Sale; lists: SaleEditList
         </Notice>
       ) : null}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onDone}>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={pending}>

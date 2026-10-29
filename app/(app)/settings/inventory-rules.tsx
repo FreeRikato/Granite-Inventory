@@ -29,7 +29,7 @@ export function InventoryRules({ ageing, stale }: Props) {
         return;
       }
       toast.success("Inventory rules saved");
-      afterWrite();
+      afterWrite("inventory-rules");
     });
   }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
+import { rowKind } from "@/lib/query/writes";
 import { Archive, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       }
       toast.success(`Batch ${result.data.batch_code} saved`);
       setForm({ ...EMPTY, purchaseDate: todayIso(), supplierId: form.supplierId });
-      afterWrite();
+      afterWrite("inward-batch");
     });
   }
 
@@ -180,7 +181,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         setSuppliers((prev) => byName(prev.map((s) => (s.id === id ? saved : s))));
         toast.success(`Supplier ${saved.name} saved`);
         setNewSupplier(null);
-        afterWrite();
+        afterWrite("rename-supplier");
         return;
       }
       const result = await createSupplierAction(draft);
@@ -191,6 +192,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       setSuppliers((prev) => byName([...prev, result.data]));
       set("supplierId", result.data.id);
       setNewSupplier(null);
+      afterWrite("create-supplier");
     });
   }
 
@@ -213,7 +215,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         setProducts((prev) => byName(prev.map((p) => (p.id === id ? saved : p))));
         toast.success(`Product ${saved.name} saved`);
         setNewProduct(null);
-        afterWrite();
+        afterWrite("rename-product");
         return;
       }
       const result = await createProductAction(draft);
@@ -224,6 +226,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       setProducts((prev) => byName([...prev, result.data]));
       set("productId", result.data.id);
       setNewProduct(null);
+      afterWrite("create-product");
     });
   }
 
@@ -246,7 +249,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       }
       forget(table, option.value);
       toast.success(`${option.label} archived`);
-      afterWrite();
+      afterWrite(`archive-${rowKind[table]}`);
     });
   }
 
@@ -262,7 +265,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
       }
       forget(table, id);
       toast.success(`${name} deleted`);
-      afterWrite();
+      afterWrite(`delete-${rowKind[table]}`);
     });
   }
 

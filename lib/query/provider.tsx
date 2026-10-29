@@ -6,6 +6,7 @@ import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persi
 import { del, get, set } from "idb-keyval";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useSyncExternalStore, type ReactNode } from "react";
+import { invalidatesAfter, type Write } from "./writes";
 
 const STALE_MS = 10_000;
 
@@ -40,13 +41,17 @@ export function QueryProvider({ children, cacheKey }: Props) {
   );
 }
 
-export function useAfterWrite(): () => void {
+export function useAfterWrite(): (write: Write) => void {
   const router = useRouter();
   const queryClient = useQueryClient();
-  return useCallback(() => {
-    void queryClient.invalidateQueries();
-    router.refresh();
-  }, [queryClient, router]);
+  return useCallback(
+    (write: Write) => {
+      const { keys, serverRefresh } = invalidatesAfter(write);
+      void queryClient.invalidateQueries({ predicate: ({ queryKey }) => keys.includes(String(queryKey[0])) });
+      if (serverRefresh) router.refresh();
+    },
+    [queryClient, router],
+  );
 }
 
 const SETTLE_TIMEOUT_MS = 3_000;

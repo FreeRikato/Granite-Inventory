@@ -37,6 +37,15 @@ code:
   - tests/e2e/offline.spec.ts
   - tests/e2e/dashboard.spec.ts
   - tests/e2e/yard-filter.spec.ts
+  - lib/query/writes.ts
+  - tests/tooling/invalidates-after.test.ts
+  - tests/e2e/write-refetch.spec.ts
+  - components/yard/batch-actions.tsx
+  - app/(app)/customers/[id]/sale-actions.tsx
+  - app/(app)/customers/[id]/customer-actions.tsx
+  - app/(app)/customers/add-customer-button.tsx
+  - app/(app)/public-link/public-link-controls.tsx
+  - app/(app)/settings/inventory-rules.tsx
   - app/(app)/overview-view.tsx
   - app/(app)/yard/yard-view.tsx
   - components/yard/yard-filters.tsx
@@ -74,7 +83,13 @@ The Overview Margin card (Week or Month) and Top customers card (This month, Las
 
 ## After a write
 
-Every write goes through a server action. Afterwards the caller invalidates both caches: the browser query cache and the Next router cache. It invalidates every key rather than picking some, so a new write site cannot forget one. Focus handling after a write is its own problem: [[focus-after-write]].
+Every write goes through a server action, and the caller then tells `useAfterWrite` which write it made. `invalidatesAfter` (`lib/query/writes.ts`) maps each named write to the query roots it changes and says whether the page needs a server refresh. Only those roots are invalidated, so a page refetches what the write touched and nothing else: archiving a Batch on Yard refetches the Yard batches and leaves the products and suppliers lists alone.
+
+The roots are derived from the views and functions behind each read, not guessed. A sale changes the Yard batches, stock lines, recent batches, KPIs, fast moving, margin, top customers and the customer list. A new Batch changes the same stock reads plus the recent stacks, but not the sales aggregates. Archiving a Batch drops it from the stock lines and KPIs and leaves the recent stacks alone. Creating a product or supplier on Inward invalidates that list: the form keeps the new row in its own state, but it seeds that state from the cache when it mounts, so a trip to Sell and back showed the old list and offered "Add product" again for a name that already existed. `write-refetch.spec.ts` creates each kind, leaves for Yard or Sell, comes back and finds the row in the picker. Renaming a product or supplier changes the names inside the batch reads too; archiving or deleting one changes only its own list, because a delete is refused while any Batch references the row. Inventory rules change the stale threshold and the Yard statuses that use it. When unsure whether a write reaches a read, its root is listed: a missing root shows stale rows for up to 10 s, an extra one costs a request. `invalidates-after.test.ts` pins every write and checks each root exists in `reads.ts`.
+
+`router.refresh()` runs only for writes made on a server-rendered page: Settings (including its product and supplier lists, named `settings-*` so the same rename made on Inward does not refresh), the Public Catalog controls, and a customer's page (edit customer, correct and delete Sale). Overview, Yard, Sell, Customers and Inward read in the browser, so a refresh there would only re-render a shell with no data. Deleting a customer leaves its page for the list, so it invalidates the customer reads and skips the refresh instead of re-rendering a page that no longer exists. The server actions still call `revalidatePath` for the router cache.
+
+The edit dialogs for a Batch and a Sale call the write only when saved. Cancel closes the dialog and fetches nothing. Focus handling after a write is its own problem: [[focus-after-write]]. `write-refetch.spec.ts` counts the Supabase reads and the server render requests after archiving a Batch and after cancelling an edit.
 
 ## Other pieces
 
