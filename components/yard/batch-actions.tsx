@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { isCategory, slotChoices, slotLabel } from "@/lib/domain";
-import { todayIso } from "@/lib/format";
+import { formatArea, todayIso } from "@/lib/format";
 import type { Tables } from "@/lib/database.types";
 import { archiveBatchAction, correctBatchAction, deleteBatchAction } from "@/app/(app)/yard/actions";
 
@@ -158,8 +158,11 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
   const productOptions = lists.products.filter((p) => !p.archived_at || p.id === batch.product_id);
   const supplierOptions = lists.suppliers.filter((s) => !s.archived_at || s.id === batch.supplier_id);
   const slots = slotChoices([...lists.slots, batch.slot, form.slot]);
-  const product = lists.products.find((p) => p.id === form.productId);
-  const memorial = product ? isCategory(product.category) && product.category === "MEMORIAL" : false;
+  const isMemorial = (productId: string) => {
+    const product = lists.products.find((p) => p.id === productId);
+    return product ? isCategory(product.category) && product.category === "MEMORIAL" : false;
+  };
+  const memorial = isMemorial(form.productId);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   function submit(e: React.FormEvent) {
@@ -208,14 +211,20 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             id="eb-product"
             options={productOptions.map((p) => ({ value: p.id, label: p.name }))}
             value={form.productId}
-            onChange={(v) => set("productId", v)}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                productId: v,
+                unitPurchasePrice: isMemorial(v) === isMemorial(f.productId) ? f.unitPurchasePrice : "",
+              }))
+            }
             placeholder="Product"
             className="h-9"
           />
         </Field>
       </div>
       {!memorial ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Length (ft)" htmlFor="eb-length">
             <Input
               id="eb-length"
@@ -234,6 +243,16 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
               min="0"
               value={form.breadthFt}
               onChange={(e) => set("breadthFt", e.target.value)}
+            />
+          </Field>
+          <Field label="Area (sq ft)" htmlFor="eb-area">
+            <Input
+              id="eb-area"
+              readOnly
+              tabIndex={-1}
+              placeholder="0"
+              value={formatArea(form.lengthFt, form.breadthFt)}
+              className="bg-muted tabular"
             />
           </Field>
           <Field label="Thickness (mm)" htmlFor="eb-thickness">
@@ -259,7 +278,11 @@ function BatchEditForm({ batch, lists, onDone }: { batch: EditableBatch; lists: 
             onChange={(e) => set("initialUnits", e.target.value)}
           />
         </Field>
-        <Field label="Unit Purchase Price (₹)" htmlFor="eb-price" hint="Per piece, freight included">
+        <Field
+          label="Unit Purchase Price (₹)"
+          htmlFor="eb-price"
+          hint={memorial ? "Per piece, freight included" : "Per sq ft, freight included"}
+        >
           <Input
             id="eb-price"
             type="number"

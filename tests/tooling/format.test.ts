@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRupees, formatRupeesAxis, formatRupeesCompact } from "@/lib/format";
+import { formatArea, formatRupees, formatRupeesAxis, formatRupeesCompact } from "@/lib/format";
 
 describe("formatRupees", () => {
   it("puts the sign of a negative amount before the symbol", () => {
@@ -32,5 +32,24 @@ describe("formatRupeesAxis", () => {
   it("puts the sign of a negative amount before the symbol", () => {
     expect(formatRupeesAxis(-3000)).toBe("-₹3K");
     expect(formatRupeesAxis(-150000)).toBe("-₹1.5L");
+  });
+});
+
+describe("formatArea", () => {
+  it("multiplies length by breadth without floating point noise", () => {
+    expect(formatArea("6", "2")).toBe("12");
+    expect(formatArea("4.25", "2.75")).toBe("11.6875");
+    expect(formatArea("2.33", "3.1")).toBe("7.223");
+  });
+
+  it("rounds each side to two places the way the size columns store it", () => {
+    expect(formatArea("2.335", "3")).toBe("7.02");
+    expect(formatArea("2.333", "3.1")).toBe("7.223");
+  });
+
+  it("stays empty until both sides are above zero", () => {
+    expect(formatArea("", "2")).toBe("");
+    expect(formatArea("6", "0")).toBe("");
+    expect(formatArea("abc", "2")).toBe("");
   });
 });

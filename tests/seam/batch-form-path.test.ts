@@ -46,28 +46,28 @@ describe("batch forms: freight is part of the Unit Purchase Price", () => {
     return batchRpcArgs(parsed.data);
   }
 
-  it("a new batch saved from the form has landed cost equal to the Unit Purchase Price and no freight", async () => {
+  it("a new batch saved from the form has landed cost of the area times the Unit Purchase Price and no freight", async () => {
     const { data, error } = await operator.rpc("create_batch", parse(formPayload()));
     expect(error).toBeNull();
     expect(data?.freight_cost).toBe(0);
-    expect(data?.landed_cost).toBe(1000);
+    expect(data?.landed_cost).toBe(8000);
   });
 
   it("a payload that still carries freightCost is saved the same way", async () => {
     const { data, error } = await operator.rpc("create_batch", parse(formPayload({ freightCost: "500" })));
     expect(error).toBeNull();
     expect(data?.freight_cost).toBe(0);
-    expect(data?.landed_cost).toBe(1000);
+    expect(data?.landed_cost).toBe(8000);
   });
 
-  it("editing a batch from the form sets landed cost to the new price and keeps freight at 0", async () => {
+  it("editing a batch from the form sets landed cost from the new price and keeps freight at 0", async () => {
     const created = await operator.rpc("create_batch", parse(formPayload()));
     const { data, error } = await admin.rpc("correct_batch", {
       p_batch_id: created.data?.id ?? "",
       ...parse(formPayload({ unitPurchasePrice: "1200", freightCost: "500" })),
     });
     expect(error).toBeNull();
-    expect(data?.landed_cost).toBe(1200);
+    expect(data?.landed_cost).toBe(9600);
     expect(data?.freight_cost).toBe(0);
   });
 });

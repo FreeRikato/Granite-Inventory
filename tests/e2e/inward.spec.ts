@@ -29,11 +29,12 @@ test("operator logs a delivery with a new product and sees it listed", async ({ 
 
   await page.getByLabel("Length (ft)").fill("4");
   await page.getByLabel("Breadth (ft)").fill("2");
+  await expect(page.getByLabel("Area (sq ft)")).toHaveValue("8");
   await page.getByLabel("Thickness (mm)").fill("16");
   await page.getByLabel("Unit Quantity").fill("15");
   await expect(page.getByLabel("Freight Cost")).toHaveCount(0);
-  await expect(page.getByText("Per piece, freight included")).toBeVisible();
-  await page.getByLabel("Unit Purchase Price (₹)").fill("1450");
+  await expect(page.getByText("Per sq ft, freight included")).toBeVisible();
+  await page.getByLabel("Unit Purchase Price (₹)").fill("181.25");
 
   await page.getByRole("button", { name: "Add new batch number" }).click();
   const stackDialog = page.getByRole("dialog", { name: "New batch number" });

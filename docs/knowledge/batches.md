@@ -8,6 +8,9 @@ code:
   - supabase/migrations/20261026190835_batch_stack_number.sql
   - supabase/migrations/20261029100000_fold_freight_into_price.sql
   - supabase/migrations/20261029110000_batch_total_cost.sql
+  - supabase/migrations/20261029130000_price_per_sqft.sql
+  - lib/format.ts
+  - tests/tooling/format.test.ts
   - app/(app)/inward/recent-batches.tsx
   - lib/domain.ts
   - lib/rpc-args.ts
@@ -15,6 +18,7 @@ code:
   - app/(app)/inward/page.tsx
   - components/yard/batch-actions.tsx
   - tests/e2e/inward.spec.ts
+  - tests/e2e/corrections.spec.ts
   - tests/seam/batch-form-path.test.ts
   - tests/seam/batch-total-cost.test.ts
 ---
@@ -50,13 +54,29 @@ A Stack is the pile a Batch is put on, named by a Slot plus a typed number; scre
 
 ## Freight is part of the price
 
-The client adds freight into the Unit Purchase Price themselves, so neither the Inward form nor the Edit dialog asks for a Freight Cost, and `batchSchema` and `batchRpcArgs` no longer carry it. `create_batch` then takes its default 0, and `correct_batch` writes `coalesce(p_freight_cost, 0)`, so an edit from the app leaves freight at 0 and Landed Cost equals the price. The column and the `p_freight_cost` parameter stay so the database rules (non-negative, spread over the pieces into `landed_cost`) keep working for any caller that still sends it; the seam tests that call the raw RPCs with freight still cover that.
+The client adds freight into the Unit Purchase Price themselves, so neither the Inward form nor the Edit dialog asks for a Freight Cost, and `batchSchema` and `batchRpcArgs` no longer carry it. `create_batch` then takes its default 0, and `correct_batch` writes `coalesce(p_freight_cost, 0)`, so an edit from the app leaves freight at 0 and Landed Cost comes from the price alone (see Price per square foot). The column and the `p_freight_cost` parameter stay so the database rules (non-negative, spread over the pieces into `landed_cost`) keep working for any caller that still sends it; the seam tests that call the raw RPCs with freight still cover that.
 
 `20261029100000_fold_freight_into_price.sql` runs once: for every Batch with freight it sets `unit_purchase_price = landed_cost` and `freight_cost = 0`. `landed_cost` is already rounded to paise, so it comes out unchanged; Sales hold their own snapshot and are not touched. The statement runs with `batches_check_size` disabled and enables it again right after: the fold only moves money between two columns, and an admin may have changed a Product's category in Settings after the Batch was inwarded (a sized Batch under a Product that is now Memorial, or the reverse), which would make the size rule abort the whole migration and the deploy. A Batch with no freight is not matched, so its `updated_at` stays. `tests/seam/batch-form-path.test.ts` drives the form path (`batchSchema`, `batchRpcArgs`, then the RPC) to show a stray `freightCost` in the payload is ignored.
 
+## Price per square foot
+
+Granite and Tiles are bought by the square foot, so for a sized Batch the Unit Purchase Price is a rate per sq ft and `landed_cost` (still per piece) is `round(coalesce(length_ft * breadth_ft, 1) * unit_purchase_price + freight_cost / initial_units, 2)`. Memorial has no Size, so the `coalesce` keeps its price per piece. Keeping Landed Cost per piece is what lets the Sell form, margins, `v_sales` and inventory value carry on unchanged: they already multiply Landed Cost by pieces, and the Sale Price stays per piece.
+
+`20261029130000_price_per_sqft.sql` runs once:
+
+- A generated column cannot change type or expression in place while its inputs change type, so it drops `landed_cost`, widens `unit_purchase_price` to `numeric(22, 10)`, divides every sized Batch's stored per-piece price by its Area, and adds `landed_cost` back with the new expression. Ten decimals keep `Area * rate` within a paisa of the old price for any Size the columns allow, and twelve integer digits leave room for a high price on a tiny piece.
+- It snapshots every `landed_cost` first and raises if any differs afterwards, so a rounding surprise aborts the deploy instead of shifting inventory value. Sales hold their own snapshots and are untouched.
+- `batches_check_size` and `batches_set_updated_at` are off during the update, for the same reason as the freight fold and so the conversion does not look like an edit.
+- Every view that reads `batches`, directly or through another view, blocks the type change. The migration finds them through `pg_depend`, saves each definition, `reloptions` and grants, drops them deepest first and recreates them shallowest first with the same grants. It names no view, so a view added on another branch (the chat views) survives whichever order the branches merge in.
+- `private.validate_batch_input` refuses a price whose Landed Cost would overflow `numeric(12, 2)` with "Landed Cost per piece is too large" ([[readable-refusals]]); the Size and price caps alone no longer bound it. The check reads every input as its column stores it (sides to hundredths, the price to ten places, freight to paise) and rounds the result to paise, so a value that only reaches ₹1,000 crore once stored is refused too. A price of ₹1 lakh crore or more per sq ft would overflow `numeric(22, 10)` before any Landed Cost is computed, so it is refused first with "Unit purchase price is too large".
+- Whether a price is per sq ft or per piece follows the Batch's own Size, not its Product's category. A Product whose category an admin changes after inwarding keeps Batches of the other kind; editing such a Batch makes the dialog follow the new category and drop or ask for the Size, while the stored price stays the same number, so its Landed Cost changes by the Area. To stop that number carrying over silently, the Edit dialog clears the price whenever the Product select moves a Batch between a sized and a Memorial Product, so the admin re-enters it in the new unit (`tests/e2e/corrections.spec.ts`). A Product whose category was changed in Settings still shows the stored number under the new hint; check the price when editing such a Batch.
+- Deploy order: Vercel deploys on merge while production migrations are pushed by hand ([environments](../environments.md)). A Batch saved between the two is wrong either way: new app on the old schema stores a rate the migration then divides again, and old app on the new schema stores a per piece price that is then multiplied by the Area. So for this migration: ask the yard to stop inwarding, run `pnpm db:push:prod`, merge the PR straight away, wait for the Vercel deploy, then reopen inwarding. Staging follows the same order with `pnpm db:push:staging` before merging into `staging`.
+
+The Inward form and the Edit dialog show a read-only Area (sq ft) box after Breadth, `formatArea(length, breadth)`, blank until both are above zero. It rounds each side to hundredths first, as `numeric(5, 2)` stores them (half away from zero, so `2.335` is `2.34`, through an exponent string to dodge binary rounding), so the box shows the Area the cost uses; the product is shown to four places. The price hint reads "Per sq ft" for sized products and "Per piece" for Memorial. A converted price may show up to ten decimals in the Edit dialog.
+
 ## Total cost
 
-Recent batches shows what a whole Batch cost next to the per-piece Landed cost, so nobody multiplies by Pieces by hand. `20261029110000_batch_total_cost.sql` appends `total_cost = initial_units * unit_purchase_price + freight_cost` as the last column of `v_batches` (`create or replace view` can only append). It is derived, not stored: the formula still adds `freight_cost` so a Batch inserted with freight reads its true cost, and an archived Batch keeps its value because the view does not filter on `archived_at`. `RecentBatches` renders it with `formatRupees`, right-aligned with tabular figures, and the table keeps its sideways scroll on phones. `tests/seam/batch-total-cost.test.ts` covers the value, the freight case and an archived row; `tests/e2e/inward.spec.ts` checks the column order and the figures.
+Recent batches shows what a whole Batch cost next to the per-piece Landed cost, so nobody multiplies by Pieces by hand. `v_batches.total_cost` is `initial_units * landed_cost`, so it always equals Pieces times the Landed cost in the next column even when a rate has many decimals; it was last redefined in `20261029130000_price_per_sqft.sql` (first appended by `20261029110000_batch_total_cost.sql`; `create or replace view` can only append). It is derived, not stored: Landed Cost already spreads any `freight_cost` over the pieces, so a Batch inserted with freight reads its true cost to the paisa per piece, and an archived Batch keeps its value because the view does not filter on `archived_at`. `RecentBatches` renders it with `formatRupees`, right-aligned with tabular figures, and the table keeps its sideways scroll on phones. `tests/seam/batch-total-cost.test.ts` covers a sized Batch, a rate with many decimals, a Memorial Batch, freight, an archived row and both overflow refusals; `tests/e2e/inward.spec.ts` checks the Area box, the column order and the figures. Seam and e2e fixtures that hand-check margins enter the per sq ft rate that gives their old per-piece cost (₹181.25 on 4 × 2 ft is ₹1,450 a piece).
 
 ## Hidden Variants
 

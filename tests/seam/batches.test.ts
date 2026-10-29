@@ -18,7 +18,7 @@ describe("batches: create_batch", () => {
     supplierId = await createSupplier(operator, "Madurai Quarry");
   });
 
-  it("creates a batch with a generated code, default slot and landed cost without freight", async () => {
+  it("creates a batch with a generated code, default slot and landed cost of the area times the price", async () => {
     const { data, error } = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 1400 });
     expect(error).toBeNull();
     const [yyyy, mm, dd] = today().split("-");
@@ -26,7 +26,7 @@ describe("batches: create_batch", () => {
     const yy = yyyy.slice(-2);
     expect(data?.batch_code).toBe(`BP-${dd}${mon}${yy}-01`);
     expect(data?.slot).toBe("4FT");
-    expect(data?.landed_cost).toBe(1400);
+    expect(data?.landed_cost).toBe(11200);
     expect(data?.units_sold).toBe(0);
     expect(data?.created_by).toBe("operator@test.local");
   });
@@ -54,7 +54,7 @@ describe("batches: create_batch", () => {
 
   it("spreads freight over the pieces into landed cost, rounded to paise", async () => {
     const { data } = await createBatch(operator, { productId, supplierId, units: 16, unitPrice: 1400, freight: 750 });
-    expect(data?.landed_cost).toBe(1446.88);
+    expect(data?.landed_cost).toBe(11246.88);
   });
 
   it("reuses an existing variant case-insensitively and never merges batches", async () => {

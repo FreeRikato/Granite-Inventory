@@ -200,7 +200,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
     const corrected = await correctBatch(admin, batchId, { price: 1200, units: 15 });
 
     expect(corrected.error).toBeNull();
-    expect(corrected.data?.landed_cost).toBe(1200);
+    expect(corrected.data?.landed_cost).toBe(9600);
   });
 
   it("uses the destination batch purchase date when correcting a moved Sale", async () => {

@@ -34,7 +34,7 @@ import {
   type Category,
 } from "@/lib/domain";
 import type { AdminListTable } from "@/lib/admin-list-references";
-import { todayIso } from "@/lib/format";
+import { formatArea, todayIso } from "@/lib/format";
 import { NAME_MAX } from "@/lib/schemas/common";
 import { useRefusal } from "@/lib/use-refusal";
 import { createClient } from "@/lib/supabase/client";
@@ -359,7 +359,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
           Doom Stones have a fixed size and are tracked by unit count.
         </Notice>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <Field label="Length (ft)" htmlFor="lengthFt">
             <Input
               id="lengthFt"
@@ -386,6 +386,16 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               value={form.breadthFt}
               onChange={(e) => set("breadthFt", e.target.value)}
               className="h-11"
+            />
+          </Field>
+          <Field label="Area (sq ft)" htmlFor="areaSqft">
+            <Input
+              id="areaSqft"
+              readOnly
+              tabIndex={-1}
+              placeholder="0"
+              value={formatArea(form.lengthFt, form.breadthFt)}
+              className="h-11 bg-muted tabular"
             />
           </Field>
           <Field label="Thickness (mm)" htmlFor="thicknessMm">
@@ -418,7 +428,11 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
             className="h-11"
           />
         </Field>
-        <Field label="Unit Purchase Price (₹)" htmlFor="unitPurchasePrice" hint="Per piece, freight included">
+        <Field
+          label="Unit Purchase Price (₹)"
+          htmlFor="unitPurchasePrice"
+          hint={memorial ? "Per piece, freight included" : "Per sq ft, freight included"}
+        >
           <Input
             id="unitPurchasePrice"
             type="number"
