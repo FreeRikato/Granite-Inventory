@@ -17,6 +17,19 @@ export function formatNumber(value: number): string {
   return inr.format(value);
 }
 
+const areaFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 4 });
+
+function toHundredths(value: string): number {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? Math.round(Number(`${parsed}e2`)) / 100 : Number.NaN;
+}
+
+export function formatArea(lengthFt: string, breadthFt: string): string {
+  const length = toHundredths(lengthFt);
+  const breadth = toHundredths(breadthFt);
+  return length > 0 && breadth > 0 ? areaFmt.format(length * breadth) : "";
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }

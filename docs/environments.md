@@ -24,7 +24,7 @@ deploys production.
 ## Migrations
 
 Never edit an applied migration; add a new one with `supabase migration new <name> < /dev/null`
-and edit the file. Apply it to staging first, then to production after the PR merges:
+and edit the file. Apply it to staging first, then to production after the PR merges (exception: a migration that changes what a stored value means, such as `20261029130000_price_per_sqft.sql`, is pushed just before the merge while nobody enters data; `docs/knowledge/batches.md` gives the order):
 
 ```
 pnpm db:push:staging

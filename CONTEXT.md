@@ -27,18 +27,21 @@ The human-readable identifier of a Batch, formed from the Product's abbreviation
 _Avoid_: Batch ID, lot number
 
 **Unit Purchase Price**:
-What a Batch cost per piece, freight included. The person logging the Batch adds the freight into this price before entering it.
+What a Batch cost per square foot of Area, freight included; for Memorial, which has no Size, per piece. The person logging the Batch adds the freight into this price before entering it.
 
 **Freight Cost**:
 A legacy stored fact: lorry and handling cost for a whole Batch, no longer entered anywhere. Batches saved before freight moved into the Unit Purchase Price had it folded in, so every Batch now holds 0.
 _Avoid_: Misc cost, inward cost
 
 **Landed Cost**:
-The true per-piece cost of a Batch. It equals the Unit Purchase Price (plus any legacy Freight Cost spread evenly over the pieces bought). All margins and inventory value use Landed Cost.
+The true per-piece cost of a Batch. It equals the Area times the Unit Purchase Price, or the Unit Purchase Price alone for Memorial (plus any legacy Freight Cost spread evenly over the pieces bought). All margins and inventory value use Landed Cost.
 _Avoid_: Purchase price (when freight matters), cost price
 
 **Total cost**:
-What the whole Batch cost: pieces bought times Unit Purchase Price, plus any legacy Freight Cost. A Batch of 15 pieces at ₹1,450 has a Total cost of ₹21,750. Derived in `v_batches` and shown in Recent batches, for archived Batches too.
+What the whole Batch cost: pieces bought times Landed Cost, so Area times pieces times Unit Purchase Price (pieces times price for Memorial); any legacy Freight Cost is already inside Landed Cost. A Batch of 15 pieces of 4 × 2 ft at ₹181.25 per sq ft has a Total cost of ₹21,750. Derived in `v_batches` and shown in Recent batches, for archived Batches too.
+
+**Area**:
+Length times breadth of one piece, in square feet. Shown read-only beside Length and Breadth on the Inward form and the Edit dialog; not stored.
 
 **Category**:
 The broad line a Product belongs to: Granite, Memorial, Tiles.

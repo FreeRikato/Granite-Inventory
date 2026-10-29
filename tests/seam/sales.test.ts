@@ -23,7 +23,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       phone: "+91 98765 43210",
       type: "CONTRACTOR",
     });
-    const batch = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 1400, freight: 750 });
+    const batch = await createBatch(operator, { productId, supplierId, units: 15, unitPrice: 175, freight: 750 });
     batchId = batch.data?.id ?? "";
   });
 

@@ -22,8 +22,8 @@ describe("archive: batches, products and suppliers", () => {
     productId = await createProduct(operator, { name: "Black Pearl", abbreviation: "BP" });
     supplierId = await createSupplier(operator, "Madurai Quarry");
     customerId = await createCustomer(operator, { name: "Murugan" });
-    kept = (await createBatch(operator, { productId, supplierId, units: 10, unitPrice: 1000 })).data?.id ?? "";
-    archived = (await createBatch(operator, { productId, supplierId, units: 6, unitPrice: 2000 })).data?.id ?? "";
+    kept = (await createBatch(operator, { productId, supplierId, units: 10, unitPrice: 125 })).data?.id ?? "";
+    archived = (await createBatch(operator, { productId, supplierId, units: 6, unitPrice: 250 })).data?.id ?? "";
     await recordSale(operator, { batchId: archived, customerId, quantity: 2, salePrice: 2500 });
   });
 
