@@ -77,7 +77,7 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await fifo.nth(0).click();
 
   await page.getByLabel("Quantity Sold").fill("1");
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByTestId("order-count")).toHaveText("1 line · 1 piece");
   await expect(page.getByTestId("total-margin")).toHaveText("₹200");
@@ -87,7 +87,7 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await page.getByRole("option", { name: BLACK_PEARL }).click();
   await page.getByTestId("fifo-batch").nth(0).click();
   await page.getByLabel("Quantity Sold").fill("1");
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
   await page.getByLabel("Stickering Cost (₹)").fill("100");
   await page.getByLabel("Stickering Price (₹)").fill("250");
@@ -118,8 +118,8 @@ test("adding Jet Black x4 and Black Pearl x5 records one bill that drops both ba
   await page.goto("/sell");
   await chooseCustomer(page, /Murugan Constructions/);
 
-  await addLine(page, JET_BLACK, "4", "2600");
-  await addLine(page, BLACK_PEARL, "5", "1650");
+  await addLine(page, JET_BLACK, "4", "173.3333");
+  await addLine(page, BLACK_PEARL, "5", "206.25");
 
   await expect(page.getByTestId("cart-line")).toHaveCount(2);
   await expect(page.getByTestId("order-count")).toHaveText("2 lines · 9 pieces");
@@ -144,15 +144,15 @@ test("adding Jet Black x4 and Black Pearl x5 records one bill that drops both ba
   await expect(page.locator('[data-batch-code="BP-OLD-01"]')).toContainText("Available:2");
 });
 
-test("adding the same batch at the same price twice shows one merged line", async ({ page, signIn }) => {
+test("adding the same batch at the same rate twice shows one merged line", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/sell");
   await chooseCustomer(page, /Walk-in Customer/);
 
-  await addLine(page, BLACK_PEARL, "2", "1650", { batchCode: "BP-OLD-01" });
-  await addLine(page, BLACK_PEARL, "1", "1650", { batchCode: "BP-OLD-01" });
+  await addLine(page, BLACK_PEARL, "2", "206.25", { batchCode: "BP-OLD-01" });
+  await addLine(page, BLACK_PEARL, "1", "206.25", { batchCode: "BP-OLD-01" });
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
-  await expect(page.getByTestId("cart-line")).toContainText("3 × ₹1,650");
+  await expect(page.getByTestId("cart-line")).toContainText("3 × 8 sq ft × ₹206.25/sq ft = ₹4,950");
   await expect(page.getByTestId("order-count")).toHaveText("1 line · 3 pieces");
 });
 
@@ -164,7 +164,7 @@ test("pieces already in the order are taken off every available figure and canno
   await page.goto("/sell");
   await chooseCustomer(page, /Walk-in Customer/);
 
-  await addLine(page, JET_BLACK, "4", "2600");
+  await addLine(page, JET_BLACK, "4", "173.3333");
 
   await page.getByRole("combobox", { name: "Product" }).click();
   await expect(page.getByRole("option", { name: JET_BLACK })).toContainText("2 available in 1 batch");
@@ -173,7 +173,7 @@ test("pieces already in the order are taken off every available figure and canno
   await expect(page.getByText("2 available", { exact: true })).toBeVisible();
 
   await page.getByLabel("Quantity Sold").fill("3");
-  await page.getByLabel("Stone Sale Price (₹)").fill("2600");
+  await page.getByLabel("Stone Sale Price (₹)").fill("173.3333");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByText("Only 2 in stock")).toBeVisible();
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
@@ -186,8 +186,8 @@ test("while Record Sale is pending the order cannot be added to or trimmed", asy
   await signIn("operator");
   await page.goto("/sell");
   await chooseCustomer(page, /Walk-in Customer/);
-  await addLine(page, BLACK_PEARL, "2", "1650");
-  await addLine(page, JET_BLACK, "1", "2600");
+  await addLine(page, BLACK_PEARL, "2", "206.25");
+  await addLine(page, JET_BLACK, "1", "173.3333");
 
   await page.route(
     (url) => url.pathname === "/sell",
@@ -198,7 +198,7 @@ test("while Record Sale is pending the order cannot be added to or trimmed", asy
   );
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: BLACK_PEARL }).click();
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await expect(page.getByRole("button", { name: "Add to order" })).toBeEnabled();
 
   await page.getByRole("button", { name: "Record Sale (2 lines)" }).click();
@@ -218,8 +218,8 @@ test("a refused order keeps its lines in the cart and shows the message", async 
   await signIn("operator");
   await page.goto("/sell");
   await chooseCustomer(page, /Walk-in Customer/);
-  await addLine(page, BLACK_PEARL, "2", "1650");
-  await addLine(page, JET_BLACK, "1", "2600");
+  await addLine(page, BLACK_PEARL, "2", "206.25");
+  await addLine(page, JET_BLACK, "1", "173.3333");
   await sql(`update public.batches set units_sold = initial_units where batch_code = 'JB-FIVE-01'`);
 
   await page.getByRole("button", { name: "Record Sale (2 lines)" }).click();
@@ -244,7 +244,7 @@ test("choosing a stock line selects its oldest batch and enables Record Sale", a
   await expect(fifo.nth(0)).toContainText("BP-OLD-01");
   await expect(page.getByRole("button", { name: "Add to order" })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Record Sale" })).toBeDisabled();
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByRole("button", { name: "Record Sale" })).toBeEnabled();
 });
@@ -272,7 +272,7 @@ test("the default batch skips one the order has already used up", async ({ page,
   await page.goto("/sell");
   await chooseCustomer(page, /Walk-in Customer/);
 
-  await addLine(page, BLACK_PEARL, "7", "1650", { batchCode: "BP-OLD-01" });
+  await addLine(page, BLACK_PEARL, "7", "206.25", { batchCode: "BP-OLD-01" });
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: BLACK_PEARL }).click();
 
@@ -306,7 +306,7 @@ test("selling more than the stock line holds is refused when adding to the order
   await page.getByRole("option", { name: /Jet Black · 5×3 ft/ }).click();
   await page.getByTestId("fifo-batch").first().click();
   await page.getByLabel("Quantity Sold").fill("7");
-  await page.getByLabel("Stone Sale Price (₹)").fill("2600");
+  await page.getByLabel("Stone Sale Price (₹)").fill("173.3333");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByText("Only 6 in stock")).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -365,7 +365,7 @@ test("a refusal clears as soon as the quantity is fixed", async ({ page, signIn 
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: /Black Pearl · 4×2 ft/ }).click();
   await page.getByTestId("fifo-batch").first().click();
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
 
   await page.getByLabel("Quantity Sold").fill("99");
   await page.getByRole("button", { name: "Add to order" }).click();
@@ -404,7 +404,7 @@ test("a sized line shows its Area in the picker and in the order, and a Memorial
   await expect(pickerCard).toContainText("40 sq ft");
   await expect(pickerCard).toContainText("8 per piece");
 
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   const line = page.getByTestId("cart-line");
   await expect(line.getByTestId("area-card")).toContainText("40 sq ft");
@@ -420,6 +420,49 @@ test("a sized line shows its Area in the picker and in the order, and a Memorial
   await expect(page.getByTestId("area-card")).toHaveCount(1);
 });
 
+test("the stone price is typed per sq ft for sized stone and per piece for a Memorial, and the order totals it", async ({
+  page,
+  signIn,
+}) => {
+  await sql(
+    `update public.batches set initial_units = 20, units_sold = 0 where batch_code in ('BP-OLD-01', 'DS-CROSS-01')`,
+  );
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Murugan Constructions/);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: BLACK_PEARL }).click();
+  await expect(page.getByText("Per sq ft", { exact: true })).toBeVisible();
+  await page.getByTestId("fifo-batch").filter({ hasText: "BP-OLD-01" }).click();
+  await page.getByLabel("Quantity Sold").fill("10");
+  await page.getByLabel("Stone Sale Price (₹)").fill("250");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  await expect(page.getByTestId("cart-line")).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000");
+  await expect(page.getByTestId("order-summary")).toContainText("Stone Sale Price₹20,000");
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: DOOM_STONE }).click();
+  await expect(page.getByText("Per piece", { exact: true })).toBeVisible();
+  await page.getByLabel("Quantity Sold").fill("10");
+  await page.getByLabel("Stone Sale Price (₹)").fill("2000");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  await expect(page.getByTestId("cart-line").nth(1)).toContainText("10 × ₹2,000 = ₹20,000");
+  await expect(page.getByTestId("order-summary")).toContainText("Stone Sale Price₹40,000");
+
+  await page.getByRole("button", { name: "Record Sale (2 lines)" }).click();
+  await expect(page.getByText(/Sale recorded/)).toBeVisible();
+  const stored = await sql<{ batch_code: string; sale_rate: string; area_sqft: string | null }>(
+    `select b.batch_code, s.sale_rate, s.area_sqft from public.sales s join public.batches b on b.id = s.batch_id order by b.batch_code`,
+  );
+  expect(
+    stored.map((r) => [r.batch_code, Number(r.sale_rate), r.area_sqft === null ? null : Number(r.area_sqft)]),
+  ).toEqual([
+    ["BP-OLD-01", 250, 8],
+    ["DS-CROSS-01", 2000, null],
+  ]);
+});
+
 async function seedSplitStock() {
   await sql(`update public.batches set initial_units = 14, units_sold = 0 where batch_code = 'BP-OLD-01'`);
   await sql(`update public.batches set initial_units = 30, units_sold = 0 where batch_code = 'BP-NEW-01'`);
@@ -432,7 +475,7 @@ async function askForBlackPearl(page: Page, quantity: string, options: { batchCo
     await page.getByTestId("fifo-batch").filter({ hasText: options.batchCode }).click();
   }
   await page.getByLabel("Quantity Sold").fill(quantity);
-  await page.getByLabel("Stone Sale Price (₹)").fill(options.price ?? "1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill(options.price ?? "206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
 }
 
@@ -448,7 +491,7 @@ test("asking for more than the selected batch holds splits the quantity across b
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: BLACK_PEARL }).click();
   await page.getByLabel("Quantity Sold").fill("20");
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
   await page.getByLabel("Stickering Cost (₹)").fill("100");
   await page.getByLabel("Stickering Price (₹)").fill("250");
@@ -485,8 +528,8 @@ test("asking for more than the selected batch holds splits the quantity across b
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const lines = page.getByTestId("cart-line");
   await expect(lines).toHaveCount(2);
-  await expect(lines.nth(0)).toContainText("BP-OLD-01 · 14 × ₹1,650 + ₹250 stickering");
-  await expect(lines.nth(1)).toContainText("BP-NEW-01 · 6 × ₹1,650 + ₹250 stickering");
+  await expect(lines.nth(0)).toContainText("BP-OLD-01 · 14 × 8 sq ft × ₹206.25/sq ft = ₹23,100 + ₹250 stickering");
+  await expect(lines.nth(1)).toContainText("BP-NEW-01 · 6 × 8 sq ft × ₹206.25/sq ft = ₹9,900 + ₹250 stickering");
   await expect(page.getByTestId("order-count")).toHaveText("2 lines · 20 pieces");
   const product = page.getByRole("combobox", { name: "Product" });
   await expect.poll(() => product.evaluate((element) => document.activeElement === element)).toBe(true);
@@ -501,7 +544,7 @@ test("a quantity the selected batch covers adds with no modal", async ({ page, s
   await askForBlackPearl(page, "14");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
-  await expect(page.getByTestId("cart-line")).toContainText("BP-OLD-01 · 14 × ₹1,650");
+  await expect(page.getByTestId("cart-line")).toContainText("BP-OLD-01 · 14 × 8 sq ft × ₹206.25/sq ft = ₹23,100");
 });
 
 test("pieces already in the order count against the split and a request beyond all stock is refused", async ({
@@ -523,7 +566,7 @@ test("pieces already in the order count against the split and a request beyond a
   await expect(dialog.getByTestId("split-total")).toHaveText("1 of 1");
   await dialog.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByTestId("cart-line")).toHaveCount(2);
-  await expect(page.getByTestId("cart-line").nth(1)).toContainText("BP-NEW-01 · 1 × ₹1,650");
+  await expect(page.getByTestId("cart-line").nth(1)).toContainText("BP-NEW-01 · 1 × 8 sq ft × ₹206.25/sq ft = ₹1,650");
 
   await askForBlackPearl(page, "30");
   await expect(page.getByText("Only 29 in stock")).toBeVisible();

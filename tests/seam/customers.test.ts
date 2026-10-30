@@ -31,14 +31,14 @@ describe("customers: v_customers and deletion rules", () => {
       batchId: batch?.id ?? "",
       customerId: murugan,
       quantity: 2,
-      salePrice: 1000,
+      saleRate: 125,
       saleDate: daysAgo(10),
     });
     await recordSale(operator, {
       batchId: batch?.id ?? "",
       customerId: murugan,
       quantity: 1,
-      salePrice: 1500,
+      saleRate: 187.5,
       saleDate: daysAgo(3),
       stickering: { cost: 100, price: 250 },
     });

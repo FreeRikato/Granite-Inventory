@@ -8,6 +8,7 @@ code:
   - lib/chat/tools.ts
   - lib/chat/alias.ts
   - lib/chat/system-prompt.ts
+  - supabase/migrations/20261030100000_sale_rate.sql
   - lib/chat/model.ts
   - lib/chat/test-model.ts
   - tests/seam/chat-answer.test.ts
@@ -72,6 +73,10 @@ What this does not close: the query can still read anything `public` can read. C
 An earlier version switched with `set local role chat_reader` in a normal function. `set role` is allowed to any role the connection's login (`authenticator`) belongs to, which includes `authenticated` and `service_role`, so `select set_config('role', 'authenticated', true), query_to_xml('select name from customers', ...)` read customer names inside one statement. Scanning the query or its plan for `set_config` does not help, because `query_to_xml(concat('select set_', 'config(...)'))` builds the name at run time.
 
 The fix is in the privilege model, not the text. Postgres refuses to change `role` or `session_authorization` inside a security-definer function, however deeply nested, and refuses to leave a read-only transaction once a query has run. `chat_query` is owned by `chat_reader` and is `security definer`, so the member's query starts as `chat_reader` and cannot become anything else. `chat_reader` gets `create` on `public` only for the `alter function ... owner to` in the migration and loses it in the same migration; `postgres` loses its `set` option on `chat_reader` right after, since nothing needs it later. `chat-query.test.ts` runs eight spellings, including the run-time-built ones, as an operator with a real customer and checks that neither the error nor the response holds the name or phone.
+
+## Sale Rate and Sale Price
+
+`v_chat_sales` carries `sale_rate` and `area_sqft` beside the per piece `sale_price`. The prompt names them so a question like "what rate per sq ft did we sell Black Pearl at" reads `sale_rate` where `area_sqft` is not null, and a revenue question keeps using `stone_total` and `revenue`, which are built from the derived `sale_price` ([[sales-and-stock-lines]]).
 
 ## What the views hide
 

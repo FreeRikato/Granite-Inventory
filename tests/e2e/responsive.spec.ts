@@ -79,8 +79,8 @@ test("mobile customer sales reflow keeps margin and admin actions reachable", as
   await sql(
     `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
   );
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today() - 3, b.id, c.id, 2, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);
   await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-OLD-01'`);
 
@@ -139,7 +139,7 @@ test("mobile inward and sell fit a 375px screen with seeded rows", async ({ page
     .click();
   await expect(page.getByTestId("fifo-batch").first()).toBeVisible();
   await expectNoHorizontalPageScroll(page);
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
   await expect(page.getByRole("button", { name: /^Remove Black Pearl/ })).toBeVisible();
@@ -165,8 +165,8 @@ test("mobile customers list fits a 375px screen with a thousand stress-like cust
       (array['REGULAR', 'CONTRACTOR', 'ENGINEER', 'TRUST', 'RETAIL'])[1 + n % 5]
     from generate_series(1, 1000) n`);
   await sql(`update public.batches set initial_units = 5000 where batch_code = 'BP-OLD-01'`);
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today() - (row_number() over ())::int % 30, b.id, c.id, 1, 1650, 1450, 'CASH'
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today() - (row_number() over ())::int % 30, b.id, c.id, 1, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1450, 'CASH'
     from public.batches b, (select id from public.customers limit 400) c where b.batch_code = 'BP-OLD-01'`);
   await sql(`update public.batches set units_sold = units_sold + 400 where batch_code = 'BP-OLD-01'`);
   await page.setViewportSize({ width: 375, height: 812 });
@@ -192,7 +192,7 @@ test("mobile sell cart lines, area cards and split modal fit a 390px screen", as
   await page.locator("#line").click();
   await page.getByRole("option", { name: /Black Pearl/ }).click();
   await page.getByLabel("Quantity Sold").fill("5");
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByTestId("cart-line")).toHaveCount(1);
   await expectReachableOnMobile(page, page.getByTestId("cart-line").first().getByTestId("area-card"));
@@ -201,7 +201,7 @@ test("mobile sell cart lines, area cards and split modal fit a 390px screen", as
   await page.getByRole("combobox", { name: "Product" }).click();
   await page.getByRole("option", { name: /Black Pearl/ }).click();
   await page.getByLabel("Quantity Sold").fill("20");
-  await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+  await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("button", { name: "Add to order" }).click();
 
   const dialog = page.getByRole("dialog");

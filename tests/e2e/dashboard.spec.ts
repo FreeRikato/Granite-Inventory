@@ -9,8 +9,8 @@ test.beforeAll(async () => {
 test.beforeEach(async () => {
   await resetDomainData();
   await seedYard();
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today(), b.id, c.id, 3, 1650, 1450, 'CASH' from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today(), b.id, c.id, 3, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-NEW-01' and c.is_walk_in`);
   await sql(`update public.batches set units_sold = units_sold + 3 where batch_code = 'BP-NEW-01'`);
 });
@@ -63,8 +63,8 @@ async function seedBuyers(): Promise<{ murugan: string }> {
   await sql(`insert into public.customers (name) values ('Old Buyer')`);
   const sale = (customer: string, batch: string, quantity: number, price: number, daysAgo: number) =>
     sql(
-      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-       select private.ist_today() - $4::integer, b.id, c.id, $3, $5, 1000, 'CASH'
+      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+       select private.ist_today() - $4::integer, b.id, c.id, $3, $5::numeric / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1000, 'CASH'
        from public.batches b, public.customers c where b.batch_code = $1 and c.name = $2`,
       [batch, customer, quantity, daysAgo, price],
     );

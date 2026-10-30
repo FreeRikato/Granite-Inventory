@@ -311,6 +311,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          area_sqft: number | null
           batch_id: string
           bill_id: string | null
           created_at: string
@@ -324,13 +325,15 @@ export type Database = {
           payment_mode: string
           quantity: number
           sale_date: string
-          sale_price: number
+          sale_price: number | null
+          sale_rate: number
           stickering_cost: number
           stickering_price: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          area_sqft?: number | null
           batch_id: string
           bill_id?: string | null
           created_at?: string
@@ -344,13 +347,15 @@ export type Database = {
           payment_mode: string
           quantity: number
           sale_date: string
-          sale_price: number
+          sale_price?: number | null
+          sale_rate: number
           stickering_cost?: number
           stickering_price?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          area_sqft?: number | null
           batch_id?: string
           bill_id?: string | null
           created_at?: string
@@ -364,7 +369,8 @@ export type Database = {
           payment_mode?: string
           quantity?: number
           sale_date?: string
-          sale_price?: number
+          sale_price?: number | null
+          sale_rate?: number
           stickering_cost?: number
           stickering_price?: number
           updated_at?: string
@@ -751,6 +757,7 @@ export type Database = {
       }
       v_chat_sales: {
         Row: {
+          area_sqft: number | null
           batch_code: string | null
           batch_id: string | null
           bill_id: string | null
@@ -775,6 +782,7 @@ export type Database = {
           revenue: number | null
           sale_date: string | null
           sale_price: number | null
+          sale_rate: number | null
           slot: string | null
           stickering_cost: number | null
           stickering_margin: number | null
@@ -931,6 +939,7 @@ export type Database = {
       }
       v_sales: {
         Row: {
+          area_sqft: number | null
           batch_code: string | null
           batch_id: string | null
           bill_id: string | null
@@ -958,6 +967,7 @@ export type Database = {
           revenue: number | null
           sale_date: string | null
           sale_price: number | null
+          sale_rate: number | null
           slot: string | null
           stickering_cost: number | null
           stickering_margin: number | null
@@ -1130,11 +1140,12 @@ export type Database = {
           p_quantity: number
           p_sale_date: string
           p_sale_id: string
-          p_sale_price: number
+          p_sale_rate: number
           p_stickering_cost?: number
           p_stickering_price?: number
         }
         Returns: {
+          area_sqft: number | null
           batch_id: string
           bill_id: string | null
           created_at: string
@@ -1148,7 +1159,8 @@ export type Database = {
           payment_mode: string
           quantity: number
           sale_date: string
-          sale_price: number
+          sale_price: number | null
+          sale_rate: number
           stickering_cost: number
           stickering_price: number
           updated_at: string
@@ -1250,11 +1262,12 @@ export type Database = {
           p_payment_mode: string
           p_quantity: number
           p_sale_date: string
-          p_sale_price: number
+          p_sale_rate: number
           p_stickering_cost?: number
           p_stickering_price?: number
         }
         Returns: {
+          area_sqft: number | null
           batch_id: string
           bill_id: string | null
           created_at: string
@@ -1268,7 +1281,8 @@ export type Database = {
           payment_mode: string
           quantity: number
           sale_date: string
-          sale_price: number
+          sale_price: number | null
+          sale_rate: number
           stickering_cost: number
           stickering_price: number
           updated_at: string

@@ -67,8 +67,8 @@ describe("bills: record_bill, v_sales.bill_id", () => {
       saleDate: daysAgo(0),
       paymentMode: "UPI",
       lines: [
-        { batchId: blackBatchId, quantity: 4, salePrice: 1650 },
-        { batchId: pearlBatchId, quantity: 5, salePrice: 900 },
+        { batchId: blackBatchId, quantity: 4, saleRate: 206.25 },
+        { batchId: pearlBatchId, quantity: 5, saleRate: 112.5 },
       ],
     });
     expect(error).toBeNull();
@@ -119,7 +119,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
       customerId,
       lines: [
         { batchId: blackBatchId, quantity: 10 },
-        { batchId: blackBatchId, quantity: 6, salePrice: 1700 },
+        { batchId: blackBatchId, quantity: 6, saleRate: 212.5 },
       ],
     });
     expect(expectError({ error }).message).toMatch(/^Only 5 available in batch /);
@@ -133,7 +133,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
       customerId,
       lines: [
         { batchId: blackBatchId, quantity: 10 },
-        { batchId: blackBatchId, quantity: 5, salePrice: 1700 },
+        { batchId: blackBatchId, quantity: 5, saleRate: 212.5 },
       ],
     });
     expect(error).toBeNull();
@@ -175,7 +175,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
       p_customer_id: customerId,
       p_sale_date: today(),
       p_payment_mode: "CHEQUE",
-      p_lines: [{ batch_id: blackBatchId, quantity: 1, sale_price: 1650 }],
+      p_lines: [{ batch_id: blackBatchId, quantity: 1, sale_rate: 206.25 }],
     });
     expect(expectError({ error }).message).toBe("Payment mode must be Cash, UPI or Bank Transfer");
     expect(await billCount()).toBe(0);

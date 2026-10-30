@@ -74,7 +74,7 @@ test.describe("client reads", () => {
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
     await page.getByTestId("fifo-batch").nth(0).click();
     await page.getByLabel("Quantity Sold").fill("1");
-    await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+    await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
     await page.getByRole("button", { name: "Record Sale" }).click();
     await expect(page.getByText(/Sale recorded: 1 from BP-OLD-01/)).toBeVisible();
 

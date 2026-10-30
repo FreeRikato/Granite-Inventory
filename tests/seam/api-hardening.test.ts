@@ -75,7 +75,7 @@ describe("API hardening: readable validation and access errors", () => {
       p_customer_id: customerId,
       p_sale_date: daysAgo(0),
       p_quantity: 1,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CHEQUE",
     });
 
@@ -100,10 +100,10 @@ describe("API hardening: readable validation and access errors", () => {
     expect(expectError(result).message).toMatch(/unit purchase price.*zero or more/i);
   });
 
-  it("returns a business-rule message for a negative sale price", async () => {
-    const result = await recordSale(operator, { batchId, customerId, salePrice: -1 });
+  it("returns a business-rule message for a negative sale rate", async () => {
+    const result = await recordSale(operator, { batchId, customerId, saleRate: -1 });
 
-    expect(expectError(result).message).toMatch(/sale price.*zero or more/i);
+    expect(expectError(result).message).toMatch(/sale rate.*zero or more/i);
   });
 
   it("returns a permission error when a non-member calls create_batch", async () => {

@@ -124,7 +124,7 @@ function SaleEditForm({
     customerId: sale.customer_id ?? "",
     saleDate: sale.sale_date ?? todayIso(),
     quantity: sale.quantity?.toString() ?? "1",
-    salePrice: sale.sale_price?.toString() ?? "",
+    saleRate: sale.sale_rate?.toString() ?? "",
     paymentMode: isPaymentMode(sale.payment_mode) ? sale.payment_mode : "CASH",
     hasStickering: sale.has_stickering ?? false,
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
@@ -135,6 +135,8 @@ function SaleEditForm({
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const current = lists.batches.find((b) => b.id === sale.batch_id);
+  const chosen = lists.batches.find((b) => b.id === form.batchId);
+  const memorial = chosen !== undefined && chosen.length_ft === null;
   const options = lists.batches
     .filter((b) => b.id === sale.batch_id || ((b.available ?? 0) > 0 && !b.archived_at))
     .sort((a, b) => (a.line_key === current?.line_key ? -1 : 1) - (b.line_key === current?.line_key ? -1 : 1));
@@ -230,14 +232,14 @@ function SaleEditForm({
             onChange={(e) => set("quantity", e.target.value)}
           />
         </Field>
-        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint="Per piece">
+        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint={memorial ? "Per piece" : "Per sq ft"}>
           <Input
             id="es-price"
             type="number"
             min="0"
             step="1"
-            value={form.salePrice}
-            onChange={(e) => set("salePrice", e.target.value)}
+            value={form.saleRate}
+            onChange={(e) => set("saleRate", e.target.value)}
           />
         </Field>
       </div>

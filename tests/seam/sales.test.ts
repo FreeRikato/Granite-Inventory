@@ -28,7 +28,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
   });
 
   it("records a sale, snapshots landed cost and decrements the batch", async () => {
-    const { data, error } = await recordSale(operator, { batchId, customerId, quantity: 5, salePrice: 1650 });
+    const { data, error } = await recordSale(operator, { batchId, customerId, quantity: 5, saleRate: 206.25 });
     expect(error).toBeNull();
     expect(data?.landed_cost).toBe(1450);
     expect(data?.created_by).toBe("operator@test.local");
@@ -41,7 +41,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       batchId,
       customerId,
       quantity: 5,
-      salePrice: 1650,
+      saleRate: 206.25,
       stickering: { cost: 100, price: 250 },
     });
     const { data } = await operator.from("v_sales").select("*").single();
@@ -53,7 +53,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
     expect(data?.margin).toBe(1750);
     expect(data?.margin_pct).toBe(18.42);
 
-    await recordSale(operator, { batchId, customerId, quantity: 1, salePrice: 1650, stickering: undefined });
+    await recordSale(operator, { batchId, customerId, quantity: 1, saleRate: 206.25, stickering: undefined });
     const plain = await operator
       .from("v_sales")
       .select("margin, margin_pct, stickering_total")
@@ -70,7 +70,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 1,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CASH",
       p_misc_expense: 300,
     };
@@ -89,7 +89,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
 
   it("a Sale stored with a Misc Expense before the change keeps its value, and new Sales store 0", async () => {
     await sql(
-      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, misc_expense, payment_mode)
+      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, landed_cost, misc_expense, payment_mode)
        values ($1, $2, $3, 1, 1650, 1450, 300, 'CASH')`,
       [today(), batchId, customerId],
     );
@@ -105,14 +105,14 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
 
   it("refuses a NaN or infinite price and stickering amount with a readable sentence", async () => {
     const refusals = [
-      { line: { sale_price: "NaN" }, message: "Sale price must be a number" },
-      { line: { sale_price: "Infinity" }, message: "Sale price must be a number" },
+      { line: { sale_rate: "NaN" }, message: "Sale rate must be a number" },
+      { line: { sale_rate: "Infinity" }, message: "Sale rate must be a number" },
       {
-        line: { sale_price: 1650, has_stickering: true, stickering_cost: "NaN" },
+        line: { sale_rate: 206.25, has_stickering: true, stickering_cost: "NaN" },
         message: "Stickering cost must be a number",
       },
       {
-        line: { sale_price: 1650, has_stickering: true, stickering_price: "Infinity" },
+        line: { sale_rate: 206.25, has_stickering: true, stickering_price: "Infinity" },
         message: "Stickering price must be a number",
       },
     ];
@@ -133,10 +133,10 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
 
   it("the shared sale check that record_sale and correct_sale call refuses NaN too", async () => {
     await expect(
-      sql(`select private.validate_sale_input(current_date, 1, 'NaN'::numeric, 'CASH', false, 0, 0, null)`),
-    ).rejects.toThrow("Sale price must be a number");
+      sql(`select private.validate_sale_input(current_date, 1, 'NaN'::numeric, 8, 'CASH', false, 0, 0, null)`),
+    ).rejects.toThrow("Sale rate must be a number");
     await expect(
-      sql(`select private.validate_sale_input(current_date, 1, 100, 'CASH', true, 0, 'NaN'::numeric, null)`),
+      sql(`select private.validate_sale_input(current_date, 1, 100, 8, 'CASH', true, 0, 'NaN'::numeric, null)`),
     ).rejects.toThrow("Stickering price must be a number");
   });
 

@@ -87,8 +87,12 @@ _Avoid_: Invoice, order, receipt, cart (the cart is the unsaved screen state bef
 When selling, matching Batches are shown oldest first with their Ageing Band. The operator picks the Batch the stone physically came from; nothing is blocked.
 _Avoid_: FIFO enforcement
 
+**Sale Rate**:
+What the Customer pays per square foot of Area for the stone alone, excluding Stickering; for Memorial, which has no Size, per piece. It is the figure typed on Sell Stone and Edit sale, under the label "Stone Sale Price (₹)" with the hint "Per sq ft" or "Per piece". A sale of 10 pieces of 4 × 2 ft at ₹250 per sq ft is ₹20,000.
+_Avoid_: Selling rate, price per sq ft (as the canonical term)
+
 **Sale Price**:
-What the Customer pays per piece for the stone alone, excluding Stickering.
+What the Customer pays per piece for the stone alone, excluding Stickering. Derived, never typed: the Area of the piece at the time of the Sale times the Sale Rate (the Sale Rate itself for Memorial), rounded to paise. Margin, revenue and every dashboard figure read it.
 _Avoid_: Rate, selling rate
 
 **Stickering**:
@@ -131,7 +135,7 @@ _Avoid_: User, staff, account
 Admin or Yard Operator. Both see all stock, costs and margins; only Admin makes Corrections, changes Settings and manages Team Members.
 
 **Margin**:
-Per Sale: (Sale Price − Landed Cost) × quantity, plus (Stickering Price − Stickering Cost) × quantity. Margin percentage is Margin divided by total billed (stone plus Stickering).
+Per Sale: (Sale Price − Landed Cost) × quantity, where the Sale Price is Area × Sale Rate, plus (Stickering Price − Stickering Cost) × quantity. Margin percentage is Margin divided by total billed (stone plus Stickering).
 _Avoid_: Profit, markup
 
 **Size**:

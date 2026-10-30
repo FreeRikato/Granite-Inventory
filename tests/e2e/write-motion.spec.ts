@@ -183,8 +183,8 @@ async function seedSale() {
   await sql(
     `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
   );
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today() - 3, b.id, c.id, 2, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);
   await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-OLD-01'`);
   const [customer] = await sql<{ id: string }>(`select id from public.customers where name = 'Murugan Constructions'`);
@@ -251,7 +251,7 @@ test.describe("a write that never reaches the server", () => {
     await page.getByRole("option", { name: /Walk-in Customer/ }).click();
     await page.getByRole("combobox", { name: "Product" }).click();
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
-    await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+    await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
     await page.getByRole("button", { name: "Add to order" }).click();
     const line = page.getByTestId("cart-line");
     await expect(line).toHaveCount(1);
@@ -280,7 +280,7 @@ test.describe("a write the server committed but never answered", () => {
     await page.getByRole("combobox", { name: "Product" }).click();
     await expect(page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm.*14 available/ })).toBeVisible();
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
-    await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+    await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
     await page.getByLabel("Quantity Sold").fill("2");
     await page.getByRole("button", { name: "Add to order" }).click();
     await expect(page.getByTestId("cart-line")).toHaveCount(1);
@@ -396,7 +396,7 @@ test.describe("the order", () => {
     await page.getByRole("option", { name: /Walk-in Customer/ }).click();
     await page.getByRole("combobox", { name: "Product" }).click();
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
-    await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+    await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
     await page.getByRole("button", { name: "Add to order" }).click();
     const line = page.getByTestId("cart-line");
     await expect(line).toHaveCount(1);
@@ -417,13 +417,13 @@ test.describe("the order", () => {
     await page.goto("/sell");
     await page.getByRole("combobox", { name: "Product" }).click();
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
-    await page.getByLabel("Stone Sale Price (₹)").fill("1650");
+    await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
     await page.getByRole("button", { name: "Add to order" }).click();
     const line = page.getByTestId("cart-line");
     await expect(page.getByTestId("order-count")).toBeVisible();
     await page.getByRole("combobox", { name: "Product" }).click();
     await page.getByRole("option", { name: /Black Pearl · 4×2 ft, 16mm/ }).click();
-    await page.getByLabel("Stone Sale Price (₹)").fill("1700");
+    await page.getByLabel("Stone Sale Price (₹)").fill("212.5");
     await expect(page.getByRole("button", { name: "Add to order" })).toBeEnabled();
     await page.clock.pauseAt(new Date(Date.now() + 5_000));
 

@@ -1,4 +1,5 @@
 import { computeMargin, type MarginBreakdown } from "@/lib/margin";
+import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
 
 export type CartLine = {
   readonly batchId: string;
@@ -8,7 +9,7 @@ export type CartLine = {
   readonly lengthFt: number | null;
   readonly breadthFt: number | null;
   readonly quantity: number;
-  readonly salePrice: number;
+  readonly saleRate: number;
   readonly landedCost: number;
   readonly stickering: { readonly cost: number; readonly price: number } | null;
 };
@@ -19,7 +20,7 @@ function sameStickering(a: CartLine["stickering"], b: CartLine["stickering"]): b
 }
 
 function isSameLine(a: CartLine, b: CartLine): boolean {
-  return a.batchId === b.batchId && a.salePrice === b.salePrice && sameStickering(a.stickering, b.stickering);
+  return a.batchId === b.batchId && a.saleRate === b.saleRate && sameStickering(a.stickering, b.stickering);
 }
 
 export function addLine(cart: readonly CartLine[], line: CartLine): readonly CartLine[] {
@@ -52,8 +53,17 @@ export function splitCovers(availables: readonly number[], takes: readonly numbe
   return withinStock && takes.reduce((sum, take) => sum + take, 0) === quantity;
 }
 
+export function lineMargin(line: CartLine): MarginBreakdown {
+  return computeMargin({
+    quantity: line.quantity,
+    salePrice: salePricePerPiece(pieceArea(line.lengthFt, line.breadthFt), line.saleRate),
+    landedCost: line.landedCost,
+    stickering: line.stickering,
+  });
+}
+
 export function orderFigures(cart: readonly CartLine[]): MarginBreakdown {
-  const lines = cart.map(computeMargin);
+  const lines = cart.map(lineMargin);
   const sum = (pick: (m: MarginBreakdown) => number) => lines.reduce((total, m) => total + pick(m), 0);
   const stickeringCost = cart.reduce((total, l) => total + (l.stickering ? l.quantity * l.stickering.cost : 0), 0);
   return computeMargin({

@@ -54,14 +54,14 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
       batchId: a.data?.id ?? "",
       customerId,
       quantity: 5,
-      salePrice: 1500,
+      saleRate: 187.5,
       saleDate: iso(lastMonthEnd),
     });
     await recordSale(operator, {
       batchId: a.data?.id ?? "",
       customerId,
       quantity: 3,
-      salePrice: 1500,
+      saleRate: 187.5,
       saleDate: iso(monthStart),
       stickering: { cost: 100, price: 300 },
     });
@@ -69,7 +69,7 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
       batchId: b.data?.id ?? "",
       customerId,
       quantity: 2,
-      salePrice: 2500,
+      saleRate: 166.6666666667,
       saleDate: iso(today),
     });
 

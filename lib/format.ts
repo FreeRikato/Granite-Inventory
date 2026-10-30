@@ -51,6 +51,27 @@ export function formatAreaTotal(lengthFt: string, breadthFt: string, quantity: n
     : "";
 }
 
+const rateFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+
+export function formatRate(value: number): string {
+  return `₹${rateFmt.format(value)}`;
+}
+
+export function formatSaleLine(line: {
+  readonly quantity: number;
+  readonly areaSqft: number | null;
+  readonly saleRate: number;
+  readonly stoneTotal: number;
+  readonly stickeringPrice: number | null;
+}): string {
+  const total = formatRupees(line.stoneTotal);
+  const working =
+    line.areaSqft === null
+      ? `${line.quantity} × ${formatRate(line.saleRate)} = ${total}`
+      : `${line.quantity} × ${areaFmt.format(line.areaSqft)} sq ft × ${formatRate(line.saleRate)}/sq ft = ${total}`;
+  return line.stickeringPrice === null ? working : `${working} + ${formatRupees(line.stickeringPrice)} stickering`;
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }

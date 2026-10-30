@@ -26,8 +26,8 @@ test.beforeEach(async () => {
   await seedYard();
   await sql(`update public.settings set catalog_public = true, whatsapp_number = '+91 98765 43210'`);
   await sql(`
-    insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today(), b.id, c.id, 1, 1800, 1500, 'CASH'
+    insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today(), b.id, c.id, 1, 1800 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1500, 'CASH'
     from public.batches b, public.customers c
     where b.batch_code = 'BP-NEW-01' and c.is_walk_in
   `);
