@@ -46,7 +46,7 @@ describe("dashboard trends: margin_by_period", () => {
 
   async function insertSale(row: SaleRow) {
     await sql(
-      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, has_stickering, stickering_cost, stickering_price, misc_expense, payment_mode)
+      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, landed_cost, has_stickering, stickering_cost, stickering_price, misc_expense, payment_mode)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'CASH')`,
       [
         row.saleDate ?? today(),
@@ -168,7 +168,7 @@ describe("dashboard trends: top_customers", () => {
   }) {
     const saleDate = iso(new Date(istToday().getTime() - (input.daysAgo ?? 0) * DAY_MS));
     await sql(
-      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, has_stickering, stickering_cost, stickering_price, payment_mode)
+      `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, landed_cost, has_stickering, stickering_cost, stickering_price, payment_mode)
        values ($1, $2, $3, $4, $5, $6, $7, 0, $8, 'CASH')`,
       [
         saleDate,

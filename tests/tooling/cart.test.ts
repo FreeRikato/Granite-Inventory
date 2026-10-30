@@ -19,7 +19,7 @@ function line(overrides: Partial<CartLine> = {}): CartLine {
     lengthFt: 4,
     breadthFt: 2,
     quantity: 2,
-    salePrice: 1650,
+    saleRate: 206.25,
     landedCost: 1450,
     stickering: null,
     ...overrides,
@@ -27,15 +27,15 @@ function line(overrides: Partial<CartLine> = {}): CartLine {
 }
 
 describe("addLine", () => {
-  it("adds the quantities when the same batch comes in at the same price", () => {
+  it("adds the quantities when the same batch comes in at the same rate", () => {
     const cart = addLine([line({ quantity: 2 })], line({ quantity: 1 }));
     expect(cart).toHaveLength(1);
     expect(cart[0]?.quantity).toBe(3);
   });
 
-  it("keeps a second line when the price differs", () => {
-    const cart = addLine([line()], line({ salePrice: 1700 }));
-    expect(cart.map((l) => l.salePrice)).toEqual([1650, 1700]);
+  it("keeps a second line when the rate differs", () => {
+    const cart = addLine([line()], line({ saleRate: 212.5 }));
+    expect(cart.map((l) => l.saleRate)).toEqual([206.25, 212.5]);
   });
 
   it("keeps a second line when the batch differs", () => {
@@ -68,7 +68,7 @@ describe("removeLine and piecesInCart", () => {
   it("sums the pieces of one batch across lines", () => {
     const cart = [
       line({ quantity: 2 }),
-      line({ quantity: 3, salePrice: 1700 }),
+      line({ quantity: 3, saleRate: 212.5 }),
       line({ batchId: "batch-new", quantity: 4 }),
     ];
     expect(piecesInCart(cart, "batch-old")).toBe(5);
@@ -116,8 +116,8 @@ describe("splitCovers", () => {
 describe("orderFigures", () => {
   it("totals stone, landed cost and margin across lines", () => {
     const cart = [
-      line({ quantity: 4, salePrice: 2600, landedCost: 2000 }),
-      line({ batchId: "batch-new", quantity: 5, salePrice: 1650, landedCost: 1450 }),
+      line({ quantity: 4, saleRate: 325, landedCost: 2000 }),
+      line({ batchId: "batch-new", quantity: 5, saleRate: 206.25, landedCost: 1450 }),
     ];
     const figures = orderFigures(cart);
     expect(figures.stoneTotal).toBe(18650);
@@ -130,8 +130,8 @@ describe("orderFigures", () => {
 
   it("adds each stickering line's margin to the order total", () => {
     const cart = [
-      line({ quantity: 5, salePrice: 1650, landedCost: 1450, stickering: { cost: 100, price: 250 } }),
-      line({ batchId: "batch-new", quantity: 2, salePrice: 1000, landedCost: 900 }),
+      line({ quantity: 5, saleRate: 206.25, landedCost: 1450, stickering: { cost: 100, price: 250 } }),
+      line({ batchId: "batch-new", quantity: 2, saleRate: 125, landedCost: 900 }),
     ];
     const figures = orderFigures(cart);
     expect(figures.stoneTotal).toBe(10250);
@@ -145,6 +145,25 @@ describe("orderFigures", () => {
     const figures = orderFigures([]);
     expect(figures.margin).toBe(0);
     expect(figures.marginPct).toBeNull();
+  });
+});
+
+describe("orderFigures at a rate per sq ft", () => {
+  it("shows Stone Sale Price 20000 for 10 pieces of 4 x 2 ft at 250 per sq ft", () => {
+    const figures = orderFigures([line({ quantity: 10, saleRate: 250, landedCost: 1450 })]);
+    expect(figures.stoneTotal).toBe(20000);
+    expect(figures.landedTotal).toBe(14500);
+    expect(figures.margin).toBe(5500);
+  });
+
+  it("prices a Memorial line per piece", () => {
+    const memorial = line({ quantity: 10, saleRate: 2000, landedCost: 1500, lengthFt: null, breadthFt: null });
+    expect(orderFigures([memorial]).stoneTotal).toBe(20000);
+  });
+
+  it("uses the per piece price rounded to paise, as the database stores it", () => {
+    const odd = line({ quantity: 10, saleRate: 33.33, landedCost: 100, lengthFt: 4.5, breadthFt: 2.25 });
+    expect(orderFigures([odd]).stoneTotal).toBeCloseTo(3374.7, 2);
   });
 });
 

@@ -6,6 +6,8 @@ code:
   - app/(app)/sell/area-card.tsx
   - app/(app)/sell/split-dialog.tsx
   - lib/format.ts
+  - lib/margin.ts
+  - lib/sale-price.ts
   - app/(app)/sell/actions.ts
   - lib/schemas/sale.ts
   - lib/rpc-args.ts
@@ -19,7 +21,7 @@ code:
 ---
 # Sell cart
 
-Sell Stone builds an order before it records anything. Customer, Sale Date and Payment Mode are chosen once at the top; below them the user picks a Stock Line and Batch, quantity, price per piece and stickering, then presses "Add to order". "This order" lists the lines with a count such as "2 lines · 9 pieces", and one Record Sale press sends every line to `record_bill` ([[sales-and-stock-lines]]), which saves all of them or none.
+Sell Stone builds an order before it records anything. The price field is the Sale Rate: its label stays "Stone Sale Price (₹)" and its hint reads "Per sq ft" once a sized Batch is picked and "Per piece" for a Memorial Batch, like Inward's Unit Purchase Price ([[batches]]). Stickering Cost and Price stay per piece. Customer, Sale Date and Payment Mode are chosen once at the top; below them the user picks a Stock Line and Batch, quantity, Stone Sale Price and stickering, then presses "Add to order". "This order" lists the lines with a count such as "2 lines · 9 pieces", and one Record Sale press sends every line to `record_bill` ([[sales-and-stock-lines]]), which saves all of them or none.
 
 ## The cart lives in the browser until Record Sale
 
@@ -27,7 +29,7 @@ Nothing is written when a line is added, so removing a line, or leaving the page
 
 ## Merging
 
-Adding a line merges into an existing one only when the Batch, the price per piece and the stickering (cost and price, or none on both) are all the same; quantities add. A different price stays a separate line because each line becomes one Sale at one price. Stickering counts in the comparison because merging a line with stickering into one without would change what the customer is charged.
+Adding a line merges into an existing one only when the Batch, the Sale Rate and the stickering (cost and price, or none on both) are all the same; quantities add. A different rate stays a separate line because each line becomes one Sale at one rate. Stickering counts in the comparison because merging a line with stickering into one without would change what the customer is charged.
 
 ## Available counts the cart
 
@@ -39,15 +41,15 @@ Asking for more than the chosen Batch has left (after the cart) opens the split 
 
 The modal lists the Stock Line's Batches oldest first, each with what is available after the cart and a count field. The counts start filled oldest first from the oldest Batch whatever Batch was chosen: asking 20 with 14 in the oldest and 30 in the next prefills 14 and 6, and the running total reads "20 of 20". Add is enabled only when every count is a whole number from 0 up to that row's available and the counts sum to the quantity asked, so 15 and 5 or 14.5 and 5.5 or -5 and 25 all leave it disabled even though they add to 20. A Batch the cart has used up stays listed at 0 available, which is how asking for one more piece after taking all 14 takes it from the next Batch.
 
-Add creates one cart line per Batch with a non-zero count, all at the price and stickering entered, and each goes through the merge rule above, so a Batch already in the cart at the same price just gains pieces. When every Batch together holds less than the quantity, no modal opens and the form says "Only N in stock", N being what is left across the Batches after the cart. Closing the modal adds nothing and keeps the fields as typed; focus returns to "Add to order", or to the Product select once Add has cleared the form and disabled that button. The list scrolls inside the modal and the count fields have a fixed width, so the modal fits a 390px screen.
+Add creates one cart line per Batch with a non-zero count, all at the rate and stickering entered, and each goes through the merge rule above, so a Batch already in the cart at the same price just gains pieces. When every Batch together holds less than the quantity, no modal opens and the form says "Only N in stock", N being what is left across the Batches after the cart. Closing the modal adds nothing and keeps the fields as typed; focus returns to "Add to order", or to the Product select once Add has cleared the form and disabled that button. The list scrolls inside the modal and the count fields have a fixed width, so the modal fits a 390px screen.
 
 ## Area card
 
-A sized line shows how much stone it is, like Inward's Area: the line's total in large text ("40 sq ft" for 5 pieces of 4×2 ft) with the per piece Area under it ("8 per piece"). It appears under the quantity once a Batch is chosen and a whole quantity is typed, and again on each "This order" line, so the customer and the operator see the same figure before and after adding. `formatAreaTotal` multiplies the per piece Area by the quantity and reads both sides the way `formatArea` does (two decimal places, as the size columns store them), so the per piece figure and the total never disagree. A Memorial line has no Size, the total comes back empty and no card renders. It is information only: prices stay per piece and nothing in the margin reads it.
+A sized line shows how much stone it is, like Inward's Area: the line's total in large text ("40 sq ft" for 5 pieces of 4×2 ft) with the per piece Area under it ("8 per piece"). It appears under the quantity once a Batch is chosen and a whole quantity is typed, and again on each "This order" line, so the customer and the operator see the same figure before and after adding. `formatAreaTotal` multiplies the per piece Area by the quantity and reads both sides the way `formatArea` does (two decimal places, as the size columns store them), so the per piece figure and the total never disagree. A Memorial line has no Size, the total comes back empty and no card renders. The line text spells the same arithmetic out: `formatSaleLine` writes `10 × 8 sq ft × ₹250/sq ft = ₹20,000` for sized stone and `10 × ₹2,000 = ₹20,000` for Memorial, the rate with up to two decimals so ₹33.33 and ₹183.33 read as typed.
 
 ## Order Summary
 
-The summary totals the whole order, not the line being typed: Stone Sale Price, Landed Cost, Base Margin, Stickering Margin (shown only when any line has stickering), Total Margin and the margin percent colour from [[sales-and-stock-lines]]. `orderFigures` sums each line's `computeMargin` result and hands the sums back through `computeMargin` once more, so the percent uses the one rounding rule in `lib/margin.ts`. The button reads "Record Sale" for one line and "Record Sale (N lines)" for more.
+The summary totals the whole order, not the line being typed: Stone Sale Price, Landed Cost, Base Margin, Stickering Margin (shown only when any line has stickering), Total Margin and the margin percent colour from [[sales-and-stock-lines]]. `lineMargin` turns a cart line into a per piece Sale Price with `salePricePerPiece(pieceArea(length, breadth), saleRate)` and feeds `computeMargin`, and `orderFigures` sums each line's result and hands the sums back through `computeMargin` once more, so the percent uses the one rounding rule in `lib/margin.ts`. The button reads "Record Sale" for one line and "Record Sale (N lines)" for more.
 
 ## Boundary
 

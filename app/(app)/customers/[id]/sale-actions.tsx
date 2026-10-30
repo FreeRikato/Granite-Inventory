@@ -16,7 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatSize, todayIso } from "@/lib/format";
+import { formatDate, formatSaleLine, formatSize, todayIso } from "@/lib/format";
+import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
+import { saleSchema } from "@/lib/schemas/sale";
 import { useRefusal } from "@/lib/use-refusal";
 import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
 
@@ -124,7 +126,7 @@ function SaleEditForm({
     customerId: sale.customer_id ?? "",
     saleDate: sale.sale_date ?? todayIso(),
     quantity: sale.quantity?.toString() ?? "1",
-    salePrice: sale.sale_price?.toString() ?? "",
+    saleRate: sale.sale_rate?.toString() ?? "",
     paymentMode: isPaymentMode(sale.payment_mode) ? sale.payment_mode : "CASH",
     hasStickering: sale.has_stickering ?? false,
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
@@ -135,6 +137,25 @@ function SaleEditForm({
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const current = lists.batches.find((b) => b.id === sale.batch_id);
+  const chosen = lists.batches.find((b) => b.id === form.batchId);
+  const areaSqft =
+    form.batchId === sale.batch_id
+      ? sale.area_sqft
+      : chosen === undefined
+        ? undefined
+        : pieceArea(chosen.length_ft, chosen.breadth_ft);
+  const memorial = areaSqft === null;
+  const entered = saleSchema.pick({ quantity: true, saleRate: true, stickeringPrice: true }).safeParse(form);
+  const working =
+    areaSqft !== undefined && entered.success
+      ? formatSaleLine({
+          quantity: entered.data.quantity,
+          saleRate: entered.data.saleRate,
+          areaSqft,
+          stoneTotal: entered.data.quantity * salePricePerPiece(areaSqft, entered.data.saleRate),
+          stickeringPrice: form.hasStickering ? entered.data.stickeringPrice : null,
+        })
+      : null;
   const options = lists.batches
     .filter((b) => b.id === sale.batch_id || ((b.available ?? 0) > 0 && !b.archived_at))
     .sort((a, b) => (a.line_key === current?.line_key ? -1 : 1) - (b.line_key === current?.line_key ? -1 : 1));
@@ -230,17 +251,22 @@ function SaleEditForm({
             onChange={(e) => set("quantity", e.target.value)}
           />
         </Field>
-        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint="Per piece">
+        <Field label="Stone Sale Price (₹)" htmlFor="es-price" hint={memorial ? "Per piece" : "Per sq ft"}>
           <Input
             id="es-price"
             type="number"
             min="0"
             step="1"
-            value={form.salePrice}
-            onChange={(e) => set("salePrice", e.target.value)}
+            value={form.saleRate}
+            onChange={(e) => set("saleRate", e.target.value)}
           />
         </Field>
       </div>
+      {working ? (
+        <p className="text-sm tabular text-muted-foreground" data-testid="sale-working">
+          {working}
+        </p>
+      ) : null}
       <div className="flex items-center justify-between rounded-tile border border-border p-3">
         <span className="text-sm font-semibold">Stickering / Engraving</span>
         <Switch checked={form.hasStickering} onCheckedChange={(c) => set("hasStickering", c)} aria-label="Stickering" />

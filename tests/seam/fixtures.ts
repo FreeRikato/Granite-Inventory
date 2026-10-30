@@ -82,7 +82,7 @@ export type SaleInput = {
   customerId: string;
   saleDate?: string;
   quantity?: number;
-  salePrice?: number;
+  saleRate?: number;
   paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
   stickering?: { cost: number; price: number };
 };
@@ -93,7 +93,7 @@ export function recordSale(db: Db, input: SaleInput) {
     p_customer_id: input.customerId,
     p_sale_date: input.saleDate ?? today(),
     p_quantity: input.quantity ?? 1,
-    p_sale_price: input.salePrice ?? 1650,
+    p_sale_rate: input.saleRate ?? 206.25,
     p_payment_mode: input.paymentMode ?? "CASH",
     p_has_stickering: input.stickering !== undefined,
     p_stickering_cost: input.stickering?.cost ?? 0,
@@ -104,7 +104,7 @@ export function recordSale(db: Db, input: SaleInput) {
 export type BillLineInput = {
   batchId: string;
   quantity?: number;
-  salePrice?: number;
+  saleRate?: number;
   stickering?: { cost: number; price: number };
 };
 
@@ -123,7 +123,7 @@ export function recordBill(db: Db, input: BillInput) {
     p_lines: input.lines.map((line) => ({
       batch_id: line.batchId,
       quantity: line.quantity ?? 1,
-      sale_price: line.salePrice ?? 1650,
+      sale_rate: line.saleRate ?? 206.25,
       has_stickering: line.stickering !== undefined,
       stickering_cost: line.stickering?.cost ?? 0,
       stickering_price: line.stickering?.price ?? 0,

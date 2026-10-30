@@ -50,6 +50,7 @@ export function buildSystemPrompt(input: {
     ...input.views.map((view) => `  ${describeView(view)}`),
     "- End the SELECT without a semicolon; it is wrapped in another query and a trailing one is a syntax error.",
     "- Money is in rupees. Quote a figure only from rows you got back.",
+    "- In v_chat_sales, sale_rate is the stone price per sq ft of area_sqft, or per piece when area_sqft is null (Memorial). sale_price is the price per piece, area_sqft times sale_rate. stone_total is quantity times sale_price.",
     "- Customers appear only as aliases like C-3f9a2b. Use the alias when you mention or filter a customer; never ask for or invent a name or phone. To find a customer the member names, call find_customer, then filter on customer_alias.",
     "- Sales by month: group on date_trunc('month', sale_date), which is already an India date. \"The last 4 months\" is this month and the 3 before it, counted from today's date above; sum quantity per product for units sold.",
     "- Stale and Ageing mean the ageing_band column values 'STALE', 'AGEING' and 'FRESH' in v_chat_batches. Filter on ageing_band; never use your own day cut-offs.",

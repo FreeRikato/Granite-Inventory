@@ -80,13 +80,13 @@ describe("API observations: readable refusals", () => {
       customerId: "00000000-0000-4000-8000-000000000004",
       saleDate: today(),
       quantity: 1,
-      salePrice: 1000,
+      saleRate: 1000,
       paymentMode: "CASH",
       hasStickering: false,
     };
     expect(saleSchema.safeParse(sale).success).toBe(true);
     expect(saleSchema.safeParse({ ...sale, quantity: 2_147_483_648 }).success).toBe(false);
-    expect(saleSchema.safeParse({ ...sale, salePrice: 1e10 }).success).toBe(false);
+    expect(saleSchema.safeParse({ ...sale, saleRate: 1e10 }).success).toBe(false);
   });
 
   it("the forms and the API use the same sentence for a zero quantity", () => {
@@ -105,7 +105,7 @@ describe("API observations: readable refusals", () => {
     const line = {
       batchId: "00000000-0000-4000-8000-000000000003",
       quantity: 2,
-      salePrice: 1650,
+      saleRate: 1650,
       hasStickering: false,
     };
     const order = {
@@ -119,7 +119,7 @@ describe("API observations: readable refusals", () => {
     expect(billSchema.safeParse({ ...order, lines: [line] }).success).toBe(true);
     const zero = billSchema.safeParse({ ...order, lines: [line, { ...line, quantity: 0 }] });
     expect(zero.error?.issues[0]?.message).toBe("Sale quantity must be greater than zero");
-    const negative = billSchema.safeParse({ ...order, lines: [{ ...line, salePrice: -1 }] });
+    const negative = billSchema.safeParse({ ...order, lines: [{ ...line, saleRate: -1 }] });
     expect(negative.error?.issues[0]?.message).toBe("Stone Sale Price cannot be negative");
   });
 
@@ -127,11 +127,11 @@ describe("API observations: readable refusals", () => {
     const line = { batchId: "00000000-0000-4000-8000-000000000003", quantity: 2, hasStickering: false };
 
     for (const blank of ["", "   ", undefined]) {
-      const parsed = billLineSchema.safeParse({ ...line, salePrice: blank });
+      const parsed = billLineSchema.safeParse({ ...line, saleRate: blank });
       expect(parsed.error?.issues[0]?.message, JSON.stringify(blank)).toBe("Stone Sale Price is required");
     }
-    expect(billLineSchema.safeParse({ ...line, salePrice: "0" }).success).toBe(true);
-    expect(billLineSchema.safeParse({ ...line, salePrice: 0 }).success).toBe(true);
+    expect(billLineSchema.safeParse({ ...line, saleRate: "0" }).success).toBe(true);
+    expect(billLineSchema.safeParse({ ...line, saleRate: 0 }).success).toBe(true);
   });
 
   it("the record_bill arguments carry stickering only on lines that have it", () => {
@@ -143,7 +143,7 @@ describe("API observations: readable refusals", () => {
         {
           batchId: "00000000-0000-4000-8000-000000000003",
           quantity: 4,
-          salePrice: 2600,
+          saleRate: 2600,
           hasStickering: false,
           stickeringCost: 100,
           stickeringPrice: 250,
@@ -151,7 +151,7 @@ describe("API observations: readable refusals", () => {
         {
           batchId: "00000000-0000-4000-8000-000000000005",
           quantity: 5,
-          salePrice: 1650,
+          saleRate: 1650,
           hasStickering: true,
           stickeringCost: 100,
           stickeringPrice: 250,
@@ -163,7 +163,7 @@ describe("API observations: readable refusals", () => {
       {
         batch_id: "00000000-0000-4000-8000-000000000003",
         quantity: 4,
-        sale_price: 2600,
+        sale_rate: 2600,
         has_stickering: false,
         stickering_cost: 0,
         stickering_price: 0,
@@ -171,7 +171,7 @@ describe("API observations: readable refusals", () => {
       {
         batch_id: "00000000-0000-4000-8000-000000000005",
         quantity: 5,
-        sale_price: 1650,
+        sale_rate: 1650,
         has_stickering: true,
         stickering_cost: 100,
         stickering_price: 250,
@@ -181,12 +181,12 @@ describe("API observations: readable refusals", () => {
 
   it("every negative amount is refused by the field's label", () => {
     const batch = batchSchema.safeParse({ unitPurchasePrice: -1 });
-    const sale = saleSchema.safeParse({ salePrice: -1, stickeringCost: -1, stickeringPrice: -1 });
+    const sale = saleSchema.safeParse({ saleRate: -1, stickeringCost: -1, stickeringPrice: -1 });
     const messages = (error: { issues: { path: PropertyKey[]; message: string }[] } | undefined, key: string) =>
       error?.issues.find((i) => i.path[0] === key)?.message;
 
     expect(messages(batch.error, "unitPurchasePrice")).toBe("Unit Purchase Price cannot be negative");
-    expect(messages(sale.error, "salePrice")).toBe("Stone Sale Price cannot be negative");
+    expect(messages(sale.error, "saleRate")).toBe("Stone Sale Price cannot be negative");
     expect(messages(sale.error, "stickeringCost")).toBe("Stickering Cost cannot be negative");
     expect(messages(sale.error, "stickeringPrice")).toBe("Stickering Price cannot be negative");
   });

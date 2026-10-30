@@ -119,10 +119,10 @@ async function seed(db: Db): Promise<void> {
     ids.push(created.data.id);
   }
   const sales = [
-    { batchId: ids[0], customerId: balaji, saleDate: today(), quantity: 4, salePrice: 1650 },
-    { batchId: ids[2], customerId: kumar, saleDate: daysAgo(2), quantity: 3, salePrice: 1500 },
-    { batchId: ids[1], customerId: kumar, saleDate: daysAgo(20), quantity: 5, salePrice: 1700 },
-    { batchId: ids[2], customerId: balaji, saleDate: daysAgo(20), quantity: 2, salePrice: 1500 },
+    { batchId: ids[0], customerId: balaji, saleDate: today(), quantity: 4, saleRate: 206.25 },
+    { batchId: ids[2], customerId: kumar, saleDate: daysAgo(2), quantity: 3, saleRate: 187.5 },
+    { batchId: ids[1], customerId: kumar, saleDate: daysAgo(20), quantity: 5, saleRate: 212.5 },
+    { batchId: ids[2], customerId: balaji, saleDate: daysAgo(20), quantity: 2, saleRate: 187.5 },
   ];
   for (const sale of sales) {
     const recorded = await recordSale(db, sale);

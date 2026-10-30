@@ -388,7 +388,7 @@ describe("chat_query: a member's SELECT over the chat views, read-only", () => {
         batchId: old.data?.id ?? "",
         customerId,
         quantity: 2,
-        salePrice: 2000,
+        saleRate: 250,
         stickering: { cost: 100, price: 150 },
       });
       await sql(`update public.settings set ageing_after_days = 90, stale_after_days = 180`);

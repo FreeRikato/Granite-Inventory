@@ -12,8 +12,8 @@ test.beforeEach(async () => {
   await sql(
     `insert into public.customers (name, phone, customer_type) values ('Murugan Constructions', '+91 98765 43210', 'CONTRACTOR')`,
   );
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_price, landed_cost, payment_mode)
-    select private.ist_today() - 3, b.id, c.id, 2, 1650, 1450, 'CASH' from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today() - 3, b.id, c.id, 2, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, 1450, 'CASH' from public.batches b, public.customers c
     where b.batch_code = 'BP-OLD-01' and c.name = 'Murugan Constructions'`);
   await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-OLD-01'`);
 });
@@ -41,6 +41,42 @@ test("customers list, add, and detail with sales", async ({ page, signIn }) => {
   await expect(page.getByTestId("sale-row")).toContainText("BP-OLD-01");
   await expect(page.getByTestId("sale-row")).toContainText("₹3,300");
   await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
+});
+
+test("a sale row on the customer page shows the per sq ft working, nested bill lines included", async ({
+  page,
+  signIn,
+}) => {
+  await sql(`update public.batches set initial_units = 20 where batch_code = 'BP-NEW-01'`);
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost, stickering_price)
+    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 100, 300 from public.batches b, public.customers c
+    where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
+  await sql(`update public.batches set units_sold = units_sold + 10 where batch_code = 'BP-NEW-01'`);
+  await sql(`with bill as (
+      insert into public.bills (customer_id, sale_date, payment_mode)
+      select id, private.ist_today() - 2, 'UPI' from public.customers where name = 'Murugan Constructions'
+      returning id, customer_id, sale_date, payment_mode
+    )
+    insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, bill_id)
+    select bill.sale_date, b.id, bill.customer_id, 3, 900, null, 900, bill.payment_mode, bill.id
+    from bill, public.batches b where b.batch_code = 'DS-CROSS-01'`);
+  await sql(`update public.batches set units_sold = units_sold + 3 where batch_code = 'DS-CROSS-01'`);
+
+  await signIn("operator");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+  const perSqft = page.getByTestId("sale-row").filter({ hasText: "BP-NEW-01" });
+  await expect(perSqft).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000 + ₹300 stickering");
+  await expect(page.getByTestId("sale-row").filter({ hasText: "BP-OLD-01" })).toContainText(
+    "2 × 8 sq ft × ₹206.25/sq ft = ₹3,300",
+  );
+  await expect(page.getByTestId("sale-row").filter({ hasText: "BP-OLD-01" })).not.toContainText("stickering");
+
+  await page
+    .getByTestId("bill-row")
+    .getByRole("button", { name: /1 item/ })
+    .click();
+  await expect(page.getByTestId("sale-row").filter({ hasText: "DS-CROSS-01" })).toContainText("3 × ₹900 = ₹2,700");
 });
 
 test("an existing phone selects that customer instead of creating a duplicate", async ({ page, signIn }) => {

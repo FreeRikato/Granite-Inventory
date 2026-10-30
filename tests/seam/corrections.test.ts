@@ -95,14 +95,14 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
   });
 
   it("moving a sale between batches rebalances both and re-snapshots landed cost", async () => {
-    const sale = await recordSale(operator, { batchId: a, customerId, quantity: 5, salePrice: 1500 });
+    const sale = await recordSale(operator, { batchId: a, customerId, quantity: 5, saleRate: 187.5 });
     const moved = await admin.rpc("correct_sale", {
       p_sale_id: sale.data?.id ?? "",
       p_batch_id: b,
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 3,
-      p_sale_price: 2500,
+      p_sale_rate: 312.5,
       p_payment_mode: "UPI",
       p_has_stickering: true,
       p_stickering_cost: 100,
@@ -119,7 +119,7 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 10,
-      p_sale_price: 2500,
+      p_sale_rate: 312.5,
       p_payment_mode: "CASH",
     });
     expect(sameBatch.error).toBeNull();
@@ -132,7 +132,7 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 11,
-      p_sale_price: 2500,
+      p_sale_rate: 312.5,
       p_payment_mode: "CASH",
     });
     expect(expectError(tooMany).message).toMatch(/Only 10 available/);

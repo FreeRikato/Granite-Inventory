@@ -24,7 +24,7 @@ describe("archive: batches, products and suppliers", () => {
     customerId = await createCustomer(operator, { name: "Murugan" });
     kept = (await createBatch(operator, { productId, supplierId, units: 10, unitPrice: 125 })).data?.id ?? "";
     archived = (await createBatch(operator, { productId, supplierId, units: 6, unitPrice: 250 })).data?.id ?? "";
-    await recordSale(operator, { batchId: archived, customerId, quantity: 2, salePrice: 2500 });
+    await recordSale(operator, { batchId: archived, customerId, quantity: 2, saleRate: 312.5 });
   });
 
   function archiveBatch(db: Db, id: string, value = true) {
@@ -77,7 +77,7 @@ describe("archive: batches, products and suppliers", () => {
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 1,
-      p_sale_price: 1500,
+      p_sale_rate: 187.5,
       p_payment_mode: "CASH",
     });
     expect(expectError(moved).message).toMatch(/is archived; unarchive it to sell from it$/);
@@ -89,7 +89,7 @@ describe("archive: batches, products and suppliers", () => {
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 1,
-      p_sale_price: 2500,
+      p_sale_rate: 312.5,
       p_payment_mode: "CASH",
     });
     expect(edited.error).toBeNull();

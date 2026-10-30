@@ -24,7 +24,7 @@ export function saleRpcArgs(s: SaleInput) {
     p_customer_id: s.customerId,
     p_sale_date: s.saleDate,
     p_quantity: s.quantity,
-    p_sale_price: s.salePrice,
+    p_sale_rate: s.saleRate,
     p_payment_mode: s.paymentMode,
     p_has_stickering: s.hasStickering,
     p_stickering_cost: s.hasStickering ? s.stickeringCost : 0,
@@ -41,7 +41,7 @@ export function billRpcArgs(b: BillInput) {
     p_lines: b.lines.map((l) => ({
       batch_id: l.batchId,
       quantity: l.quantity,
-      sale_price: l.salePrice,
+      sale_rate: l.saleRate,
       has_stickering: l.hasStickering,
       stickering_cost: l.hasStickering ? l.stickeringCost : 0,
       stickering_price: l.hasStickering ? l.stickeringPrice : 0,

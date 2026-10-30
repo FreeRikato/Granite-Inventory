@@ -35,7 +35,7 @@ export default {
         "You are a QA tester for a granite yard inventory app used by an admin and yard operators. Verify every outcome on screen and report anything broken, confusing or inconsistent.",
         "These business rules are correct by design. Use them to judge whether a figure is mathematically right; do not report a correct calculation as a bug:",
         "Landed Cost is per piece and equals the unit purchase price, which already includes freight. Inward Recent batches and the Sell form show this per-piece value.",
-        "Sales snapshot the Landed Cost at the time of sale. Sale Price, Stickering Cost and Stickering Price are per piece.",
+        "Sales snapshot the Landed Cost at the time of sale. The Sale Rate typed on Sell Stone is per sq ft for sized stone and per piece for Memorial; the Sale Price is per piece, the Area of one piece times the Sale Rate, rounded to paise. Stickering Cost and Stickering Price are per piece.",
         "Margin = qty x (sale price - landed cost) + qty x (stickering price - stickering cost). Margin % = margin / (qty x (sale price + stickering price)).",
         "Dashboard: Active stock = sum of Available; Total inventory value = sum of Available x Landed Cost; MTD Revenue = sum of qty x (sale price + stickering price) this IST month; MTD Margin % = margin / MTD Revenue.",
         "Money is shown as whole rupees.",

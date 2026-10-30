@@ -54,7 +54,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: quantity,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CASH",
     });
   }
@@ -105,7 +105,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 4,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CASH",
     };
     const changes = [{ p_customer_id: otherCustomerId }, { p_sale_date: daysAgo(1) }, { p_payment_mode: "UPI" }];
@@ -135,7 +135,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 2,
-      p_sale_price: 2000,
+      p_sale_rate: 250,
       p_payment_mode: "CASH",
       p_has_stickering: true,
       p_stickering_cost: 50,
@@ -146,7 +146,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       bill_id: billId,
       batch_id: pearlBatchId,
       quantity: 2,
-      sale_price: 2000,
+      sale_rate: 250,
       has_stickering: true,
     });
   });

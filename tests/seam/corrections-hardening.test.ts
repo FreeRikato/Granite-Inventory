@@ -64,7 +64,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
     input: {
       readonly saleDate?: string;
       readonly quantity?: number;
-      readonly salePrice?: number;
+      readonly saleRate?: number;
       readonly paymentMode?: string;
     } = {},
   ) {
@@ -74,7 +74,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
       p_customer_id: customerId,
       p_sale_date: input.saleDate ?? today(),
       p_quantity: input.quantity ?? 1,
-      p_sale_price: input.salePrice ?? 1650,
+      p_sale_rate: input.saleRate ?? 206.25,
       p_payment_mode: input.paymentMode ?? "CASH",
     });
   }
@@ -120,7 +120,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
 
     const invalidInputs = [
       { input: { quantity: 0 }, message: /sale quantity.*greater than zero/i },
-      { input: { salePrice: -1 }, message: /sale price.*zero or more/i },
+      { input: { saleRate: -1 }, message: /sale rate.*zero or more/i },
       { input: { paymentMode: "CHEQUE" }, message: /payment mode.*cash.*upi.*bank transfer/i },
       { input: { saleDate: daysAgo(-1) }, message: /sale date.*future/i },
     ];
@@ -215,7 +215,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
       p_customer_id: customerId,
       p_sale_date: saleDate,
       p_quantity: 1,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CASH",
     });
 
@@ -229,7 +229,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
       p_customer_id: customerId,
       p_sale_date: today(),
       p_quantity: 1,
-      p_sale_price: 1650,
+      p_sale_rate: 206.25,
       p_payment_mode: "CASH",
     });
 
@@ -243,7 +243,7 @@ describe("correction hardening: readable validation, stable yard gaps and mapper
         p_customer_id: "00000000-0000-0000-0000-000000000000",
         p_sale_date: today(),
         p_quantity: 0,
-        p_sale_price: 1650,
+        p_sale_rate: 206.25,
         p_payment_mode: "CASH",
       }),
     );
