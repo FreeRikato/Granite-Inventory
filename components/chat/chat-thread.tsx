@@ -1,68 +1,49 @@
 "use client";
 
-import "./no-devtools";
 import { useEffect, useRef, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
-import { Renderer } from "@openuidev/react-lang";
+import type { UIMessage } from "ai";
 import { Plus, SendHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Input } from "@/components/ui/input";
-import { chatLibrary } from "@/lib/chat/library";
+import { Message } from "@/components/ui/message";
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import { useOnline } from "@/lib/use-online";
-import { answerSource } from "./chat-answer";
+import { AssistantAnswer, PhaseLine } from "./assistant-answer";
+import { useAskPanel, useAskThread } from "./ask-provider";
 import { NO_ANSWER_TEXT, chatErrorText, endedWithoutAnswer } from "./chat-error";
-import { clearChatHistory, loadChatHistory, saveChatHistory } from "./chat-history";
-import { withoutEarlierQueryRows } from "./request-messages";
 
-const transport = new DefaultChatTransport({
-  api: "/api/chat",
-  prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: withoutEarlierQueryRows(messages) } }),
-});
-
-type Props = { readonly email: string; readonly onClose: () => void };
-
-export function ChatThread({ email, onClose }: Props) {
-  const [history, setHistory] = useState<UIMessage[] | null>(null);
-  useEffect(() => {
-    void loadChatHistory(email).then(setHistory);
-  }, [email]);
-  return history ? <ChatSession email={email} history={history} onClose={onClose} /> : null;
-}
+const TOUCH_POINTER = "(pointer: coarse)";
 
 function textOf(message: UIMessage): string[] {
   return message.parts.flatMap((part) => (part.type === "text" && part.text ? [part.text] : []));
 }
 
-function ChatSession({ email, history, onClose }: Props & { readonly history: UIMessage[] }) {
-  const { messages, sendMessage, setMessages, stop, status, error, clearError } = useChat({
-    messages: history,
-    transport,
-  });
+export function ChatThread() {
+  const { messages, sendMessage, status, error, phase, historyReady, announcement, newChat } = useAskThread();
+  const { panel, close } = useAskPanel();
   const online = useOnline();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
-  const bottom = useRef<HTMLDivElement>(null);
   const busy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (status === "ready") void (messages.length > 0 ? saveChatHistory(email, messages) : clearChatHistory(email));
-  }, [email, messages, status]);
-
-  useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end" });
-  }, [messages, error]);
+    if (panel === "open" && !window.matchMedia(TOUCH_POINTER).matches) inputRef.current?.focus({ preventScroll: true });
+  }, [panel]);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const text = draft.trim();
     setDraft("");
     void sendMessage({ text });
-  }
-
-  function newChat() {
-    void stop();
-    clearError();
-    setMessages([]);
+    inputRef.current?.focus({ preventScroll: true });
   }
 
   return (
@@ -74,58 +55,65 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
             <Plus />
             New chat
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={close}>
             <X />
           </Button>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4" aria-live="polite">
-        {messages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Ask about stock, sales or margin, for example "which supplier has the most stale batches?"
-          </p>
-        ) : null}
-        {messages.map((message, index) =>
-          message.role === "user" ? (
-            <p
-              key={message.id}
-              data-testid="chat-user-message"
-              className="max-w-[85%] self-end rounded-card bg-secondary px-3 py-2 text-sm"
-            >
-              {textOf(message).join(" ")}
-            </p>
-          ) : (
-            <div key={message.id} data-testid="chat-assistant-message">
-              <Renderer
-                response={answerSource(message, status === "ready" || index < messages.length - 1)}
-                library={chatLibrary}
-                isStreaming={status === "streaming" && index === messages.length - 1}
-              />
-            </div>
-          ),
-        )}
-        {status === "submitted" ? <p className="text-sm text-muted-foreground">Thinking...</p> : null}
-        {endedWithoutAnswer(messages, status) ? (
-          <p data-testid="chat-no-answer" className="text-sm text-muted-foreground">
-            {NO_ANSWER_TEXT}
-          </p>
-        ) : null}
-        {error ? (
-          <p role="alert" data-testid="chat-error" className="text-sm text-stale">
-            {chatErrorText(error)}
-          </p>
-        ) : null}
-        <div ref={bottom} />
-      </div>
+      <MessageScrollerProvider autoScroll>
+        <MessageScroller className="flex-1">
+          <MessageScrollerViewport className="px-4 py-4">
+            {messages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Ask about stock, sales or margin, for example "which supplier has the most stale batches?"
+              </p>
+            ) : null}
+            <MessageScrollerContent className="gap-4">
+              {messages.map((message, index) =>
+                message.role === "user" ? (
+                  <MessageScrollerItem
+                    key={message.id}
+                    messageId={message.id}
+                    scrollAnchor
+                    className="animate-in fade-in motion-enter"
+                  >
+                    <Message align="end">
+                      <Bubble variant="secondary" align="end" className="max-w-[85%]">
+                        <BubbleContent data-testid="chat-user-message" className="rounded-card">
+                          {textOf(message).join(" ")}
+                        </BubbleContent>
+                      </Bubble>
+                    </Message>
+                  </MessageScrollerItem>
+                ) : (
+                  <AssistantAnswer key={message.id} message={message} settled={!busy || index < messages.length - 1} />
+                ),
+              )}
+              {phase ? <PhaseLine phase={phase} /> : null}
+              {endedWithoutAnswer(messages, status) ? (
+                <p data-testid="chat-no-answer" className="text-sm text-muted-foreground">
+                  {NO_ANSWER_TEXT}
+                </p>
+              ) : null}
+              {error ? (
+                <p role="alert" data-testid="chat-error" className="text-sm text-stale">
+                  {chatErrorText(error)}
+                </p>
+              ) : null}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton data-testid="chat-jump-latest" />
+        </MessageScroller>
+      </MessageScrollerProvider>
       <form onSubmit={submit} className="flex flex-col gap-2 border-t border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Input
             aria-label="Ask a question"
             placeholder="Ask about your stock and sales"
             value={draft}
-            disabled={!online}
+            disabled={!online || !historyReady}
             onChange={(event) => setDraft(event.target.value)}
-            autoFocus
+            ref={inputRef}
             className="h-10"
           />
           <Button type="submit" size="icon-lg" aria-label="Send" disabled={!online || busy || !draft.trim()}>
@@ -134,6 +122,9 @@ function ChatSession({ email, history, onClose }: Props & { readonly history: UI
         </div>
         {online ? null : <p className="text-xs text-muted-foreground">You are offline, chat needs a connection</p>}
       </form>
+      <p role="status" data-testid="chat-live" className="sr-only">
+        {announcement}
+      </p>
     </>
   );
 }

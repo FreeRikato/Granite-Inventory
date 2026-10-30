@@ -7,8 +7,8 @@ export function RankedBarList({ rows, label }: { readonly rows: readonly RankedR
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <ol className="flex flex-col gap-3" aria-label={label}>
-      {rows.map((r) => (
-        <li key={r.label} className="grid grid-cols-[88px_1fr_40px] items-center gap-3 text-sm">
+      {rows.map((r, i) => (
+        <li key={i} className="grid grid-cols-[88px_1fr_40px] items-center gap-3 text-sm">
           <span className="truncate text-muted-foreground">{r.label}</span>
           <span className="h-2 overflow-hidden rounded-full bg-muted" role="presentation">
             <span

@@ -2,6 +2,7 @@
 code:
   - components/chat/visuals/define.ts
   - components/chat/visuals/renderers.tsx
+  - components/chat/visuals/answer-streaming.ts
   - components/chat/visuals/use-dealias.ts
   - components/dashboard/moving-bars.tsx
   - components/dashboard/stock-donut.tsx
@@ -30,11 +31,19 @@ Because both libraries come from the same function, the prompt the model reads a
 
 ## The dashboard draws RankedBars and Donut
 
-`RankedBars` is `RankedBarList` from `components/dashboard/moving-bars.tsx`, the same list `MovingBars` draws, and `Donut` is `DonutRing` and `Legend` from `components/dashboard/stock-donut.tsx`. The chat only maps the model's rows into them (de-aliasing the labels), so a restyle of the dashboard restyles the chat. A test renders both and compares the markup.
+`RankedBars` is `RankedBarList` from `components/dashboard/moving-bars.tsx`, the same list `MovingBars` draws, and `Donut` is `DonutRing` and `Legend` from `components/dashboard/stock-donut.tsx`. The chat only maps the model's rows into them (de-aliasing the labels), so a restyle of the dashboard restyles the chat. A test renders both and compares the markup. Rows are keyed by position, because masked labels are all `...` or all "a customer" and two customers can share a name, so a label key would give several rows one key and React would render duplicates; the rows hold no state, so position is a safe key.
 
 A donut slice is keyed `s0`, `s1`, and so on, never by its label. `ChartContainer` writes each key into a `<style>` block as `--color-<key>`, so a label from the model (or from a customer name) used as the key could close the rule and add its own CSS.
 
 The library's `Renderer` accepts renderers of any props, which is why `buildChatLibrary` types its renderers as the library's own `Library["components"][string]["component"]`. What keeps a renderer's props in step with its schema is the `Renderers` type above it.
+
+## Charts wait for the whole answer
+
+While an answer streams, `BarChart` and `LineChart` draw a `Skeleton` with the chart's own `aspect-video w-full` box instead of the chart, so the placeholder and the finished chart are the same size and nothing moves when one replaces the other. The chart mounts once, when the answer settles (the turn is no longer submitted or streaming, so a stream that errors after the chart was written also settles it rather than leaving the placeholder pulsing), and fades in over the fast token (150ms). Drawing it per token would rebuild the Recharts tree many times a second, and a half-received series would draw bars that then change height.
+
+The renderers learn that the answer is streaming from `AnswerStreamingContext` (`answer-streaming.ts`), which `AssistantAnswer` sets from its `settled` flag. It is our own context, not react-lang's `useIsStreaming`, because that hook throws outside a `Renderer` and the tooling test renders single renderers directly; with the default `false` they draw the chart as before. `Donut` and `RankedBars` keep drawing as the rows arrive: their height depends on how many slices or rows the model sends, so no placeholder could have their final size.
+
+`Table` uses `table-fixed`, so column widths are decided by the table and not by the widest cell so far, and a later, longer row does not resize the columns of the rows already shown. Rows appear as the parser delivers them.
 
 ## Limits live in the renderers
 
@@ -42,7 +51,7 @@ The OpenUI parser does not enforce array length, so `.max(4)` on a schema would 
 
 ## Aliases become names in the browser
 
-The model only sees `C-xxxxxx` aliases ([[chat]]). Every component that shows text passes it through `useDealias`, which builds one lookup from the cached `customersQuery` ([[browser-reads]]) and swaps `C-` plus six hex characters for the customer name. An alias with no match stays as written, so a customer added since the list was cached still reads as an alias instead of disappearing. Numbers are never swapped, only text.
+The model only sees `C-xxxxxx` aliases ([[chat]]). Every component that shows text passes it through `useDealias`, which builds one lookup from the cached `customersQuery` ([[browser-reads]]) and swaps `C-` plus six hex characters for the customer name. An alias with no match stays as written, so a customer added since the list was cached still reads as an alias instead of disappearing. A raw code is never painted before that list is known: while `customersQuery` has no data, `maskAliases` shows `...` (three periods) in its place, in text, table cells, chart labels and series names alike, and swaps to the name when the list arrives; if the read fails after its retries, it shows "a customer" instead. `AskProvider` prefetches the list so the placeholder is rarely seen. Numbers are never swapped, only text.
 
 ## The dev inspector is off
 

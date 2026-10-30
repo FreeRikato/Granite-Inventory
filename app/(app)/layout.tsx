@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { MemberProvider } from "@/components/shell/member-provider";
@@ -6,6 +7,8 @@ import { OfflineNotice } from "@/components/shell/offline-notice";
 import { getSession } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query/provider";
 import { createClient } from "@/lib/supabase/server";
+
+export const viewport: Viewport = { interactiveWidget: "resizes-content" };
 
 async function getBusinessName(): Promise<string | null> {
   const supabase = await createClient();
