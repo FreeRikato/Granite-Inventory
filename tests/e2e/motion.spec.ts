@@ -21,7 +21,14 @@ async function transformsWhile(page: Page, open: () => Promise<void>): Promise<s
     tick();
   });
   await open();
-  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished)));
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished),
+    ),
+  );
   const seen = await page.evaluate(() => [...(window as unknown as { __transforms: Set<string> }).__transforms]);
   return seen.filter((transform) => !IDENTITY.test(transform));
 }

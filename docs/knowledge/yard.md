@@ -10,6 +10,7 @@ code:
   - components/yard/clamp.tsx
   - components/ageing-badge.tsx
   - tests/e2e/yard-cls.spec.ts
+  - tests/e2e/yard-filter.spec.ts
   - tests/e2e/yard.spec.ts
   - tests/e2e/yard-windowing.spec.ts
   - tests/seam/yard-chunks.test.ts
@@ -34,7 +35,7 @@ Past `WINDOW_AFTER`, `chunkStacks` cuts each Stack into chunks of `CHUNK_SIZE` b
 
 ## Filters and links
 
-Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it.
+The filter row marks itself pending while a change is on its way to the URL, and the list dims until the new rows are shown ([[browser-reads]]). Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it.
 
 ## Empty states
 

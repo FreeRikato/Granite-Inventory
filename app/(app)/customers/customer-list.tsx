@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge";
+import { LinkPending } from "@/components/shell/link-pending";
 import { Input } from "@/components/ui/input";
 import type { Tables } from "@/lib/database.types";
 import { relativeDays } from "@/lib/format";
@@ -55,11 +56,13 @@ export function CustomerList({ customers, kpis }: Props) {
               <li key={c.id}>
                 <Link
                   href={`/customers/${c.id}`}
+                  transitionTypes={["nav-forward"]}
                   className="flex flex-wrap items-start gap-4 py-4 hover:bg-secondary/40"
                   data-testid="customer-row"
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                  <span className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                     {initialsOf(c.name ?? "")}
+                    <LinkPending className="pointer-events-none absolute inset-0 size-8 rounded-full has-[svg]:bg-accent" />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="break-words text-[15px] font-semibold">{c.name}</span>

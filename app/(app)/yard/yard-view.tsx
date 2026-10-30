@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
@@ -13,7 +14,7 @@ import { YardFilters } from "@/components/yard/yard-filters";
 import { slotChoices, slotLabel, stackLabel } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import {
   WINDOW_AFTER,
   chunkStacks,
@@ -24,7 +25,7 @@ import {
   type YardBatch,
 } from "@/lib/yard";
 
-export function YardView() {
+export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
   const params = useSearchParams();
   const raw: Record<string, string> = Object.fromEntries(params.entries());
   const query = parseYardQuery(raw);
@@ -37,7 +38,7 @@ export function YardView() {
   const options = useMemo(() => filterOptions(batches.data ?? []), [batches.data]);
 
   if (!hydrated || batches.isPending) {
-    return <ViewSkeleton />;
+    return skeleton;
   }
   if (batches.isError) {
     return <ViewError what="the yard" message={batches.error.message} />;
@@ -67,7 +68,7 @@ export function YardView() {
   const slotOptions = slots.map((slot) => ({ value: slot, label: slotLabel(slot) }));
 
   return (
-    <>
+    <ViewReady>
       <YardFilters
         query={query}
         slots={slotOptions}
@@ -80,18 +81,23 @@ export function YardView() {
         <DataAge updatedAt={batches.dataUpdatedAt} fetching={batches.isFetching} />
       </div>
 
-      {groups.length === 0 ? (
-        <p className="rounded-card bg-card/60 py-8 text-center text-sm text-muted-foreground shadow-sm ring-1 ring-border">
-          {all.length === 0
-            ? "No batches in the yard yet. Log a delivery to get started."
-            : filtering
-              ? "Nothing matches these filters."
-              : "No stock in the yard right now."}
-        </p>
-      ) : (
-        <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
-      )}
-    </>
+      <div
+        data-testid="yard-list"
+        className="transition-opacity duration-(--motion-fast) ease-(--motion-ease-out) peer-data-[pending=true]/filters:opacity-60"
+      >
+        {groups.length === 0 ? (
+          <p className="rounded-card bg-card/60 py-8 text-center text-sm text-muted-foreground shadow-sm ring-1 ring-border">
+            {all.length === 0
+              ? "No batches in the yard yet. Log a delivery to get started."
+              : filtering
+                ? "Nothing matches these filters."
+                : "No stock in the yard right now."}
+          </p>
+        ) : (
+          <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
+        )}
+      </div>
+    </ViewReady>
   );
 }
 

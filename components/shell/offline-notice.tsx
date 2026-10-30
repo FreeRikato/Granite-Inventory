@@ -8,7 +8,10 @@ export function OfflineNotice() {
   return (
     <div role="status" data-testid="offline-status">
       {online ? null : (
-        <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-sm font-medium text-white">
+        <div
+          data-offline-banner
+          className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-sm font-medium text-white"
+        >
           <WifiOff className="size-4" aria-hidden />
           You are offline
         </div>

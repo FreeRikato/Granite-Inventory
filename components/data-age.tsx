@@ -4,15 +4,16 @@ import { useSyncExternalStore } from "react";
 
 type Props = { readonly updatedAt: number; readonly fetching: boolean };
 
+const MINUTE_MS = 60_000;
+
 export function DataAge({ updatedAt, fetching }: Props) {
-  const now = useSyncExternalStore(
-    subscribeMinute,
-    () => Date.now(),
-    () => 0,
+  const now = useSyncExternalStore(subscribeMinute, currentMinute, () => 0);
+  const label = fetching ? "Refreshing…" : updatedAt === 0 || now === 0 ? "" : `Updated ${ago(now - updatedAt)}`;
+  return (
+    <span className="block h-4 text-xs text-muted-foreground" data-testid="data-age">
+      {label}
+    </span>
   );
-  if (fetching) return <span className="text-xs text-muted-foreground">Refreshing…</span>;
-  if (updatedAt === 0 || now === 0) return null;
-  return <span className="text-xs text-muted-foreground">Updated {ago(now - updatedAt)}</span>;
 }
 
 function ago(ms: number): string {
@@ -25,7 +26,21 @@ function ago(ms: number): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
+function currentMinute(): number {
+  return Math.floor(Date.now() / MINUTE_MS) * MINUTE_MS;
+}
+
 function subscribeMinute(notify: () => void): () => void {
-  const id = setInterval(notify, 60_000);
-  return () => clearInterval(id);
+  let timer: ReturnType<typeof setTimeout>;
+  const schedule = () => {
+    timer = setTimeout(
+      () => {
+        notify();
+        schedule();
+      },
+      MINUTE_MS - (Date.now() % MINUTE_MS),
+    );
+  };
+  schedule();
+  return () => clearTimeout(timer);
 }

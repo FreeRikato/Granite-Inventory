@@ -1,8 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { DataAge } from "@/components/data-age";
@@ -11,7 +12,7 @@ import { MovingBars } from "@/components/dashboard/moving-bars";
 import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
-import { ViewError, ViewSkeleton } from "@/components/view-state";
+import { ViewError, ViewReady } from "@/components/view-state";
 import { formatNumber, formatPercent, formatRupeesCompact, formatSize } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
@@ -32,9 +33,16 @@ const GRAIN_OPTIONS = [
   { value: "month", label: "Month" },
 ] as const satisfies readonly { value: MarginGrain; label: string }[];
 
+function useShownWhileSettled<T>(value: T, settled: boolean): T {
+  const [shown, setShown] = useState(value);
+  if (settled && shown !== value) setShown(value);
+  return shown;
+}
+
 function MarginCard() {
   const [grain, setGrain] = useState<MarginGrain>("week");
-  const margin = useQuery(marginByPeriodQuery(grain));
+  const margin = useQuery({ ...marginByPeriodQuery(grain), placeholderData: keepPreviousData });
+  const shownGrain = useShownWhileSettled(grain, !margin.isPlaceholderData);
 
   return (
     <section className="rounded-card bg-card p-6 shadow-sm" data-testid="margin-card">
@@ -47,7 +55,7 @@ function MarginCard() {
       </div>
       <div className="mt-4">
         {margin.isSuccess ? (
-          <MarginBars rows={margin.data} grain={grain} />
+          <MarginBars rows={margin.data} grain={shownGrain} />
         ) : margin.isError ? (
           <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
         ) : (
@@ -72,7 +80,8 @@ const WINDOW_EMPTY_MESSAGE = {
 
 function TopCustomersCard() {
   const [range, setRange] = useState<TopCustomerWindow>("90d");
-  const customers = useQuery(topCustomersQuery(range));
+  const customers = useQuery({ ...topCustomersQuery(range), placeholderData: keepPreviousData });
+  const shownRange = useShownWhileSettled(range, !customers.isPlaceholderData);
 
   return (
     <section className="min-w-0 rounded-card bg-card p-6 shadow-sm" data-testid="top-customers-card">
@@ -82,7 +91,7 @@ function TopCustomersCard() {
       </div>
       <div className="mt-4">
         {customers.isSuccess ? (
-          <TopCustomers rows={customers.data} emptyMessage={WINDOW_EMPTY_MESSAGE[range]} />
+          <TopCustomers rows={customers.data} emptyMessage={WINDOW_EMPTY_MESSAGE[shownRange]} />
         ) : customers.isError ? (
           <p className="py-6 text-center text-sm text-destructive">
             Could not load top customers: {customers.error.message}
@@ -95,7 +104,7 @@ function TopCustomersCard() {
   );
 }
 
-export function OverviewView() {
+export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
   const hydrated = useHydrated();
   const kpis = useQuery(dashboardKpisQuery);
   const moving = useQuery(fastMovingQuery);
@@ -105,7 +114,7 @@ export function OverviewView() {
   if (!hydrated || !kpis.isSuccess || !moving.isSuccess || !batches.isSuccess) {
     const failed = [kpis, moving, batches].find((q) => q.isError);
     if (failed?.isError) return <ViewError what="the overview" message={failed.error.message} />;
-    return <ViewSkeleton />;
+    return skeleton;
   }
 
   const k = kpis.data;
@@ -121,7 +130,7 @@ export function OverviewView() {
   const change = lastMonth > 0 ? ((active - lastMonth) / lastMonth) * 100 : null;
 
   return (
-    <>
+    <ViewReady>
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
@@ -239,6 +248,6 @@ export function OverviewView() {
           </ul>
         )}
       </section>
-    </>
+    </ViewReady>
   );
 }
