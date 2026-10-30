@@ -37,9 +37,20 @@ code:
   - tests/e2e/offline.spec.ts
   - tests/e2e/dashboard.spec.ts
   - tests/e2e/yard-filter.spec.ts
+  - lib/query/writes.ts
+  - tests/tooling/invalidates-after.test.ts
+  - tests/e2e/write-refetch.spec.ts
+  - components/yard/batch-actions.tsx
+  - app/(app)/customers/[id]/sale-actions.tsx
+  - app/(app)/customers/[id]/customer-actions.tsx
+  - app/(app)/customers/add-customer-button.tsx
+  - app/(app)/public-link/public-link-controls.tsx
+  - app/(app)/settings/inventory-rules.tsx
   - app/(app)/overview-view.tsx
   - app/(app)/yard/yard-view.tsx
   - components/yard/yard-filters.tsx
+  - lib/query/row-state.tsx
+  - tests/e2e/write-motion.spec.ts
 ---
 # Browser reads and caching
 
@@ -74,7 +85,17 @@ The Overview Margin card (Week or Month) and Top customers card (This month, Las
 
 ## After a write
 
-Every write goes through a server action. Afterwards the caller invalidates both caches: the browser query cache and the Next router cache. It invalidates every key rather than picking some, so a new write site cannot forget one. Focus handling after a write is its own problem: [[focus-after-write]].
+Every write goes through a server action, and the caller then tells `useAfterWrite` which write it made. `invalidatesAfter` (`lib/query/writes.ts`) maps each named write to the query roots it changes and says whether the page needs a server refresh. Only those roots are invalidated, so a page refetches what the write touched and nothing else: archiving a Batch on Yard refetches the Yard batches and leaves the products and suppliers lists alone.
+
+The roots are derived from the views and functions behind each read, not guessed. A sale changes the Yard batches, stock lines, recent batches, KPIs, fast moving, margin, top customers and the customer list. A new Batch changes the same stock reads plus the recent stacks, but not the sales aggregates. Archiving a Batch drops it from the stock lines and KPIs and leaves the recent stacks alone. Creating a product or supplier on Inward invalidates that list: the form keeps the new row in its own state, but it seeds that state from the cache when it mounts, so a trip to Sell and back showed the old list and offered "Add product" again for a name that already existed. `write-refetch.spec.ts` creates each kind, leaves for Yard or Sell, comes back and finds the row in the picker. Renaming a product or supplier changes the names inside the batch reads too; archiving or deleting one changes only its own list, because a delete is refused while any Batch references the row. Inventory rules change the stale threshold and the Yard statuses that use it. When unsure whether a write reaches a read, its root is listed: a missing root shows stale rows for up to 10 s, an extra one costs a request. `invalidates-after.test.ts` pins every write and checks each root exists in `reads.ts`.
+
+`router.refresh()` runs only for writes made on a server-rendered page: Settings (including its product and supplier lists, named `settings-*` so the same rename made on Inward does not refresh), the Public Catalog controls, and a customer's page (edit customer, correct and delete Sale). Overview, Yard, Sell, Customers and Inward read in the browser, so a refresh there would only re-render a shell with no data. Deleting a customer leaves its page for the list, so it invalidates the customer reads and skips the refresh instead of re-rendering a page that no longer exists. The server actions still call `revalidatePath` for the router cache.
+
+Archiving and unarchiving a Batch is optimistic. `BatchActions` cancels any in-flight Yard batches and recent batches fetches (otherwise one would land after the edit and put the old row back), writes the new `archived_at` into the cached Yard rows and into every cached recent batches list with `setQueryData` and `setQueriesData`, and then calls the server. Inward's Recent batches reads the second cache, so patching only the Yard rows left its row unchanged until the refetch. The card shows the Archived badge, or leaves the list when archived rows are hidden, before the server answers. If the server refuses, or the request throws (a dropped connection), only that row's `archived_at` is put back and a toast gives the reason; the rest of the cache is untouched, so a refetch that landed meanwhile is not overwritten. Both paths then refetch: the cancelled fetches would otherwise stay cancelled and leave the cache as it was before the click, and a thrown request may have been applied by the server before the connection dropped, so the put-back row would disagree with it. On success the normal invalidation follows. Every write that can be applied before its answer is lost refetches in its catch: the archive above, a row delete (`useRowRemoval` takes the delete kind and invalidates it) and Record Sale. Without that, a Sale the server recorded kept showing the stock it had used, and a second Record Sale could bill the same pieces twice. `write-motion.spec.ts` answers the request on the server and then aborts it, and checks the stock after the Sale and the missing card after a batch delete; a second spec holds the archive of a Batch that no longer exists and checks the card is gone after the refusal. In the windowed Yard list the removed card's stack chunk is re-measured by `VirtualStacks` (it keys chunks by stack, not by index), and `write-motion.spec.ts` checks that the cards above it keep their position, the scroll position holds and no two cards overlap. It records the "before" layout only once two samples 100 ms apart are identical, because `VirtualStacks` starts every chunk at an estimated height and corrects it as chunks are measured, which moves card tops and the scroll offset for a moment after a long scroll.
+
+Deleting a Batch, a Sale or a customer, and recording a Sale, are not optimistic: money and history are involved, so the row waits for the server ([[motion]], "Rows after a write"). Deleting a Batch also removes it from the cached Yard rows and the recent batches lists once it has faded, so it does not wait for the refetch (on Inward the faded row would otherwise stay in the table as an invisible gap).
+
+The edit dialogs for a Batch and a Sale call the write only when saved. Cancel closes the dialog and fetches nothing. Focus handling after a write is its own problem: [[focus-after-write]]. `write-refetch.spec.ts` counts the Supabase reads and the server render requests after archiving a Batch and after cancelling an edit.
 
 ## Other pieces
 

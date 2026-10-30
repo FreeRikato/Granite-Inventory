@@ -4,6 +4,7 @@ import { AgeingBanner } from "@/components/ageing-badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDims } from "@/lib/format";
 import type { YardBatch } from "@/lib/yard";
+import { rowStateClass } from "@/lib/query/row-style";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -19,6 +20,7 @@ export function BatchCard({ batch, actions }: Props) {
       data-batch-code={batch.batch_code}
       className={cn(
         "rounded-tile border bg-card p-4 shadow-sm",
+        rowStateClass,
         stale ? "border-stale/40" : "border-border",
         (batch.sold_out || batch.archived_at) && "opacity-60",
       )}

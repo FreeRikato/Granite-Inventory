@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
+import { messageOf } from "@/lib/action-result";
 import { useAfterWrite } from "@/lib/query/provider";
+import { RowMark } from "@/lib/query/row-state";
+import { EXIT_MS, rowStateClass, wait, type RowState } from "@/lib/query/row-style";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AddButton } from "@/components/add-button";
@@ -11,6 +14,7 @@ import { Notice } from "@/components/notice";
 import { SearchSelect } from "@/components/search-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import {
   CUSTOMER_TYPES,
@@ -30,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
 import { recordBillAction } from "./actions";
 import { AreaCard } from "./area-card";
-import { addLine, describeOrder, orderFigures, piecesInCart, removeLine, type CartLine } from "./cart";
+import { addLine, describeOrder, orderFigures, piecesInCart, type CartLine } from "./cart";
 import { SplitDialog } from "./split-dialog";
 
 type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_type" | "is_walk_in">;
@@ -52,6 +56,10 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
   return isPhone
     ? { name: "", phone: `${trimmed.startsWith("+") ? "+" : ""}${digits}`, customerType: "REGULAR" }
     : { name: trimmed, phone: "", customerType: "REGULAR" };
+}
+
+function lineId(line: CartLine): string {
+  return `${line.batchId}-${line.salePrice}-${line.stickering?.cost ?? "none"}-${line.stickering?.price ?? "none"}`;
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
@@ -76,7 +84,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [stickeringCost, setStickeringCost] = useState("");
   const [stickeringPrice, setStickeringPrice] = useState("");
   const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
-  const [cart, setCart] = useState<readonly CartLine[]>([]);
+  const [listed, setCart] = useState<readonly CartLine[]>([]);
+  const [leavingIds, setLeavingIds] = useState<readonly string[]>([]);
+  const cart = leavingIds.length === 0 ? listed : listed.filter((line) => !leavingIds.includes(lineId(line)));
   const [split, setSplit] = useState<BillLineInput | null>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const addRefusal = useRefusal([
@@ -176,31 +186,50 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     target?.focus();
   }
 
+  function removeFromCart(line: CartLine) {
+    const id = lineId(line);
+    setLeavingIds((ids) => [...ids, id]);
+    window.setTimeout(() => {
+      setCart((lines) => lines.filter((other) => lineId(other) !== id));
+      setLeavingIds((ids) => ids.filter((other) => other !== id));
+    }, EXIT_MS);
+  }
+
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
     startTransition(async () => {
-      const result = await recordBillAction({
-        customerId,
-        saleDate,
-        paymentMode,
-        lines: cart.map((l) => ({
-          batchId: l.batchId,
-          quantity: l.quantity,
-          salePrice: l.salePrice,
-          hasStickering: l.stickering !== null,
-          stickeringCost: l.stickering?.cost ?? 0,
-          stickeringPrice: l.stickering?.price ?? 0,
-        })),
-      });
+      let result: Awaited<ReturnType<typeof recordBillAction>>;
+      try {
+        result = await recordBillAction({
+          customerId,
+          saleDate,
+          paymentMode,
+          lines: cart.map((l) => ({
+            batchId: l.batchId,
+            quantity: l.quantity,
+            salePrice: l.salePrice,
+            hasStickering: l.stickering !== null,
+            stickeringCost: l.stickering?.cost ?? 0,
+            stickeringPrice: l.stickering?.price ?? 0,
+          })),
+        });
+      } catch (error) {
+        toast.error(messageOf(error));
+        afterWrite("record-sale");
+        return;
+      }
       if (!result.ok) {
         refuse(result.error);
         return;
       }
       toast.success(`Sale recorded: ${cart.map((l) => `${l.quantity} from ${l.batchCode}`).join(", ")}`);
+      setLeavingIds(cart.map(lineId));
+      await wait(EXIT_MS);
       setCart([]);
+      setLeavingIds([]);
       resetLineFields();
-      afterWrite();
+      afterWrite("record-sale");
     });
   }
 
@@ -430,7 +459,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             ref={addButtonRef}
             type="button"
             variant="secondary"
-            disabled={!batch || pending}
+            disabled={!batch || pending || leavingIds.length > 0}
             onClick={addToOrder}
             className="h-11 w-full"
           >
@@ -447,16 +476,20 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
               </span>
             ) : null}
           </div>
-          {cart.length === 0 ? (
+          {listed.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No lines yet. Add a product to start the order.</p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2">
-              {cart.map((l, index) => (
+              {listed.map((l) => (
                 <li
-                  key={`${l.batchId}-${l.salePrice}-${l.stickering?.cost ?? "none"}-${l.stickering?.price ?? "none"}`}
+                  key={lineId(l)}
                   data-testid="cart-line"
-                  className="flex min-w-0 flex-wrap items-center gap-3 rounded-tile border border-border bg-card px-4 py-3"
+                  className={cn(
+                    "flex min-w-0 animate-in flex-wrap items-center gap-3 rounded-tile border border-border bg-card px-4 py-3 fade-in motion-enter",
+                    rowStateClass,
+                  )}
                 >
+                  <RowMark state={lineState(leavingIds.includes(lineId(l)), pending)} />
                   <span className="flex min-w-40 flex-1 flex-col">
                     <span className="truncate text-sm font-semibold">
                       {l.productName} · {l.size}
@@ -476,9 +509,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                     size="icon"
                     aria-label={`Remove ${l.productName} ${l.batchCode}`}
                     disabled={pending}
-                    onClick={() => setCart(removeLine(cart, index))}
+                    onClick={() => removeFromCart(l)}
                   >
-                    <Trash2 className="size-4" aria-hidden />
+                    {pending ? <Spinner aria-hidden /> : <Trash2 className="size-4" aria-hidden />}
                   </Button>
                 </li>
               ))}
@@ -559,11 +592,16 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           setAddedCustomers((prev) => [...prev, c]);
           setCustomerId(c.id);
           setNewCustomer(null);
-          afterWrite();
+          afterWrite("add-customer");
         }}
       />
     </form>
   );
+}
+
+function lineState(leaving: boolean, pending: boolean): RowState {
+  if (leaving) return "leaving";
+  return pending ? "pending" : "idle";
 }
 
 function Card({ children }: { children: React.ReactNode }) {

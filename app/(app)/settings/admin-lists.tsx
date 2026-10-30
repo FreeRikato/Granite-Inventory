@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useAfterWrite } from "@/lib/query/provider";
+import { rowKind } from "@/lib/query/writes";
 import { Archive, ArchiveRestore, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -123,7 +124,7 @@ function EditableRow({
       }
       toast.success("Saved");
       setEditing(false);
-      afterWrite();
+      afterWrite(`settings-rename-${rowKind[table]}`);
     });
   }
 
@@ -135,7 +136,7 @@ function EditableRow({
         return;
       }
       toast.success(archived ? "Unarchived" : "Archived");
-      afterWrite();
+      afterWrite(`settings-archive-${rowKind[table]}`);
     });
   }
 
@@ -147,7 +148,7 @@ function EditableRow({
         return;
       }
       toast.success("Deleted");
-      afterWrite();
+      afterWrite(`settings-delete-${rowKind[table]}`);
     });
   }
 

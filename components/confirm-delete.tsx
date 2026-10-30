@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,21 +20,30 @@ type Props = {
   readonly description: string;
   readonly onConfirm: () => void;
   readonly disabled?: boolean;
+  readonly pending?: boolean;
   readonly label?: string;
   readonly iconLabel?: string;
 };
 
-export function ConfirmDelete({ title, description, onConfirm, disabled, label = "Delete", iconLabel }: Props) {
+export function ConfirmDelete({
+  title,
+  description,
+  onConfirm,
+  disabled,
+  pending,
+  label = "Delete",
+  iconLabel,
+}: Props) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         {iconLabel ? (
           <Button variant="ghost" size="icon" className="size-8 text-stale" disabled={disabled} aria-label={iconLabel}>
-            <Trash2 className="size-4" />
+            <Icon pending={pending} />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="h-9 bg-card text-stale" disabled={disabled}>
-            <Trash2 className="size-4" /> {label}
+            <Icon pending={pending} /> {label}
           </Button>
         )}
       </AlertDialogTrigger>
@@ -49,4 +59,8 @@ export function ConfirmDelete({ title, description, onConfirm, disabled, label =
       </AlertDialogContent>
     </AlertDialog>
   );
+}
+
+function Icon({ pending }: { readonly pending?: boolean }) {
+  return pending ? <Spinner aria-hidden /> : <Trash2 className="size-4" />;
 }

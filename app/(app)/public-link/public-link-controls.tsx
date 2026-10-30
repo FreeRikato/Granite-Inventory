@@ -41,7 +41,7 @@ export function PublicLinkControls({ url, catalogPublic, whatsappNumber, busines
             ? "Catalog is live"
             : "Catalog switched off",
       );
-      afterWrite();
+      afterWrite("public-link");
     });
   }
 
