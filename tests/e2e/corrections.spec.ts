@@ -151,6 +151,54 @@ test("a batch with sales cannot be deleted, an unsold one only after archiving, 
   await expect(page.getByRole("button", { name: /^Edit/ })).toHaveCount(0);
 });
 
+test("the Edit sale dialog spells out the working under the rate and follows quantity, rate and batch", async ({
+  page,
+  signIn,
+}) => {
+  await sql(`update public.batches set initial_units = 20 where batch_code = 'BP-NEW-01'`);
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH' from public.batches b, public.customers c
+    where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
+  await sql(`update public.batches set units_sold = units_sold + 10 where batch_code = 'BP-NEW-01'`);
+
+  await signIn("admin");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-NEW-01" }));
+  const dialog = page.getByRole("dialog", { name: "Edit sale" });
+  await expect(page.getByLabel("Stone Sale Price (₹)")).toHaveValue("250");
+  await expect(page.getByText("Per sq ft", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("sale-working")).toHaveText("10 × 8 sq ft × ₹250/sq ft = ₹20,000");
+
+  await page.getByLabel("Quantity").fill("4");
+  await expect(dialog).toContainText("4 × 8 sq ft × ₹250/sq ft = ₹8,000");
+  await page.getByLabel("Quantity").fill("0");
+  await expect(page.getByTestId("sale-working")).toHaveCount(0);
+  await page.getByLabel("Quantity").fill("2.5");
+  await expect(page.getByTestId("sale-working")).toHaveCount(0);
+  await page.getByLabel("Quantity").fill("10");
+
+  await page.getByLabel("Stone Sale Price (₹)").fill("");
+  await expect(page.getByTestId("sale-working")).toHaveCount(0);
+  await page.getByLabel("Stone Sale Price (₹)").fill("-5");
+  await expect(page.getByTestId("sale-working")).toHaveCount(0);
+  await page.getByLabel("Stone Sale Price (₹)").fill("300");
+  await expect(dialog).toContainText("10 × 8 sq ft × ₹300/sq ft = ₹24,000");
+
+  await page.getByRole("combobox", { name: "Batch" }).click();
+  await page.getByRole("option", { name: /JB-FIVE-01/ }).click();
+  await expect(dialog).toContainText("10 × 15 sq ft × ₹300/sq ft = ₹45,000");
+  await page.getByRole("combobox", { name: "Batch" }).click();
+  await page.getByRole("option", { name: /BP-NEW-01/ }).click();
+
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Sale updated")).toBeVisible();
+  await expect(page.getByTestId("sale-row").filter({ hasText: "BP-NEW-01" })).toContainText("₹24,000");
+  await expect(page.getByTestId("sale-row").filter({ hasText: "BP-NEW-01" })).toContainText(
+    "10 × 8 sq ft × ₹300/sq ft = ₹24,000",
+  );
+});
+
 test("the Edit sale refusal clears as soon as the quantity is fixed", async ({ page, signIn }) => {
   await signIn("admin");
   await page.goto("/customers");
@@ -163,4 +211,29 @@ test("the Edit sale refusal clears as soon as the quantity is fixed", async ({ p
 
   await page.getByLabel("Quantity").fill("3");
   await expect(refusal).toHaveCount(0);
+});
+
+test("the Edit sale working keeps the Area the Sale was stored with after its Batch is resized, and the stickering price", async ({
+  page,
+  signIn,
+}) => {
+  await sql(`update public.batches set initial_units = 20 where batch_code = 'BP-NEW-01'`);
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost, stickering_price)
+    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 100, 300 from public.batches b, public.customers c
+    where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
+  await sql(
+    `update public.batches set units_sold = units_sold + 10, length_ft = 5, breadth_ft = 2 where batch_code = 'BP-NEW-01'`,
+  );
+
+  await signIn("admin");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+  await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-NEW-01" }));
+  const dialog = page.getByRole("dialog", { name: "Edit sale" });
+  await expect(dialog).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000 + ₹300 stickering");
+  await expect(dialog).not.toContainText("10 sq ft");
+
+  await page.getByRole("combobox", { name: "Batch" }).click();
+  await page.getByRole("option", { name: /JB-FIVE-01/ }).click();
+  await expect(dialog).toContainText("10 × 15 sq ft × ₹250/sq ft = ₹37,500 + ₹300 stickering");
 });

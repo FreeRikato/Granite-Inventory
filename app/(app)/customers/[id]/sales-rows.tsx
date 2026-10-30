@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatPercent, formatRupees, formatSize } from "@/lib/format";
+import { formatDate, formatPercent, formatRupees, formatSaleLine, formatSize } from "@/lib/format";
 import { rowStateClass } from "@/lib/query/row-style";
 import { cn } from "@/lib/utils";
 import { SaleActions, type SaleEditLists } from "./sale-actions";
@@ -114,6 +114,7 @@ function SaleRow({
           {formatSize({ length_ft: s.length_ft, breadth_ft: s.breadth_ft, thickness_mm: s.thickness_mm })}
           {s.has_stickering ? " · with stickering" : ""}
         </span>
+        <SaleWorking sale={s} />
       </td>
       <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-2.5 sm:pr-4">
         <MobileLabel className="mr-2 font-sans">Batch</MobileLabel>
@@ -141,6 +142,21 @@ function SaleRow({
         </td>
       ) : null}
     </tr>
+  );
+}
+
+function SaleWorking({ sale }: { readonly sale: Sale }) {
+  if (sale.quantity === null || sale.sale_rate === null || sale.stone_total === null) return null;
+  return (
+    <span className="block text-xs font-normal text-muted-foreground tabular">
+      {formatSaleLine({
+        quantity: sale.quantity,
+        areaSqft: sale.area_sqft,
+        saleRate: sale.sale_rate,
+        stoneTotal: sale.stone_total,
+        stickeringPrice: sale.has_stickering ? sale.stickering_price : null,
+      })}
+    </span>
   );
 }
 
