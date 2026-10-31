@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -23,6 +24,8 @@ type Props = {
   readonly pending?: boolean;
   readonly label?: string;
   readonly iconLabel?: string;
+  readonly children?: ReactNode;
+  readonly confirmDisabled?: boolean;
 };
 
 export function ConfirmDelete({
@@ -33,6 +36,8 @@ export function ConfirmDelete({
   pending,
   label = "Delete",
   iconLabel,
+  children,
+  confirmDisabled,
 }: Props) {
   return (
     <AlertDialog>
@@ -52,9 +57,12 @@ export function ConfirmDelete({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>{label}</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm} disabled={confirmDisabled}>
+            {label}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

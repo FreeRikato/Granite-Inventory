@@ -7,13 +7,14 @@ import { CommandPalette } from "@/components/shell/command-palette";
 import { ViewReady } from "@/components/view-state";
 import { rowStateClass } from "@/lib/query/row-style";
 import { CustomerActions } from "./customer-actions";
-import { type SaleEditLists } from "./sale-actions";
+import { isPaymentMode } from "@/lib/domain";
+import { type BillPayments, type SaleEditLists } from "./sale-actions";
 import { SalesRows } from "./sales-rows";
 
 export default async function CustomerPage(props: PageProps<"/customers/[id]">) {
   const { id } = await props.params;
   const supabase = await createClient();
-  const [{ data: customer }, { data: sales }, session] = await Promise.all([
+  const [{ data: customer }, { data: sales }, { data: paid }, session] = await Promise.all([
     supabase.from("v_customers").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("v_sales")
@@ -21,9 +22,24 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
       .eq("customer_id", id)
       .order("sale_date", { ascending: false })
       .order("created_at", { ascending: false }),
+    supabase
+      .from("v_payments")
+      .select("bill_id, payment_mode, amount, total")
+      .eq("customer_id", id)
+      .not("bill_id", "is", null)
+      .order("payment_mode"),
     getSession(),
   ]);
   if (!customer) notFound();
+  const billPayments: Record<string, BillPayments> = {};
+  for (const p of paid ?? []) {
+    if (!p.bill_id || !isPaymentMode(p.payment_mode)) continue;
+    const bill = billPayments[p.bill_id] ?? { total: p.total ?? 0, payments: [] };
+    billPayments[p.bill_id] = {
+      ...bill,
+      payments: [...bill.payments, { paymentMode: p.payment_mode, amount: p.amount ?? 0 }],
+    };
+  }
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: SaleEditLists | null = isAdmin
     ? {
@@ -100,7 +116,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                 </tr>
               </thead>
               <tbody className="block sm:table-row-group">
-                <SalesRows sales={sales} editLists={editLists} />
+                <SalesRows sales={sales} editLists={editLists} billPayments={billPayments} />
               </tbody>
             </table>
           </div>

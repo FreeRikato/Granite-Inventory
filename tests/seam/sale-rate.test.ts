@@ -64,7 +64,7 @@ describe("sale rate: the Sale Rate is stored and the per piece Sale Price is der
     return operator.rpc("record_bill", {
       p_customer_id: customerId,
       p_sale_date: today(),
-      p_payment_mode: "CASH",
+      p_payments: [{ payment_mode: "CASH" }],
       p_lines: [{ batch_id: batch, quantity: 1, ...line }],
     });
   }

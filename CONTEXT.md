@@ -80,7 +80,7 @@ A quantity of pieces taken from exactly one Batch by one Customer on one date. T
 _Avoid_: Order, invoice, outward entry, transaction
 
 **Bill**:
-The Sales recorded together in one purchase by one Customer on one date with one Payment Mode. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. A Sale on a Bill keeps the Bill's Customer, Sale date and Payment Mode: correcting the Sale cannot change them.
+The Sales recorded together in one purchase by one Customer on one date, paid through its Payment Split. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. A Sale on a Bill keeps the Bill's Customer and Sale date: correcting the Sale cannot change them. How it was paid lives on the Bill, not on its Sales.
 _Avoid_: Invoice, order, receipt, cart (the cart is the unsaved screen state before a Bill exists)
 
 **FIFO Listing**:
@@ -100,7 +100,11 @@ Engraving of names, scripture or donor details onto stone, sold as an add-on to 
 _Avoid_: Lettering, engraving service (as the canonical term)
 
 **Payment Mode**:
-How a Sale was paid: Cash, UPI or Bank Transfer. Every Sale is treated as paid in full; credit and dues are out of scope.
+How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than one (see Payment Split); a Sale recorded without a Bill has exactly one. Every Sale is treated as paid in full; credit and dues are out of scope.
+
+**Payment Split**:
+How one Bill was paid: an amount per Payment Mode, each mode at most once, for example ₹30,000 Cash + ₹20,000 UPI on a ₹50,000 Bill. The amounts always add up exactly to what the Customer pays for the Bill (Stone Sale Price plus Stickering Price over its Sales). A Bill paid in one mode has one payment of its whole total, which follows the total when a Sale is corrected or deleted. A mixed Bill's Margin is shared across its payments in proportion to amount.
+_Avoid_: Part payment, partial payment (nothing is ever left unpaid)
 
 **Customer**:
 The person or organisation a Sale is made to. Every Sale has a Customer; anonymous cash buyers go to a shared Walk-in Customer.

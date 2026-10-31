@@ -108,10 +108,13 @@ export type BillLineInput = {
   stickering?: { cost: number; price: number };
 };
 
+export type BillPayment = { payment_mode: "CASH" | "UPI" | "BANK_TRANSFER"; amount?: number };
+
 export type BillInput = {
   customerId: string;
   saleDate?: string;
   paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
+  payments?: readonly BillPayment[];
   lines: readonly BillLineInput[];
 };
 
@@ -119,7 +122,7 @@ export function recordBill(db: Db, input: BillInput) {
   return db.rpc("record_bill", {
     p_customer_id: input.customerId,
     p_sale_date: input.saleDate ?? today(),
-    p_payment_mode: input.paymentMode ?? "CASH",
+    p_payments: input.payments ? [...input.payments] : [{ payment_mode: input.paymentMode ?? "CASH" }],
     p_lines: input.lines.map((line) => ({
       batch_id: line.batchId,
       quantity: line.quantity ?? 1,

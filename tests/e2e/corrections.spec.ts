@@ -58,13 +58,18 @@ test("a bill's sales sit under one collapsed row, each line is editable and dele
   signIn,
 }) => {
   await sql(`with bill as (
-      insert into public.bills (customer_id, sale_date, payment_mode)
-      select id, private.ist_today() - 1, 'UPI' from public.customers where name = 'Murugan Constructions'
-      returning id, customer_id, sale_date, payment_mode
-    ), lines (code, quantity) as (values ('BP-NEW-01', 2), ('JB-FIVE-01', 1))
-    insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, bill_id)
-    select bill.sale_date, b.id, bill.customer_id, lines.quantity, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, b.unit_purchase_price, bill.payment_mode, bill.id
-    from bill, lines join public.batches b on b.batch_code = lines.code`);
+      insert into public.bills (customer_id, sale_date)
+      select id, private.ist_today() - 1 from public.customers where name = 'Murugan Constructions'
+      returning id, customer_id, sale_date
+    ), lines (code, quantity) as (values ('BP-NEW-01', 2), ('JB-FIVE-01', 1)),
+    sold as (
+      insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, bill_id)
+      select bill.sale_date, b.id, bill.customer_id, lines.quantity, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, b.unit_purchase_price, bill.id
+      from bill, lines join public.batches b on b.batch_code = lines.code
+      returning bill_id, quantity * (sale_price + stickering_price) as paid
+    )
+    insert into public.bill_payments (bill_id, payment_mode, amount)
+    select bill_id, 'UPI', sum(paid) from sold group by bill_id`);
   await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-NEW-01'`);
   await sql(`update public.batches set units_sold = units_sold + 1 where batch_code = 'JB-FIVE-01'`);
 
@@ -90,8 +95,10 @@ test("a bill's sales sit under one collapsed row, each line is editable and dele
   await expect(page.getByLabel("Customer")).toHaveValue("Murugan Constructions");
   await expect(page.getByLabel("Customer")).not.toBeEditable();
   await expect(page.getByLabel("Sale Date")).not.toBeEditable();
-  await expect(page.getByLabel("Payment Mode")).toHaveValue("UPI");
-  await expect(page.getByLabel("Payment Mode")).not.toBeEditable();
+  await expect(page.getByTestId("edit-payment").getByRole("button", { name: "UPI" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(page.getByLabel("Quantity")).toBeEditable();
   await page.getByLabel("Quantity").fill("3");
   await page.getByRole("button", { name: "Save changes" }).click();

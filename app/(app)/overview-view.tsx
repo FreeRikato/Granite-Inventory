@@ -4,24 +4,29 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { DataAge } from "@/components/data-age";
 import { MarginBars, type MarginGrain } from "@/components/dashboard/margin-bars";
 import { MovingBars } from "@/components/dashboard/moving-bars";
+import { PaymentTable } from "@/components/dashboard/payment-table";
 import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
 import { ViewError, ViewReady } from "@/components/view-state";
-import { formatNumber, formatPercent, formatRupeesCompact, formatSize } from "@/lib/format";
+import { Input } from "@/components/ui/input";
+import { formatNumber, formatPercent, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
   dashboardKpisQuery,
   fastMovingQuery,
   marginByPeriodQuery,
+  paymentsByModeQuery,
   staleAfterDaysQuery,
   topCustomersQuery,
   yardBatchesQuery,
+  type PaymentRange,
   type TopCustomerWindow,
 } from "@/lib/query/reads";
 import { cn } from "@/lib/utils";
@@ -33,6 +38,25 @@ const GRAIN_OPTIONS = [
   { value: "month", label: "Month" },
 ] as const satisfies readonly { value: MarginGrain; label: string }[];
 
+type MarginView = "chart" | "table";
+type RangeKind = PaymentRange["kind"];
+
+const VIEW_OPTIONS = [
+  { value: "chart", label: "Chart" },
+  { value: "table", label: "Table" },
+] as const satisfies readonly { value: MarginView; label: string }[];
+
+const RANGE_OPTIONS = [
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "custom", label: "Custom" },
+] as const satisfies readonly { value: RangeKind; label: string }[];
+
+function rangeLabel(from: string, to: string): string {
+  const day = (iso: string) => format(parseISO(iso), "d MMM");
+  return from === to ? day(from) : `${day(from)} to ${day(to)}`;
+}
+
 function useShownWhileSettled<T>(value: T, settled: boolean): T {
   const [shown, setShown] = useState(value);
   if (settled && shown !== value) setShown(value);
@@ -40,26 +64,88 @@ function useShownWhileSettled<T>(value: T, settled: boolean): T {
 }
 
 function MarginCard() {
+  const [view, setView] = useState<MarginView>("chart");
   const [grain, setGrain] = useState<MarginGrain>("week");
+  const [rangeKind, setRangeKind] = useState<RangeKind>("week");
+  const [custom, setCustom] = useState(() => ({ from: `${todayIso().slice(0, 8)}01`, to: todayIso() }));
+  const range: PaymentRange | null =
+    rangeKind !== "custom"
+      ? { kind: rangeKind }
+      : custom.from && custom.to && custom.from <= custom.to
+        ? { kind: "custom", from: custom.from, to: custom.to }
+        : null;
   const margin = useQuery({ ...marginByPeriodQuery(grain), placeholderData: keepPreviousData });
   const shownGrain = useShownWhileSettled(grain, !margin.isPlaceholderData);
+  const payments = useQuery({
+    ...paymentsByModeQuery(range ?? { kind: "week" }),
+    enabled: view === "table" && range !== null,
+    placeholderData: keepPreviousData,
+  });
+  const first = payments.data?.[0];
+  const subtitle =
+    view === "chart"
+      ? `last 12 ${grain === "week" ? "weeks" : "months"}`
+      : first
+        ? rangeLabel(first.range_from, first.range_to)
+        : "";
 
   return (
     <section className="rounded-card bg-card p-6 shadow-sm" data-testid="margin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h2 className="text-base font-bold">Margin</h2>
-          <span className="text-xs text-muted-foreground">last 12 {grain === "week" ? "weeks" : "months"}</span>
+          <span className="text-xs text-muted-foreground" data-testid="margin-subtitle">
+            {subtitle}
+          </span>
         </div>
-        <SegmentedToggle label="Margin period" options={GRAIN_OPTIONS} value={grain} onChange={setGrain} />
+        <div className="flex flex-wrap items-center gap-3">
+          <SegmentedToggle label="Margin view" options={VIEW_OPTIONS} value={view} onChange={setView} />
+          {view === "chart" ? (
+            <SegmentedToggle label="Margin period" options={GRAIN_OPTIONS} value={grain} onChange={setGrain} />
+          ) : (
+            <SegmentedToggle label="Margin range" options={RANGE_OPTIONS} value={rangeKind} onChange={setRangeKind} />
+          )}
+        </div>
       </div>
+      {view === "table" && rangeKind === "custom" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+          <Input
+            type="date"
+            aria-label="From"
+            max={custom.to || todayIso()}
+            value={custom.from}
+            onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))}
+            className="h-9 w-auto"
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            aria-label="To"
+            min={custom.from}
+            max={todayIso()}
+            value={custom.to}
+            onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))}
+            className="h-9 w-auto"
+          />
+        </div>
+      ) : null}
       <div className="mt-4">
-        {margin.isSuccess ? (
-          <MarginBars rows={margin.data} grain={shownGrain} />
-        ) : margin.isError ? (
-          <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
+        {view === "chart" ? (
+          margin.isSuccess ? (
+            <MarginBars rows={margin.data} grain={shownGrain} />
+          ) : margin.isError ? (
+            <p className="py-6 text-center text-sm text-destructive">Could not load margin: {margin.error.message}</p>
+          ) : (
+            <div className="h-64 animate-pulse rounded-lg bg-muted" />
+          )
+        ) : range === null ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Pick a start date on or before the end date.</p>
+        ) : payments.isSuccess ? (
+          <PaymentTable rows={payments.data} />
+        ) : payments.isError ? (
+          <p className="py-6 text-center text-sm text-destructive">Could not load payments: {payments.error.message}</p>
         ) : (
-          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+          <div className="h-48 animate-pulse rounded-lg bg-muted" />
         )}
       </div>
     </section>

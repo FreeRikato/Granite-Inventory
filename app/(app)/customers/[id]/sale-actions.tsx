@@ -14,9 +14,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode } from "@/lib/domain";
+import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
+import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode, type PaymentMode } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatSaleLine, formatSize, todayIso } from "@/lib/format";
+import { formatDate, formatRupees, formatSaleLine, formatSize, todayIso } from "@/lib/format";
+import { checkSplit, singleMode, splitFromPayments, type PaymentSplit } from "@/lib/payment-split";
 import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
 import { saleSchema } from "@/lib/schemas/sale";
 import { useRefusal } from "@/lib/use-refusal";
@@ -43,16 +45,42 @@ export type SaleEditLists = {
   readonly customers: readonly CustomerOption[];
 };
 
-export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lists: SaleEditLists }) {
+export type BillPayments = {
+  readonly total: number;
+  readonly payments: readonly { readonly paymentMode: PaymentMode; readonly amount: number }[];
+};
+
+type BillContext = BillPayments & { readonly lines: number };
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+function splitOf(bill: BillContext | null): PaymentSplit {
+  return bill ? splitFromPayments(bill.payments) : singleMode("CASH");
+}
+
+export function SaleActions({
+  sale,
+  lists,
+  bill = null,
+}: {
+  readonly sale: Sale;
+  readonly lists: SaleEditLists;
+  readonly bill?: BillContext | null;
+}) {
   const afterWrite = useAfterWrite();
   const afterSettled = useAfterSettled();
   const removal = useRowRemoval("delete-sale");
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [deleteSplit, setDeleteSplit] = useState<PaymentSplit>(() => splitOf(bill));
+  const askSplit = bill !== null && bill.payments.length > 1 && bill.lines > 1;
+  const leftTotal = bill ? round2(bill.total - (sale.revenue ?? 0)) : 0;
+  const deleteCheck = askSplit ? checkSplit(deleteSplit, leftTotal) : null;
 
   function remove() {
+    const payments = deleteCheck?.kind === "ok" ? deleteCheck.payments : undefined;
     removal.remove(
-      () => deleteSaleAction(sale.id ?? ""),
+      () => deleteSaleAction(sale.id ?? "", payments),
       "Sale deleted, pieces returned to the batch",
       () => afterWrite("delete-sale"),
     );
@@ -77,7 +105,20 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
         onConfirm={remove}
         disabled={removal.pending}
         pending={removal.pending}
-      />
+        confirmDisabled={deleteCheck?.kind === "refused"}
+      >
+        {askSplit ? (
+          <div className="flex flex-col gap-3 rounded-tile bg-muted/60 p-4" data-testid="delete-payment">
+            <div className="flex items-baseline justify-between gap-4 text-sm">
+              <span className="font-semibold">Bill total after delete</span>
+              <span className="font-bold tabular">{formatRupees(leftTotal)}</span>
+            </div>
+            <PaymentModeChips split={deleteSplit} onChange={setDeleteSplit} />
+            <PaymentAmounts split={deleteSplit} total={leftTotal} onChange={setDeleteSplit} idPrefix="del-pay" />
+            {deleteCheck?.kind === "refused" ? <p className="text-xs text-stale">{deleteCheck.message}</p> : null}
+          </div>
+        ) : null}
+      </ConfirmDelete>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[90svh] overflow-y-auto sm:max-w-xl"
@@ -96,6 +137,7 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
             <SaleEditForm
               sale={sale}
               lists={lists}
+              bill={bill}
               onDone={() => {
                 setOpen(false);
                 afterWrite("correct-sale");
@@ -112,11 +154,13 @@ export function SaleActions({ sale, lists }: { readonly sale: Sale; readonly lis
 function SaleEditForm({
   sale,
   lists,
+  bill,
   onDone,
   onCancel,
 }: {
   sale: Sale;
   lists: SaleEditLists;
+  bill: BillContext | null;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -132,7 +176,8 @@ function SaleEditForm({
     stickeringCost: sale.stickering_cost?.toString() ?? "0",
     stickeringPrice: sale.stickering_price?.toString() ?? "0",
   });
-  const { error, refuse, clear } = useRefusal(form);
+  const [split, setSplit] = useState<PaymentSplit>(() => splitOf(bill));
+  const { error, refuse, clear } = useRefusal([form, split]);
   const billed = sale.bill_id !== null;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -156,6 +201,12 @@ function SaleEditForm({
           stickeringPrice: form.hasStickering ? entered.data.stickeringPrice : null,
         })
       : null;
+  const newRevenue =
+    areaSqft !== undefined && entered.success
+      ? entered.data.quantity *
+        (salePricePerPiece(areaSqft, entered.data.saleRate) + (form.hasStickering ? entered.data.stickeringPrice : 0))
+      : (sale.revenue ?? 0);
+  const billTotal = bill ? round2(bill.total - (sale.revenue ?? 0) + newRevenue) : 0;
   const options = lists.batches
     .filter((b) => b.id === sale.batch_id || ((b.available ?? 0) > 0 && !b.archived_at))
     .sort((a, b) => (a.line_key === current?.line_key ? -1 : 1) - (b.line_key === current?.line_key ? -1 : 1));
@@ -163,8 +214,17 @@ function SaleEditForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     clear();
+    const paid = bill ? checkSplit(split, billTotal) : null;
+    if (paid?.kind === "refused") {
+      refuse(paid.message);
+      return;
+    }
     startTransition(async () => {
-      const result = await correctSaleAction({ ...form, saleId: sale.id });
+      const result = await correctSaleAction({
+        ...form,
+        saleId: sale.id,
+        payments: paid?.kind === "ok" ? paid.payments : undefined,
+      });
       if (!result.ok) {
         refuse(result.error);
         return;
@@ -180,7 +240,6 @@ function SaleEditForm({
         {billed ? (
           <>
             <BilledValue id="es-date" label="Sale Date" value={sale.sale_date ? formatDate(sale.sale_date) : ""} />
-            <BilledValue id="es-payment" label="Payment Mode" value={PAYMENT_MODE_LABEL[form.paymentMode]} />
             <BilledValue id="es-customer" label="Customer" value={sale.customer_name ?? ""} />
           </>
         ) : (
@@ -240,6 +299,16 @@ function SaleEditForm({
           />
         </Field>
       </div>
+      {billed && bill ? (
+        <div className="flex flex-col gap-3 rounded-tile bg-muted/60 p-4" data-testid="edit-payment">
+          <div className="flex items-baseline justify-between gap-4 text-sm">
+            <span className="font-semibold">Bill total</span>
+            <span className="font-bold tabular">{formatRupees(billTotal)}</span>
+          </div>
+          <PaymentModeChips split={split} onChange={setSplit} />
+          <PaymentAmounts split={split} total={billTotal} onChange={setSplit} idPrefix="es-pay" />
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Quantity" htmlFor="es-qty">
           <Input

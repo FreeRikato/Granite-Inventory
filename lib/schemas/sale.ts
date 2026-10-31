@@ -27,6 +27,19 @@ export const saleSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+export const paymentSchema = z.object({
+  paymentMode: z.enum(PAYMENT_MODES),
+  amount: money("Payment amount").optional(),
+});
+
+export const paymentsSchema = z
+  .array(paymentSchema)
+  .min(1, "Pick at least one payment mode")
+  .refine(
+    (payments) => new Set(payments.map((p) => p.paymentMode)).size === payments.length,
+    "Each payment mode can appear only once on a bill",
+  );
+
 export const billLineSchema = saleSchema.pick({
   batchId: true,
   quantity: true,
@@ -39,11 +52,12 @@ export const billLineSchema = saleSchema.pick({
 export const billSchema = z.object({
   customerId: saleSchema.shape.customerId,
   saleDate: saleSchema.shape.saleDate,
-  paymentMode: saleSchema.shape.paymentMode,
+  payments: paymentsSchema,
   lines: z.array(billLineSchema).min(1, "Add at least one line to the order"),
 });
 
 export type SaleInput = z.infer<typeof saleSchema>;
+export type PaymentInput = z.infer<typeof paymentSchema>;
 export type BillLineInput = z.infer<typeof billLineSchema>;
 export type BillInput = z.infer<typeof billSchema>;
 export type CustomerInput = z.infer<typeof customerSchema>;

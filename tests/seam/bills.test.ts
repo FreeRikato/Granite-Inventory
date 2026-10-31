@@ -73,11 +73,13 @@ describe("bills: record_bill, v_sales.bill_id", () => {
     });
     expect(error).toBeNull();
 
-    const bills = await sql<{ id: string; customer_id: string; sale_date: string; payment_mode: string }>(
-      `select id, customer_id, to_char(sale_date, 'YYYY-MM-DD') as sale_date, payment_mode from public.bills`,
+    const bills = await sql<{ id: string; customer_id: string; sale_date: string }>(
+      `select id, customer_id, to_char(sale_date, 'YYYY-MM-DD') as sale_date from public.bills`,
     );
     expect(bills).toHaveLength(1);
-    expect(bills[0]).toMatchObject({ customer_id: customerId, sale_date: today(), payment_mode: "UPI" });
+    expect(bills[0]).toMatchObject({ customer_id: customerId, sale_date: today() });
+    const payments = await operator.from("bill_payments").select("payment_mode, amount");
+    expect(payments.data).toEqual([{ payment_mode: "UPI", amount: 4 * 1650 + 5 * 900 }]);
 
     const sales = await operator.from("v_sales").select("*").order("quantity");
     expect(sales.data).toHaveLength(2);
@@ -85,7 +87,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
       expect(sale.bill_id).toBe(bills[0]?.id);
       expect(sale.customer_id).toBe(customerId);
       expect(sale.sale_date).toBe(today());
-      expect(sale.payment_mode).toBe("UPI");
+      expect(sale.payment_mode).toBeNull();
     }
     const [black, pearl] = sales.data ?? [];
     expect(black).toMatchObject({ batch_id: blackBatchId, quantity: 4, landed_cost: 1450 });
@@ -174,7 +176,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
     const { error } = await operator.rpc("record_bill", {
       p_customer_id: customerId,
       p_sale_date: today(),
-      p_payment_mode: "CHEQUE",
+      p_payments: [{ payment_mode: "CHEQUE" }],
       p_lines: [{ batch_id: blackBatchId, quantity: 1, sale_rate: 206.25 }],
     });
     expect(expectError({ error }).message).toBe("Payment mode must be Cash, UPI or Bank Transfer");
@@ -248,9 +250,7 @@ describe("bills: record_bill, v_sales.bill_id", () => {
   });
 
   it("gives members no way to write a Bill directly", async () => {
-    const insert = await operator
-      .from("bills")
-      .insert({ customer_id: customerId, sale_date: today(), payment_mode: "CASH" });
+    const insert = await operator.from("bills").insert({ customer_id: customerId, sale_date: today() });
     expectError(insert);
     expect(await billCount()).toBe(0);
   });
