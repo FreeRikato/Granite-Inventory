@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import type { YardQuery } from "@/lib/yard";
+import { LOW_STOCK_BELOW, type YardQuery } from "@/lib/yard";
 
 type Option = { readonly value: string; readonly label: string };
 
@@ -112,6 +112,12 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
             <SelectItem value="newest">Sort: Newest first</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 pl-1">
+          <Switch id="low-stock" checked={query.low} onCheckedChange={(c) => update({ low: c ? "1" : null })} />
+          <Label htmlFor="low-stock" className="text-sm text-muted-foreground">
+            Less than {LOW_STOCK_BELOW} left
+          </Label>
+        </div>
         <div className="flex items-center gap-2 pl-1">
           <Switch id="show-sold" checked={query.sold} onCheckedChange={(c) => update({ sold: c ? "1" : null })} />
           <Label htmlFor="show-sold" className="text-sm text-muted-foreground">

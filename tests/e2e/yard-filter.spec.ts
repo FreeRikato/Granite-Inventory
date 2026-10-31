@@ -1,4 +1,5 @@
 import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
+import { sql } from "../seam/harness";
 import { seedYard } from "./seed";
 
 declare global {
@@ -96,4 +97,16 @@ test("changing a toggle flags the filter as pending until the list has updated",
   const pendingStates = await page.evaluate(() => window.__pendingStates);
   expect(pendingStates).toContain("true");
   expect(pendingStates.at(-1)).toBe("false");
+});
+
+test("Less than 5 left shows only Batches with fewer than 5 pieces", async ({ page, signIn }) => {
+  await sql(`update public.batches set units_sold = 2 where batch_code = 'JB-FIVE-01'`);
+  await signIn("operator");
+  await page.goto("/yard");
+  await expect(page.getByTestId("yard-batch")).toHaveCount(4);
+
+  await page.getByRole("switch", { name: "Less than 5 left" }).click();
+  await expect(page).toHaveURL(/low=1/);
+  await expect(page.getByTestId("yard-batch")).toHaveCount(1);
+  await expect(page.getByTestId("yard-batch")).toContainText("JB-FIVE-01");
 });

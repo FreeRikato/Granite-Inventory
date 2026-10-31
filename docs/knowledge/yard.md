@@ -35,7 +35,7 @@ Past `WINDOW_AFTER`, `chunkStacks` cuts each Stack into chunks of `CHUNK_SIZE` b
 
 ## Filters and links
 
-The filter row marks itself pending while a change is on its way to the URL, and the list dims until the new rows are shown ([[browser-reads]]). Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it.
+The filter row marks itself pending while a change is on its way to the URL, and the list dims until the new rows are shown ([[browser-reads]]). Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it. "Less than 5 left" (`?low=1`, threshold `LOW_STOCK_BELOW`) answers "which piles are nearly empty", so it checks each Batch's own Available, not the Stack's count or the Stock Line's total, the same per-Batch shape as every other filter in `matchesFilters`. It does not decide whether Sold Out Batches appear; "Show sold out" keeps that job, so the two toggles never contradict. It counts as a filter for the empty state, since it narrows the list.
 
 ## Empty states
 
