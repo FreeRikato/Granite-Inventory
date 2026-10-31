@@ -39,6 +39,14 @@ export async function deleteSaleAction(saleId: string): Promise<ActionResult<nul
   return ok(null);
 }
 
+export async function deleteBillAction(billId: string): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_bill", { p_bill_id: billId });
+  if (error) return fail(messageOf(error));
+  revalidateSales();
+  return ok(null);
+}
+
 function revalidateSales() {
   revalidatePath("/sell");
   revalidatePath("/yard");

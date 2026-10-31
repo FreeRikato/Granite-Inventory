@@ -151,6 +151,47 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
     });
   });
 
+  it("delete_bill removes every Sale and the Bill and returns each line's pieces to its Batch", async () => {
+    const deleted = await admin.rpc("delete_bill", { p_bill_id: billId });
+    expect(deleted.error).toBeNull();
+    expect((await admin.from("bills").select("id").eq("id", billId)).data).toEqual([]);
+    expect((await admin.from("sales").select("id").eq("bill_id", billId)).data).toEqual([]);
+    expect(await availableOf(blackBatchId)).toBe(15);
+    expect(await availableOf(pearlBatchId)).toBe(20);
+  });
+
+  it("delete_bill returns the summed pieces when two lines share a Batch and leaves other Bills alone", async () => {
+    const other = await recordBill(operator, { customerId, lines: [{ batchId: pearlBatchId, quantity: 2 }] });
+    expect(other.error).toBeNull();
+    const shared = await recordBill(operator, {
+      customerId,
+      lines: [
+        { batchId: blackBatchId, quantity: 3 },
+        { batchId: blackBatchId, quantity: 2 },
+      ],
+    });
+    expect(shared.error).toBeNull();
+    expect(await availableOf(blackBatchId)).toBe(6);
+    const sharedBillId =
+      (await admin.from("sales").select("bill_id").eq("quantity", 3).eq("batch_id", blackBatchId).single()).data
+        ?.bill_id ?? "";
+
+    expect((await admin.rpc("delete_bill", { p_bill_id: sharedBillId })).error).toBeNull();
+    expect(await availableOf(blackBatchId)).toBe(11);
+    expect(await availableOf(pearlBatchId)).toBe(13);
+    expect((await admin.from("bills").select("id")).data).toHaveLength(2);
+  });
+
+  it("delete_bill is refused for an operator and for an unknown Bill, and changes nothing", async () => {
+    expect(expectError(await operator.rpc("delete_bill", { p_bill_id: billId })).message).toMatch(/Only an Admin/);
+    expect(
+      expectError(await admin.rpc("delete_bill", { p_bill_id: "00000000-0000-0000-0000-000000000000" })).message,
+    ).toMatch(/Unknown bill/);
+    expect((await admin.from("sales").select("id").eq("bill_id", billId)).data).toHaveLength(2);
+    expect(await availableOf(blackBatchId)).toBe(11);
+    expect(await availableOf(pearlBatchId)).toBe(15);
+  });
+
   it("correcting a Bill Sale past what the Batch has is refused and changes nothing", async () => {
     const refused = await correctQuantity(blackSaleId, blackBatchId, 16);
     expect(expectError(refused).message).toMatch(/Only 15 available/);

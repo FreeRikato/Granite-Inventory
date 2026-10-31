@@ -6,7 +6,7 @@ import type { Tables } from "@/lib/database.types";
 import { formatDate, formatPercent, formatRupees, formatSaleLine, formatSize } from "@/lib/format";
 import { rowStateClass } from "@/lib/query/row-style";
 import { cn } from "@/lib/utils";
-import { SaleActions, type SaleEditLists } from "./sale-actions";
+import { BillActions, SaleActions, type SaleEditLists } from "./sale-actions";
 
 type Sale = Tables<"v_sales">;
 
@@ -43,14 +43,22 @@ export function SalesRows({
 }) {
   return groupByBill(sales).map((entry) =>
     entry.kind === "bill" ? (
-      <BillRows key={entry.billId} lines={entry.lines} editLists={editLists} />
+      <BillRows key={entry.billId} billId={entry.billId} lines={entry.lines} editLists={editLists} />
     ) : (
       <SaleRow key={entry.sale.id} sale={entry.sale} editLists={editLists} />
     ),
   );
 }
 
-function BillRows({ lines, editLists }: { readonly lines: readonly Sale[]; readonly editLists: SaleEditLists | null }) {
+function BillRows({
+  billId,
+  lines,
+  editLists,
+}: {
+  readonly billId: string;
+  readonly lines: readonly Sale[];
+  readonly editLists: SaleEditLists | null;
+}) {
   const [open, setOpen] = useState(false);
   const itemCount = `${lines.length} ${lines.length === 1 ? "item" : "items"}`;
   const total = lines.reduce((sum, line) => sum + (line.revenue ?? 0), 0);
@@ -58,7 +66,10 @@ function BillRows({ lines, editLists }: { readonly lines: readonly Sale[]; reado
 
   return (
     <Fragment>
-      <tr className="block border-t border-border py-2.5 sm:table-row sm:py-0" data-testid="bill-row">
+      <tr
+        className={cn("block border-t border-border py-2.5 sm:table-row sm:py-0", rowStateClass)}
+        data-testid="bill-row"
+      >
         <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
           <MobileLabel className="mr-2">Date</MobileLabel>
           {date ? formatDate(date) : ""}
@@ -79,6 +90,12 @@ function BillRows({ lines, editLists }: { readonly lines: readonly Sale[]; reado
           <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
           {formatRupees(total)}
         </td>
+        {editLists ? (
+          <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4" colSpan={2}>
+            <MobileLabel>Actions</MobileLabel>
+            <BillActions billId={billId} lines={lines} />
+          </td>
+        ) : null}
       </tr>
       {open ? lines.map((line) => <SaleRow key={line.id} sale={line} editLists={editLists} nested />) : null}
     </Fragment>
