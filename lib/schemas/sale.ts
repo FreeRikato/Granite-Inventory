@@ -49,12 +49,27 @@ export const billLineSchema = saleSchema.pick({
   stickeringRate: true,
 });
 
-export const billSchema = z.object({
-  customerId: saleSchema.shape.customerId,
-  saleDate: saleSchema.shape.saleDate,
-  payments: paymentsSchema,
-  lines: z.array(billLineSchema).min(1, "Add at least one line to the order"),
-});
+export const billSchema = z
+  .object({
+    customerId: saleSchema.shape.customerId,
+    saleDate: saleSchema.shape.saleDate,
+    payments: z.array(paymentSchema),
+    onCredit: z.boolean().optional(),
+    payBy: isoDate.optional(),
+    lines: z.array(billLineSchema).min(1, "Add at least one line to the order"),
+  })
+  .superRefine((bill, ctx) => {
+    if (!bill.onCredit && bill.payments.length === 0) {
+      ctx.addIssue({ code: "custom", message: "Pick at least one payment mode", path: ["payments"] });
+    }
+    if (new Set(bill.payments.map((p) => p.paymentMode)).size !== bill.payments.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Each payment mode can appear only once on a bill",
+        path: ["payments"],
+      });
+    }
+  });
 
 export type SaleInput = z.infer<typeof saleSchema>;
 export type PaymentInput = z.infer<typeof paymentSchema>;

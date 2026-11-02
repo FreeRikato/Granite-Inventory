@@ -115,6 +115,8 @@ export type BillInput = {
   saleDate?: string;
   paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
   payments?: readonly BillPayment[];
+  onCredit?: boolean;
+  payBy?: string;
   lines: readonly BillLineInput[];
 };
 
@@ -123,6 +125,8 @@ export function recordBill(db: Db, input: BillInput) {
     p_customer_id: input.customerId,
     p_sale_date: input.saleDate ?? today(),
     p_payments: input.payments ? [...input.payments] : [{ payment_mode: input.paymentMode ?? "CASH" }],
+    p_on_credit: input.onCredit,
+    p_pay_by: input.payBy,
     p_lines: input.lines.map((line) => ({
       batch_id: line.batchId,
       quantity: line.quantity ?? 1,

@@ -11,6 +11,7 @@ code:
   - e2e.config.ts
   - tests/explore/sessions.e2e.ts
   - tests/e2e/settings.spec.ts
+  - tests/e2e/credit.spec.ts
   - tests/tooling/comments.test.ts
   - tests/tooling/format.test.ts
   - tests/eval/chat.eval.ts

@@ -78,6 +78,36 @@ export function PaymentAmounts({
   );
 }
 
+export function PartPaymentAmounts({
+  split,
+  onChange,
+  idPrefix,
+}: {
+  readonly split: PaymentSplit;
+  readonly onChange: (split: PaymentSplit) => void;
+  readonly idPrefix: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2" data-testid="part-payment-amounts">
+      {split.modes.map((m) => (
+        <AmountRow key={m} id={`${idPrefix}-${m}`} label={PAYMENT_MODE_LABEL[m]} hint="paid now">
+          <Input
+            id={`${idPrefix}-${m}`}
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="1"
+            placeholder="0"
+            value={split.amounts[m] ?? ""}
+            onChange={(e) => onChange(setAmount(split, m, e.target.value))}
+            className="h-10 text-right tabular"
+          />
+        </AmountRow>
+      ))}
+    </div>
+  );
+}
+
 function AmountRow({
   id,
   label,

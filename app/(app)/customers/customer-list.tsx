@@ -4,12 +4,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge";
+import { OwesBadge } from "@/components/due-badge";
 import { LinkPending } from "@/components/shell/link-pending";
 import { Input } from "@/components/ui/input";
 import type { Tables } from "@/lib/database.types";
 import { relativeDays } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type Row = Tables<"v_customers">;
+
+const owes = (c: Row) => c.owed !== null && c.owed > 0;
 
 type Props = {
   readonly customers: readonly Row[];
@@ -71,8 +75,14 @@ export function CustomerList({ customers, kpis }: Props) {
                   <span className="hidden text-sm text-muted-foreground sm:block">
                     {c.last_purchase_date ? relativeDays(c.last_purchase_date) : "No purchases"}
                   </span>
-                  <span className="flex basis-full sm:basis-auto">
-                    <CustomerTypeBadge type={c.customer_type} className="ml-12 w-28 justify-center sm:ml-0" />
+                  <span className="flex basis-full flex-wrap items-center gap-2 sm:basis-auto">
+                    {owes(c) ? (
+                      <OwesBadge owed={c.owed ?? 0} daysLeft={c.credit_days_left} className="ml-12 sm:ml-0" />
+                    ) : null}
+                    <CustomerTypeBadge
+                      type={c.customer_type}
+                      className={cn("w-28 justify-center", !owes(c) && "ml-12 sm:ml-0")}
+                    />
                   </span>
                 </Link>
               </li>

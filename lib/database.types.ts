@@ -214,6 +214,20 @@ export type Database = {
             referencedRelation: "bills"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
+          },
         ]
       }
       bills: {
@@ -222,6 +236,7 @@ export type Database = {
           created_by: string | null
           customer_id: string
           id: string
+          on_credit: boolean
           sale_date: string
           updated_at: string
           updated_by: string | null
@@ -231,6 +246,7 @@ export type Database = {
           created_by?: string | null
           customer_id: string
           id?: string
+          on_credit?: boolean
           sale_date: string
           updated_at?: string
           updated_by?: string | null
@@ -240,6 +256,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string
           id?: string
+          on_credit?: boolean
           sale_date?: string
           updated_at?: string
           updated_by?: string | null
@@ -272,6 +289,130 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_sales"
             referencedColumns: ["customer_id"]
+          },
+        ]
+      }
+      credit_payment_lines: {
+        Row: {
+          amount: number
+          payment_id: string
+          payment_mode: string
+        }
+        Insert: {
+          amount: number
+          payment_id: string
+          payment_mode: string
+        }
+        Update: {
+          amount?: number
+          payment_id?: string
+          payment_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payment_lines_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "credit_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_payments: {
+        Row: {
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          paid_on: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          paid_on: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          paid_on?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "credit_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
+          },
+        ]
+      }
+      credit_promises: {
+        Row: {
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          id: number
+          pay_by: string
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          pay_by: string
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          pay_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_promises_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_promises_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "credit_promises_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
           },
         ]
       }
@@ -463,6 +604,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bills"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
           },
           {
             foreignKeyName: "sales_customer_id_fkey"
@@ -703,6 +858,48 @@ export type Database = {
         }
         Relationships: []
       }
+      v_bill_balances: {
+        Row: {
+          balance: number | null
+          bill_id: string | null
+          customer_id: string | null
+          margin: number | null
+          on_credit: boolean | null
+          received: number | null
+          sale_date: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
       v_chat_batches: {
         Row: {
           age_days: number | null
@@ -855,6 +1052,20 @@ export type Database = {
             referencedRelation: "bills"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
+          },
         ]
       }
       v_chat_stock_lines: {
@@ -892,15 +1103,63 @@ export type Database = {
         }
         Relationships: []
       }
+      v_credit: {
+        Row: {
+          balance: number | null
+          bill_id: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          days_left: number | null
+          extensions: number | null
+          original_pay_by: string | null
+          paid: number | null
+          pay_by: string | null
+          sale_date: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_chat_sales"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
       v_customers: {
         Row: {
           created_at: string | null
+          credit_days_left: number | null
           customer_type: string | null
           id: string | null
           is_walk_in: boolean | null
           last_purchase_date: string | null
           lifetime_revenue: number | null
           name: string | null
+          owed: number | null
           phone: string | null
           sale_count: number | null
           updated_at: string | null
@@ -908,12 +1167,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          credit_days_left?: never
           customer_type?: string | null
           id?: string | null
           is_walk_in?: boolean | null
           last_purchase_date?: never
           lifetime_revenue?: never
           name?: string | null
+          owed?: never
           phone?: string | null
           sale_count?: never
           updated_at?: string | null
@@ -921,12 +1182,14 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          credit_days_left?: never
           customer_type?: string | null
           id?: string | null
           is_walk_in?: boolean | null
           last_purchase_date?: never
           lifetime_revenue?: never
           name?: string | null
+          owed?: never
           phone?: string | null
           sale_count?: never
           updated_at?: string | null
@@ -955,6 +1218,7 @@ export type Database = {
           customer_id: string | null
           margin_share: number | null
           payment_mode: string | null
+          received_on: string | null
           sale_date: string | null
           sale_id: string | null
           total: number | null
@@ -1057,6 +1321,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bills"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_bill_balances"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "sales_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit"
+            referencedColumns: ["bill_id"]
           },
         ]
       }
@@ -1199,6 +1477,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      correct_credit_payment: {
+        Args: { p_paid_on: string; p_payment_id: string; p_payments: Json }
+        Returns: undefined
+      }
       correct_sale: {
         Args: {
           p_batch_id: string
@@ -1293,8 +1575,16 @@ export type Database = {
       }
       delete_batch: { Args: { p_batch_id: string }; Returns: undefined }
       delete_bill: { Args: { p_bill_id: string }; Returns: undefined }
+      delete_credit_payment: {
+        Args: { p_payment_id: string }
+        Returns: undefined
+      }
       delete_sale: {
         Args: { p_payments?: Json; p_sale_id: string }
+        Returns: undefined
+      }
+      extend_pay_by: {
+        Args: { p_bill_id: string; p_pay_by: string }
         Returns: undefined
       }
       fast_moving: {
@@ -1345,10 +1635,16 @@ export type Database = {
         Args: {
           p_customer_id: string
           p_lines: Json
+          p_on_credit?: boolean
+          p_pay_by?: string
           p_payments: Json
           p_sale_date: string
         }
         Returns: Json
+      }
+      record_credit_payment: {
+        Args: { p_bill_id: string; p_paid_on: string; p_payments: Json }
+        Returns: string
       }
       record_sale: {
         Args: {

@@ -47,6 +47,8 @@ export type SaleEditLists = {
 
 export type BillPayments = {
   readonly total: number;
+  readonly onCredit: boolean;
+  readonly laterTotal: number;
   readonly payments: readonly { readonly paymentMode: PaymentMode; readonly amount: number }[];
 };
 
@@ -73,7 +75,7 @@ export function SaleActions({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [deleteSplit, setDeleteSplit] = useState<PaymentSplit>(() => splitOf(bill));
-  const askSplit = bill !== null && bill.payments.length > 1 && bill.lines > 1;
+  const askSplit = bill !== null && !bill.onCredit && bill.payments.length > 1 && bill.lines > 1;
   const leftTotal = bill ? round2(bill.total - (sale.revenue ?? 0)) : 0;
   const deleteCheck = askSplit ? checkSplit(deleteSplit, leftTotal) : null;
 
@@ -101,7 +103,7 @@ export function SaleActions({
       </Button>
       <ConfirmDelete
         title="Delete this sale?"
-        description={`${sale.quantity} piece(s) go back to batch ${sale.batch_code}.`}
+        description={`${sale.quantity} piece(s) go back to batch ${sale.batch_code}.${bill?.lines === 1 ? laterNote(bill.laterTotal) : ""}`}
         onConfirm={remove}
         disabled={removal.pending}
         pending={removal.pending}
@@ -151,7 +153,19 @@ export function SaleActions({
   );
 }
 
-export function BillActions({ billId, lines }: { readonly billId: string; readonly lines: readonly Sale[] }) {
+function laterNote(laterTotal: number): string {
+  return laterTotal > 0 ? ` The ${formatRupees(laterTotal)} of later payments on it is deleted too.` : "";
+}
+
+export function BillActions({
+  billId,
+  lines,
+  laterTotal = 0,
+}: {
+  readonly billId: string;
+  readonly lines: readonly Sale[];
+  readonly laterTotal?: number;
+}) {
   const afterWrite = useAfterWrite();
   const removal = useRowRemoval("delete-bill");
   const pieces = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
@@ -169,7 +183,7 @@ export function BillActions({ billId, lines }: { readonly billId: string; readon
       <RowMark state={removal.state} />
       <ConfirmDelete
         title="Delete this bill?"
-        description={`All ${lines.length} sale(s) on it are deleted and ${pieces} piece(s) go back to their batches.`}
+        description={`All ${lines.length} sale(s) on it are deleted and ${pieces} piece(s) go back to their batches.${laterNote(laterTotal)}`}
         label="Delete bill"
         onConfirm={remove}
         disabled={removal.pending}
@@ -251,7 +265,7 @@ function SaleEditForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     clear();
-    const paid = bill ? checkSplit(split, billTotal) : null;
+    const paid = bill && !bill.onCredit ? checkSplit(split, billTotal) : null;
     if (paid?.kind === "refused") {
       refuse(paid.message);
       return;
@@ -342,8 +356,14 @@ function SaleEditForm({
             <span className="font-semibold">Bill total</span>
             <span className="font-bold tabular">{formatRupees(billTotal)}</span>
           </div>
-          <PaymentModeChips split={split} onChange={setSplit} />
-          <PaymentAmounts split={split} total={billTotal} onChange={setSplit} idPrefix="es-pay" />
+          {bill.onCredit ? (
+            <p className="text-xs text-muted-foreground">Payments on a credit bill are changed on the Credit page.</p>
+          ) : (
+            <>
+              <PaymentModeChips split={split} onChange={setSplit} />
+              <PaymentAmounts split={split} total={billTotal} onChange={setSplit} idPrefix="es-pay" />
+            </>
+          )}
         </div>
       ) : null}
       <div className="grid gap-4 sm:grid-cols-2">

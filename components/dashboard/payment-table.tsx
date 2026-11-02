@@ -2,7 +2,15 @@ import { PAYMENT_MODE_LABEL, isPaymentMode } from "@/lib/domain";
 import { formatPercent, formatRupees } from "@/lib/format";
 import type { PaymentModeRow } from "@/lib/query/reads";
 
-export function PaymentTable({ rows }: { readonly rows: readonly PaymentModeRow[] }) {
+const UNPAID = "UNPAID";
+
+function label(mode: string): string {
+  if (mode === UNPAID) return "Unpaid";
+  return isPaymentMode(mode) ? PAYMENT_MODE_LABEL[mode] : mode;
+}
+
+export function PaymentTable({ rows: all }: { readonly rows: readonly PaymentModeRow[] }) {
+  const rows = all.filter((r) => r.payment_mode !== UNPAID || r.collected !== 0 || r.margin !== 0);
   const collected = rows.reduce((sum, r) => sum + r.collected, 0);
   const margin = rows.reduce((sum, r) => sum + r.margin, 0);
   const share = (value: number) => (margin > 0 && value > 0 ? (value / margin) * 100 : null);
@@ -24,9 +32,7 @@ export function PaymentTable({ rows }: { readonly rows: readonly PaymentModeRow[
             const pct = share(r.margin);
             return (
               <tr key={r.payment_mode} className="border-b border-border" data-testid="payment-row">
-                <td className="py-3 pr-4 font-medium">
-                  {isPaymentMode(r.payment_mode) ? PAYMENT_MODE_LABEL[r.payment_mode] : r.payment_mode}
-                </td>
+                <td className="py-3 pr-4 font-medium">{label(r.payment_mode)}</td>
                 <td className="py-3 pr-4 text-right">{formatRupees(r.collected)}</td>
                 <td className="py-3 pr-4 text-right">{formatRupees(r.margin)}</td>
                 <td className="py-3 pr-4 text-right text-muted-foreground">

@@ -17,7 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, isCustomerType, stackLabel } from "@/lib/domain";
-import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
+import { OwesBadge } from "@/components/due-badge";
+import { PartPaymentAmounts, PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
+import { checkPartPayment, defaultPayBy, formatDay, partPaid } from "@/lib/credit";
 import { checkSplit, singleMode, type PaymentSplit } from "@/lib/payment-split";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSaleLine, formatSize, formatStickeringLine, todayIso } from "@/lib/format";
@@ -37,8 +39,11 @@ type Customer = Pick<Tables<"customers">, "id" | "name" | "phone" | "customer_ty
 type Line = Tables<"v_stock_lines">;
 type Batch = Tables<"v_yard_batches">;
 
+type Owed = { readonly id: string | null; readonly owed: number | null; readonly credit_days_left: number | null };
+
 type Props = {
   readonly customers: readonly Customer[];
+  readonly owed: readonly Owed[];
   readonly lines: readonly Line[];
   readonly batches: readonly Batch[];
   readonly preselectBatchId: string | null;
@@ -58,7 +63,7 @@ function lineId(line: CartLine): string {
   return `${line.batchId}-${line.saleRate}-${line.stickering?.costRate ?? "none"}-${line.stickering?.priceRate ?? "none"}`;
 }
 
-export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
+export function SellForm({ customers: initialCustomers, owed, lines, batches, preselectBatchId }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
@@ -71,6 +76,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
 
   const [saleDate, setSaleDate] = useState(todayIso());
   const [payment, setPayment] = useState<PaymentSplit>(singleMode("CASH"));
+  const [partPayment, setPartPayment] = useState(false);
+  const [payByTyped, setPayByTyped] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [lineKey, setLineKey] = useState<string | null>(preselected?.line_key ?? null);
   const [batchId, setBatchId] = useState<string | null>(preselected?.id ?? null);
@@ -95,7 +102,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     stickeringCostRate,
     stickeringRate,
   ]);
-  const { error, refuse, clear } = useRefusal([saleDate, payment, customerId, cart]);
+  const { error, refuse, clear } = useRefusal([saleDate, payment, customerId, cart, partPayment, payByTyped]);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
   const lineBatches = useMemo(() => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []), [batches, lineKey]);
@@ -126,6 +133,11 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       : null;
 
   const figures = orderFigures(cart);
+  const credit = partPayment && customer?.is_walk_in !== true;
+  const suggestedPayBy = defaultPayBy(saleDate);
+  const payBy = payByTyped || suggestedPayBy;
+  const paidNow = partPaid(payment);
+  const owedById = useMemo(() => new Map(owed.map((o) => [o.id, o])), [owed]);
   const health = marginHealth(cart.length > 0 ? figures.marginPct : null);
 
   function resetLineFields() {
@@ -210,7 +222,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
-    const paid = checkSplit(payment, figures.revenue);
+    const paid = credit ? checkPartPayment(payment, figures.revenue) : checkSplit(payment, figures.revenue);
     if (paid.kind === "refused") {
       refuse(paid.message);
       return;
@@ -222,6 +234,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           customerId,
           saleDate,
           payments: paid.payments,
+          onCredit: credit || undefined,
+          payBy: credit ? payBy : undefined,
           lines: cart.map((l) => ({
             batchId: l.batchId,
             quantity: l.quantity,
@@ -246,6 +260,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       setCart([]);
       setLeavingIds([]);
       setPayment(singleMode(payment.modes[0]));
+      setPartPayment(false);
+      setPayByTyped(null);
       resetLineFields();
       afterWrite("record-sale");
     });
@@ -285,8 +301,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   options={customers.map((c) => ({
                     value: c.id,
                     label: c.name,
-                    hint: c.phone ?? (c.is_walk_in ? "No phone on file" : undefined),
+                    hint: c.is_walk_in ? "Credit not available" : (c.phone ?? undefined),
                     phone: c.phone,
+                    trailing: owedBadge(owedById.get(c.id)),
                   }))}
                   value={customerId}
                   onChange={setCustomerId}
@@ -619,7 +636,63 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 {formatRupees(figures.revenue)}
               </span>
             </div>
-            <PaymentAmounts split={payment} total={figures.revenue} onChange={setPayment} idPrefix="pay" />
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="part-payment" className="flex flex-col text-sm font-medium">
+                Part payment
+                <span className="text-xs font-normal text-muted-foreground">
+                  {customer?.is_walk_in ? "Credit needs a named Customer" : "The rest is owed as credit"}
+                </span>
+              </label>
+              <Switch
+                id="part-payment"
+                checked={credit}
+                disabled={customer?.is_walk_in === true}
+                onCheckedChange={setPartPayment}
+              />
+            </div>
+            {credit ? (
+              <PartPaymentAmounts split={payment} onChange={setPayment} idPrefix="pay" />
+            ) : (
+              <PaymentAmounts split={payment} total={figures.revenue} onChange={setPayment} idPrefix="pay" />
+            )}
+          </div>
+        ) : null}
+        {cart.length > 0 && credit ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-tile border border-border p-4" data-testid="credit-tile">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="font-bold">Credit</span>
+              <span className="text-xs text-muted-foreground">This Bill</span>
+            </div>
+            <dl className="flex flex-col gap-2 text-sm">
+              <Row label="Total" value={formatRupees(figures.revenue)} muted />
+              <Row label="Paid now" value={formatRupees(paidNow)} />
+              <div className="border-t border-border pt-2">
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="font-bold">Balance</dt>
+                  <dd className="font-bold tabular" data-testid="credit-balance">
+                    {formatRupees(Math.max(0, figures.revenue - paidNow))}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+            <Field
+              label="Pay by"
+              htmlFor="pay-by"
+              hint={
+                payBy === suggestedPayBy
+                  ? `${formatDay(payBy)}, the coming Saturday. Change it if the Customer promised another day.`
+                  : `${formatDay(payBy)}. The usual date would be ${formatDay(suggestedPayBy)}.`
+              }
+            >
+              <Input
+                id="pay-by"
+                type="date"
+                min={saleDate}
+                value={payBy}
+                onChange={(e) => setPayByTyped(e.target.value)}
+                className="h-11"
+              />
+            </Field>
           </div>
         ) : null}
         {error ? (
@@ -660,6 +733,11 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       />
     </form>
   );
+}
+
+function owedBadge(found: Owed | undefined) {
+  if (!found || found.owed === null || found.owed <= 0) return null;
+  return <OwesBadge owed={found.owed} daysLeft={found.credit_days_left} />;
 }
 
 function lineState(leaving: boolean, pending: boolean): RowState {

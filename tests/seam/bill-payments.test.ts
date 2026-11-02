@@ -378,6 +378,7 @@ describe("bill payments: a Bill paid in more than one Payment Mode", () => {
         { payment_mode: "CASH", collected: 70000, margin: 16200, margin_pct: 23.14 },
         { payment_mode: "UPI", collected: 45000, margin: 10800, margin_pct: 24 },
         { payment_mode: "BANK_TRANSFER", collected: 60000, margin: 15000, margin_pct: 25 },
+        { payment_mode: "UNPAID", collected: 0, margin: 0, margin_pct: null },
       ]);
     });
 
@@ -392,12 +393,12 @@ describe("bill payments: a Bill paid in more than one Payment Mode", () => {
         lines: [{ batchId: await memorialBatch(2900), quantity: 1, saleRate: 3000 }],
       });
       const { data } = await operator.rpc("payments_by_mode", { p_range: "custom", p_from: today(), p_to: today() });
-      const shares = (data ?? []).map((r) => r.margin);
+      const shares = (data ?? []).filter((r) => r.payment_mode !== "UNPAID").map((r) => r.margin);
       expect(shares.toSorted()).toEqual([33.33, 33.33, 33.34]);
       expect(shares.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 10);
     });
 
-    it("leaves out Sales outside the range and shows every mode even with nothing in it", async () => {
+    it("leaves out Sales outside the range and shows every mode and the unpaid row even with nothing in it", async () => {
       await recordBill(operator, {
         customerId,
         saleDate: daysAgo(5),
@@ -405,7 +406,7 @@ describe("bill payments: a Bill paid in more than one Payment Mode", () => {
       });
       const { data } = await operator.rpc("payments_by_mode", { p_range: "custom", p_from: daysAgo(2), p_to: today() });
       expect(data).toEqual(
-        ["CASH", "UPI", "BANK_TRANSFER"].map((mode) => ({
+        ["CASH", "UPI", "BANK_TRANSFER", "UNPAID"].map((mode) => ({
           payment_mode: mode,
           collected: 0,
           margin: 0,

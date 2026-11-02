@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Tables } from "@/lib/database.types";
+import type { CreditRow } from "@/lib/credit";
+import { isPaymentMode, type PaymentMode } from "@/lib/domain";
 
 export type Db = SupabaseClient<Database>;
 type RowsResult<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
@@ -253,4 +255,112 @@ export const staleAfterDaysQuery = queryOptions({
     if (error) throw new Error(error.message);
     return data?.stale_after_days ?? 180;
   },
+});
+
+export function readCredit(db: Db) {
+  return allRows<Tables<"v_credit">>(
+    (from, to) => db.from("v_credit").select("*").order("bill_id").range(from, to),
+    (row) => row.bill_id ?? "",
+  );
+}
+
+export function toCreditRow(row: Tables<"v_credit">): CreditRow {
+  return {
+    billId: row.bill_id ?? "",
+    customerId: row.customer_id ?? "",
+    customerName: row.customer_name ?? "",
+    customerPhone: row.customer_phone,
+    saleDate: row.sale_date ?? "",
+    total: row.total ?? 0,
+    paid: row.paid ?? 0,
+    balance: row.balance ?? 0,
+    originalPayBy: row.original_pay_by ?? "",
+    payBy: row.pay_by ?? "",
+    extensions: row.extensions ?? 0,
+    daysLeft: row.days_left ?? 0,
+  };
+}
+
+export const creditQuery = queryOptions({
+  queryKey: ["credit"],
+  queryFn: async () => (await readCredit(createClient())).map(toCreditRow),
+});
+
+export type ReceiptLine = { readonly paymentMode: PaymentMode; readonly amount: number };
+
+export type CreditReceipt = {
+  readonly id: string;
+  readonly paidOn: string;
+  readonly recordedBy: string | null;
+  readonly lines: readonly ReceiptLine[];
+};
+
+export type AtSalePayments = { readonly recordedBy: string | null; readonly lines: readonly ReceiptLine[] };
+
+export type CreditPromise = {
+  readonly payBy: string;
+  readonly madeAt: string;
+  readonly madeBy: string | null;
+};
+
+export type CreditPayments = {
+  readonly atSale: AtSalePayments;
+  readonly later: readonly CreditReceipt[];
+  readonly promises: readonly CreditPromise[];
+};
+
+function receiptLines(
+  rows: readonly { readonly payment_mode: string; readonly amount: number }[],
+): readonly ReceiptLine[] {
+  return rows
+    .flatMap((r) => (isPaymentMode(r.payment_mode) ? [{ paymentMode: r.payment_mode, amount: r.amount }] : []))
+    .toSorted((a, b) => a.paymentMode.localeCompare(b.paymentMode));
+}
+
+export const creditPaymentsQuery = (billId: string) =>
+  queryOptions({
+    queryKey: ["credit-payments", billId],
+    queryFn: async (): Promise<CreditPayments> => {
+      const db = createClient();
+      const [atSale, later, promises, team] = await Promise.all([
+        rows(db.from("bill_payments").select("payment_mode, amount, created_by").eq("bill_id", billId)),
+        rows(
+          db
+            .from("credit_payments")
+            .select("id, paid_on, created_by, created_at, credit_payment_lines(payment_mode, amount)")
+            .eq("bill_id", billId)
+            .order("paid_on")
+            .order("created_at"),
+        ),
+        rows(db.from("credit_promises").select("id, pay_by, created_at, created_by").eq("bill_id", billId).order("id")),
+        rows(db.from("team_members").select("email, name")),
+      ]);
+      const names = new Map(team.map((t) => [t.email, t.name ?? t.email]));
+      const who = (email: string | null) => (email === null ? null : (names.get(email) ?? email));
+      return {
+        atSale: { recordedBy: who(atSale[0]?.created_by ?? null), lines: receiptLines(atSale) },
+        later: later.map((r) => ({
+          id: r.id,
+          paidOn: r.paid_on,
+          recordedBy: who(r.created_by),
+          lines: receiptLines(r.credit_payment_lines),
+        })),
+        promises: promises.map((p) => ({ payBy: p.pay_by, madeAt: p.created_at, madeBy: who(p.created_by) })),
+      };
+    },
+  });
+
+export const customerOwedQuery = queryOptions({
+  queryKey: ["customer-owed"],
+  queryFn: () =>
+    allRows<Pick<Tables<"v_customers">, "id" | "owed" | "credit_days_left">>(
+      (from, to) =>
+        createClient()
+          .from("v_customers")
+          .select("id, owed, credit_days_left")
+          .gt("owed", 0)
+          .order("id")
+          .range(from, to),
+      (row) => row.id ?? "",
+    ),
 });

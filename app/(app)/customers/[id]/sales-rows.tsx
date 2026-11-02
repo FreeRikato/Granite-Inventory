@@ -12,11 +12,20 @@ import {
   formatStickeringLine,
 } from "@/lib/format";
 import { rowStateClass } from "@/lib/query/row-style";
+import { DueBadge } from "@/components/due-badge";
+import { describeReceipt, formatDay, isOpen, payByLine, type CreditRow } from "@/lib/credit";
 import { describePayments } from "@/lib/payment-split";
+import type { PaymentMode } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { BillActions, SaleActions, type BillPayments, type SaleEditLists } from "./sale-actions";
 
 type Sale = Tables<"v_sales">;
+
+export type LaterPayment = {
+  readonly id: string;
+  readonly paidOn: string;
+  readonly lines: readonly { readonly paymentMode: PaymentMode; readonly amount: number }[];
+};
 
 type Entry =
   | { readonly kind: "sale"; readonly sale: Sale }
@@ -46,10 +55,14 @@ export function SalesRows({
   sales,
   editLists,
   billPayments,
+  credit,
+  laterPayments,
 }: {
   readonly sales: readonly Sale[];
   readonly editLists: SaleEditLists | null;
   readonly billPayments: Readonly<Record<string, BillPayments>>;
+  readonly credit: ReadonlyMap<string, CreditRow>;
+  readonly laterPayments: Readonly<Record<string, readonly LaterPayment[]>>;
 }) {
   return groupByBill(sales).map((entry) =>
     entry.kind === "bill" ? (
@@ -59,6 +72,8 @@ export function SalesRows({
         lines={entry.lines}
         editLists={editLists}
         bill={billPayments[entry.billId] ?? null}
+        credit={credit.get(entry.billId) ?? null}
+        later={laterPayments[entry.billId] ?? []}
       />
     ) : (
       <SaleRow key={entry.sale.id} sale={entry.sale} editLists={editLists} />
@@ -71,11 +86,15 @@ function BillRows({
   lines,
   editLists,
   bill,
+  credit,
+  later,
 }: {
   readonly billId: string;
   readonly lines: readonly Sale[];
   readonly editLists: SaleEditLists | null;
   readonly bill: BillPayments | null;
+  readonly credit: CreditRow | null;
+  readonly later: readonly LaterPayment[];
 }) {
   const [open, setOpen] = useState(false);
   const itemCount = `${lines.length} ${lines.length === 1 ? "item" : "items"}`;
@@ -108,9 +127,14 @@ function BillRows({
               className="block pl-5.5 text-xs font-normal text-muted-foreground tabular"
               data-testid="bill-payments"
             >
-              {describePayments(bill.payments)}
+              {credit
+                ? bill.payments.length === 0
+                  ? "Nothing paid at the sale"
+                  : describeReceipt(bill.payments)
+                : describePayments(bill.payments)}
             </span>
           ) : null}
+          {credit ? <CreditLine credit={credit} later={later} /> : null}
         </td>
         <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
           <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
@@ -119,7 +143,7 @@ function BillRows({
         {editLists ? (
           <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4" colSpan={2}>
             <MobileLabel>Actions</MobileLabel>
-            <BillActions billId={billId} lines={lines} />
+            <BillActions billId={billId} lines={lines} laterTotal={bill?.laterTotal ?? 0} />
           </td>
         ) : null}
       </tr>
@@ -135,6 +159,32 @@ function BillRows({
           ))
         : null}
     </Fragment>
+  );
+}
+
+function CreditLine({ credit, later }: { readonly credit: CreditRow; readonly later: readonly LaterPayment[] }) {
+  return (
+    <span
+      className="flex flex-col gap-1 pl-5.5 pt-1 text-xs font-normal text-muted-foreground"
+      data-testid="bill-credit"
+    >
+      {later.map((p) => (
+        <span key={p.id} className="tabular">
+          {formatDay(p.paidOn)} · {describeReceipt(p.lines)}
+        </span>
+      ))}
+      <span className="flex flex-wrap items-center gap-2 tabular">
+        Balance {formatRupees(credit.balance)}
+        {isOpen(credit) ? (
+          <>
+            <DueBadge daysLeft={credit.daysLeft} />
+            <span>{payByLine(credit.payBy, credit.originalPayBy)}</span>
+          </>
+        ) : (
+          <span className="font-semibold text-fresh">Paid in full</span>
+        )}
+      </span>
+    </span>
   );
 }
 
