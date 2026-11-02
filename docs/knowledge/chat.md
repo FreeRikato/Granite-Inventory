@@ -9,6 +9,7 @@ code:
   - lib/chat/alias.ts
   - lib/chat/system-prompt.ts
   - supabase/migrations/20261030100000_sale_rate.sql
+  - supabase/migrations/20261102100000_stickering_rate.sql
   - lib/chat/model.ts
   - lib/chat/test-model.ts
   - tests/seam/chat-answer.test.ts
@@ -78,6 +79,10 @@ The fix is in the privilege model, not the text. Postgres refuses to change `rol
 ## Sale Rate and Sale Price
 
 `v_chat_sales` carries `sale_rate` and `area_sqft` beside the per piece `sale_price`. The prompt names them so a question like "what rate per sq ft did we sell Black Pearl at" reads `sale_rate` where `area_sqft` is not null, and a revenue question keeps using `stone_total` and `revenue`, which are built from the derived `sale_price` ([[sales-and-stock-lines]]).
+
+## Stickering rates
+
+`v_chat_sales` also carries `stickering_rate` and `stickering_cost_rate` beside the per piece `stickering_price` and `stickering_cost`. The prompt says which is which, so "what stickering rate per sq ft did we charge" reads the rate, and a revenue or margin question keeps using `stickering_total` and `stickering_margin` ([[sales-and-stock-lines]]).
 
 ## What the views hide
 

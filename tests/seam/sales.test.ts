@@ -42,7 +42,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       customerId,
       quantity: 5,
       saleRate: 206.25,
-      stickering: { cost: 100, price: 250 },
+      stickering: { costRate: 12.5, priceRate: 31.25 },
     });
     const { data } = await operator.from("v_sales").select("*").single();
     expect(data?.stone_total).toBe(8250);
@@ -108,11 +108,11 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       { line: { sale_rate: "NaN" }, message: "Sale rate must be a number" },
       { line: { sale_rate: "Infinity" }, message: "Sale rate must be a number" },
       {
-        line: { sale_rate: 206.25, has_stickering: true, stickering_cost: "NaN" },
+        line: { sale_rate: 206.25, has_stickering: true, stickering_cost_rate: "NaN" },
         message: "Stickering cost must be a number",
       },
       {
-        line: { sale_rate: 206.25, has_stickering: true, stickering_price: "Infinity" },
+        line: { sale_rate: 206.25, has_stickering: true, stickering_rate: "Infinity" },
         message: "Stickering price must be a number",
       },
     ];

@@ -145,16 +145,16 @@ describe("API observations: readable refusals", () => {
           quantity: 4,
           saleRate: 2600,
           hasStickering: false,
-          stickeringCost: 100,
-          stickeringPrice: 250,
+          stickeringCostRate: 100,
+          stickeringRate: 250,
         },
         {
           batchId: "00000000-0000-4000-8000-000000000005",
           quantity: 5,
           saleRate: 1650,
           hasStickering: true,
-          stickeringCost: 100,
-          stickeringPrice: 250,
+          stickeringCostRate: 100,
+          stickeringRate: 250,
         },
       ],
     });
@@ -165,29 +165,29 @@ describe("API observations: readable refusals", () => {
         quantity: 4,
         sale_rate: 2600,
         has_stickering: false,
-        stickering_cost: 0,
-        stickering_price: 0,
+        stickering_cost_rate: 0,
+        stickering_rate: 0,
       },
       {
         batch_id: "00000000-0000-4000-8000-000000000005",
         quantity: 5,
         sale_rate: 1650,
         has_stickering: true,
-        stickering_cost: 100,
-        stickering_price: 250,
+        stickering_cost_rate: 100,
+        stickering_rate: 250,
       },
     ]);
   });
 
   it("every negative amount is refused by the field's label", () => {
     const batch = batchSchema.safeParse({ unitPurchasePrice: -1 });
-    const sale = saleSchema.safeParse({ saleRate: -1, stickeringCost: -1, stickeringPrice: -1 });
+    const sale = saleSchema.safeParse({ saleRate: -1, stickeringCostRate: -1, stickeringRate: -1 });
     const messages = (error: { issues: { path: PropertyKey[]; message: string }[] } | undefined, key: string) =>
       error?.issues.find((i) => i.path[0] === key)?.message;
 
     expect(messages(batch.error, "unitPurchasePrice")).toBe("Unit Purchase Price cannot be negative");
     expect(messages(sale.error, "saleRate")).toBe("Stone Sale Price cannot be negative");
-    expect(messages(sale.error, "stickeringCost")).toBe("Stickering Cost cannot be negative");
-    expect(messages(sale.error, "stickeringPrice")).toBe("Stickering Price cannot be negative");
+    expect(messages(sale.error, "stickeringCostRate")).toBe("Stickering Cost cannot be negative");
+    expect(messages(sale.error, "stickeringRate")).toBe("Stickering Price cannot be negative");
   });
 });

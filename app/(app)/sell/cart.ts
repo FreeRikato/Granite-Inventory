@@ -1,5 +1,5 @@
 import { computeMargin, type MarginBreakdown } from "@/lib/margin";
-import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
+import { pieceArea, pricePerPiece } from "@/lib/sale-price";
 
 export type CartLine = {
   readonly batchId: string;
@@ -11,12 +11,12 @@ export type CartLine = {
   readonly quantity: number;
   readonly saleRate: number;
   readonly landedCost: number;
-  readonly stickering: { readonly cost: number; readonly price: number } | null;
+  readonly stickering: { readonly costRate: number; readonly priceRate: number } | null;
 };
 
 function sameStickering(a: CartLine["stickering"], b: CartLine["stickering"]): boolean {
   if (a === null || b === null) return a === b;
-  return a.cost === b.cost && a.price === b.price;
+  return a.costRate === b.costRate && a.priceRate === b.priceRate;
 }
 
 function isSameLine(a: CartLine, b: CartLine): boolean {
@@ -53,19 +53,28 @@ export function splitCovers(availables: readonly number[], takes: readonly numbe
   return withinStock && takes.reduce((sum, take) => sum + take, 0) === quantity;
 }
 
+export function stickeringPerPiece(line: CartLine): { readonly cost: number; readonly price: number } | null {
+  if (line.stickering === null) return null;
+  const area = pieceArea(line.lengthFt, line.breadthFt);
+  return {
+    cost: pricePerPiece(area, line.stickering.costRate),
+    price: pricePerPiece(area, line.stickering.priceRate),
+  };
+}
+
 export function lineMargin(line: CartLine): MarginBreakdown {
   return computeMargin({
     quantity: line.quantity,
-    salePrice: salePricePerPiece(pieceArea(line.lengthFt, line.breadthFt), line.saleRate),
+    salePrice: pricePerPiece(pieceArea(line.lengthFt, line.breadthFt), line.saleRate),
     landedCost: line.landedCost,
-    stickering: line.stickering,
+    stickering: stickeringPerPiece(line),
   });
 }
 
 export function orderFigures(cart: readonly CartLine[]): MarginBreakdown {
   const lines = cart.map(lineMargin);
   const sum = (pick: (m: MarginBreakdown) => number) => lines.reduce((total, m) => total + pick(m), 0);
-  const stickeringCost = cart.reduce((total, l) => total + (l.stickering ? l.quantity * l.stickering.cost : 0), 0);
+  const stickeringCost = cart.reduce((total, l) => total + l.quantity * (stickeringPerPiece(l)?.cost ?? 0), 0);
   return computeMargin({
     quantity: 1,
     salePrice: sum((m) => m.stoneTotal),

@@ -7,6 +7,7 @@ import {
   formatRupeesAxis,
   formatRupeesCompact,
   formatSaleLine,
+  formatStickeringLine,
 } from "@/lib/format";
 
 describe("formatRupees", () => {
@@ -88,26 +89,40 @@ describe("formatRate", () => {
 
 describe("formatSaleLine", () => {
   it("writes quantity, Area, rate per sq ft and the stone total for sized stone", () => {
-    expect(formatSaleLine({ quantity: 10, areaSqft: 8, saleRate: 250, stoneTotal: 20000, stickeringPrice: null })).toBe(
+    expect(formatSaleLine({ quantity: 10, areaSqft: 8, saleRate: 250, stoneTotal: 20000 })).toBe(
       "10 × 8 sq ft × ₹250/sq ft = ₹20,000",
     );
   });
 
   it("keeps up to four decimals of Area and rounds the total to whole rupees", () => {
-    expect(
-      formatSaleLine({ quantity: 1, areaSqft: 10.125, saleRate: 33.33, stoneTotal: 337.46, stickeringPrice: null }),
-    ).toBe("1 × 10.125 sq ft × ₹33.33/sq ft = ₹337");
+    expect(formatSaleLine({ quantity: 1, areaSqft: 10.125, saleRate: 33.33, stoneTotal: 337.46 })).toBe(
+      "1 × 10.125 sq ft × ₹33.33/sq ft = ₹337",
+    );
   });
 
   it("writes a Memorial line per piece", () => {
-    expect(
-      formatSaleLine({ quantity: 10, areaSqft: null, saleRate: 2000, stoneTotal: 20000, stickeringPrice: null }),
-    ).toBe("10 × ₹2,000 = ₹20,000");
+    expect(formatSaleLine({ quantity: 10, areaSqft: null, saleRate: 2000, stoneTotal: 20000 })).toBe(
+      "10 × ₹2,000 = ₹20,000",
+    );
   });
 
-  it("takes the total as given and appends the stickering price after it", () => {
-    expect(formatSaleLine({ quantity: 10, areaSqft: 8, saleRate: 250, stoneTotal: 19999, stickeringPrice: 300 })).toBe(
-      "10 × 8 sq ft × ₹250/sq ft = ₹19,999 + ₹300 stickering",
+  it("takes the total as given", () => {
+    expect(formatSaleLine({ quantity: 10, areaSqft: 8, saleRate: 250, stoneTotal: 19999 })).toBe(
+      "10 × 8 sq ft × ₹250/sq ft = ₹19,999",
+    );
+  });
+});
+
+describe("formatStickeringLine", () => {
+  it("writes quantity, Area, Stickering rate per sq ft and the total for sized stone", () => {
+    expect(formatStickeringLine({ quantity: 10, areaSqft: 8, stickeringRate: 60, stickeringTotal: 4800 })).toBe(
+      "10 × 8 sq ft × ₹60/sq ft = ₹4,800",
+    );
+  });
+
+  it("writes a Memorial line per piece", () => {
+    expect(formatStickeringLine({ quantity: 3, areaSqft: null, stickeringRate: 250, stickeringTotal: 750 })).toBe(
+      "3 × ₹250 = ₹750",
     );
   });
 });

@@ -51,6 +51,7 @@ export function buildSystemPrompt(input: {
     "- End the SELECT without a semicolon; it is wrapped in another query and a trailing one is a syntax error.",
     "- Money is in rupees. Quote a figure only from rows you got back.",
     "- In v_chat_sales, sale_rate is the stone price per sq ft of area_sqft, or per piece when area_sqft is null (Memorial). sale_price is the price per piece, area_sqft times sale_rate. stone_total is quantity times sale_price.",
+    "- In v_chat_sales, stickering_rate and stickering_cost_rate are the Stickering price charged and cost paid per sq ft of area_sqft, or per piece when area_sqft is null (Memorial). stickering_price and stickering_cost are per piece, area_sqft times the rate. stickering_total is quantity times stickering_price.",
     "- Payment mode lives in v_chat_payments: one row per payment of a Bill (bill_id) or of a Sale without a Bill (sale_id), with amount and margin_share. A Bill can be paid in several modes. In v_chat_sales, payment_mode is null on a Sale that belongs to a Bill. For money or margin by payment mode, sum v_chat_payments.",
     "- Customers appear only as aliases like C-3f9a2b. Use the alias when you mention or filter a customer; never ask for or invent a name or phone. To find a customer the member names, call find_customer, then filter on customer_alias.",
     "- Sales by month: group on date_trunc('month', sale_date), which is already an India date. \"The last 4 months\" is this month and the 3 before it, counted from today's date above; sum quantity per product for units sold.",

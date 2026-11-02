@@ -246,8 +246,8 @@ test("the Edit sale working keeps the Area the Sale was stored with after its Ba
   signIn,
 }) => {
   await sql(`update public.batches set initial_units = 20 where batch_code = 'BP-NEW-01'`);
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost, stickering_price)
-    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 100, 300 from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost_rate, stickering_rate)
+    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 40, 60 from public.batches b, public.customers c
     where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
   await sql(
     `update public.batches set units_sold = units_sold + 10, length_ft = 5, breadth_ft = 2 where batch_code = 'BP-NEW-01'`,
@@ -258,10 +258,13 @@ test("the Edit sale working keeps the Area the Sale was stored with after its Ba
   await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
   await openDialog(page, page.getByRole("button", { name: "Edit sale of BP-NEW-01" }));
   const dialog = page.getByRole("dialog", { name: "Edit sale" });
-  await expect(dialog).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000 + ₹300 stickering");
+  await expect(dialog).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000");
+  await expect(dialog.getByTestId("stickering-working")).toHaveText("Stickering 10 × 8 sq ft × ₹60/sq ft = ₹4,800");
+  await expect(dialog.getByLabel("Stickering Price (₹)")).toHaveValue("60");
   await expect(dialog).not.toContainText("10 sq ft");
 
   await page.getByRole("combobox", { name: "Batch" }).click();
   await page.getByRole("option", { name: /JB-FIVE-01/ }).click();
-  await expect(dialog).toContainText("10 × 15 sq ft × ₹250/sq ft = ₹37,500 + ₹300 stickering");
+  await expect(dialog).toContainText("10 × 15 sq ft × ₹250/sq ft = ₹37,500");
+  await expect(dialog.getByTestId("stickering-working")).toHaveText("Stickering 10 × 15 sq ft × ₹60/sq ft = ₹9,000");
 });

@@ -7,6 +7,6 @@ export function pieceArea(lengthFt: number | null, breadthFt: number | null): nu
   return roundTo(lengthFt * breadthFt, 4);
 }
 
-export function salePricePerPiece(areaSqft: number | null, saleRate: number): number {
+export function pricePerPiece(areaSqft: number | null, saleRate: number): number {
   return roundTo((areaSqft ?? 1) * saleRate, 2);
 }

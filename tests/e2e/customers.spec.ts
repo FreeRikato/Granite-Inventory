@@ -48,8 +48,8 @@ test("a sale row on the customer page shows the per sq ft working, nested bill l
   signIn,
 }) => {
   await sql(`update public.batches set initial_units = 20 where batch_code = 'BP-NEW-01'`);
-  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost, stickering_price)
-    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 100, 300 from public.batches b, public.customers c
+  await sql(`insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, has_stickering, stickering_cost_rate, stickering_rate)
+    select private.ist_today() - 1, b.id, c.id, 10, 250, 8, 187.5, 'CASH', true, 40, 60 from public.batches b, public.customers c
     where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
   await sql(`update public.batches set units_sold = units_sold + 10 where batch_code = 'BP-NEW-01'`);
   await sql(`with bill as (
@@ -70,11 +70,15 @@ test("a sale row on the customer page shows the per sq ft working, nested bill l
   await page.goto("/customers");
   await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
   const perSqft = page.getByTestId("sale-row").filter({ hasText: "BP-NEW-01" });
-  await expect(perSqft).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000 + ₹300 stickering");
+  await expect(perSqft).toContainText("10 × 8 sq ft × ₹250/sq ft = ₹20,000");
+  await expect(perSqft.getByTestId("stickering-working")).toHaveText("Stickering 10 × 8 sq ft × ₹60/sq ft = ₹4,800");
   await expect(page.getByTestId("sale-row").filter({ hasText: "BP-OLD-01" })).toContainText(
     "2 × 8 sq ft × ₹206.25/sq ft = ₹3,300",
   );
   await expect(page.getByTestId("sale-row").filter({ hasText: "BP-OLD-01" })).not.toContainText("stickering");
+  await expect(
+    page.getByTestId("sale-row").filter({ hasText: "BP-OLD-01" }).getByTestId("stickering-working"),
+  ).toHaveCount(0);
 
   await page
     .getByTestId("bill-row")

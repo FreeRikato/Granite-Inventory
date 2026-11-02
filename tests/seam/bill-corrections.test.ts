@@ -138,8 +138,8 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       p_sale_rate: 250,
       p_payment_mode: "CASH",
       p_has_stickering: true,
-      p_stickering_cost: 50,
-      p_stickering_price: 120,
+      p_stickering_cost_rate: 50,
+      p_stickering_rate: 120,
     });
     expect(changed.error).toBeNull();
     expect(changed.data).toMatchObject({

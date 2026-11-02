@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
+import { pieceArea, pricePerPiece } from "@/lib/sale-price";
 
 describe("pieceArea", () => {
   it("multiplies length by breadth", () => {
@@ -18,25 +18,25 @@ describe("pieceArea", () => {
   });
 });
 
-describe("salePricePerPiece", () => {
+describe("pricePerPiece", () => {
   it("multiplies Area by the rate", () => {
-    expect(salePricePerPiece(8, 250)).toBe(2000);
+    expect(pricePerPiece(8, 250)).toBe(2000);
   });
 
   it("rounds to paise", () => {
-    expect(salePricePerPiece(10.125, 33.33)).toBe(337.47);
+    expect(pricePerPiece(10.125, 33.33)).toBe(337.47);
   });
 
   it("rounds a half paise up, as Postgres does, despite float noise", () => {
-    expect(salePricePerPiece(1, 1.005)).toBe(1.01);
-    expect(salePricePerPiece(1.005, 1)).toBe(1.01);
+    expect(pricePerPiece(1, 1.005)).toBe(1.01);
+    expect(pricePerPiece(1.005, 1)).toBe(1.01);
   });
 
   it("takes the rate as the price for a Memorial, which has no Area", () => {
-    expect(salePricePerPiece(null, 2000)).toBe(2000);
+    expect(pricePerPiece(null, 2000)).toBe(2000);
   });
 
   it("is zero at a zero rate", () => {
-    expect(salePricePerPiece(8, 0)).toBe(0);
+    expect(pricePerPiece(8, 0)).toBe(0);
   });
 });
