@@ -51,9 +51,9 @@ export function CustomerList({ customers, kpis }: Props) {
         />
       </div>
 
-      <div className="rounded-card bg-card px-6 shadow-sm">
+      <div className="overflow-hidden rounded-card bg-card shadow-sm">
         {visible.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">No customers match.</p>
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">No customers match.</p>
         ) : (
           <ul className="divide-y divide-border">
             {visible.map((c) => (
@@ -61,7 +61,7 @@ export function CustomerList({ customers, kpis }: Props) {
                 <Link
                   href={`/customers/${c.id}`}
                   transitionTypes={["nav-forward"]}
-                  className="flex flex-wrap items-start gap-4 py-4 hover:bg-secondary/40"
+                  className="flex flex-wrap items-start gap-4 px-6 py-4 hover:bg-secondary/40"
                   data-testid="customer-row"
                 >
                   <span className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">

@@ -408,7 +408,7 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
               <li key={b.id}>
                 <Link
                   href={`/yard?line=${encodeURIComponent(b.line_key ?? "")}&q=${encodeURIComponent(b.batch_code ?? "")}`}
-                  className="flex items-center gap-4 py-3 hover:bg-secondary/40"
+                  className="-mx-3 flex items-center gap-4 rounded-lg px-3 py-3 hover:bg-secondary/40"
                   data-testid="stale-row"
                 >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-stale-soft text-xs font-bold text-stale">
