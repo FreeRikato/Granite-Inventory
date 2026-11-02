@@ -35,7 +35,7 @@ Adding a line merges into an existing one only when the Batch, the Sale Rate and
 
 ## Available counts the cart
 
-Every available figure on the form is the database figure minus the pieces already in the cart: the Product option hints, the Batch list, the quantity hint and the check made when a line is added. Without it a second line could promise stone the first line already took. Choosing a Product selects its oldest Batch that still has pieces after the cart; a Batch the cart has used up stays listed at 0 available.
+Every available figure on the form is the database figure minus the pieces already in the cart: the Product option hints, the Batch list, the quantity hint and the check made when a line is added. Without it a second line could promise stone the first line already took. Choosing a Product selects its oldest Batch that still has pieces after the cart; a Batch the cart has used up stays listed at 0 available. Each row in the Batch list shows its Stack as a neutral pill (`stackLabel(slot, stack_number)`, for example "4 ft Slot · 12") above the Ageing badge, so two piles of the same stone at different prices can be told apart; the pill truncates at a fixed width so a typed 20 character Slot never pushes the row, and a Batch logged before Stacks existed shows no pill. The list stays oldest first rather than grouped by Stack, because the order is what tells the operator which Batch to sell from.
 
 Asking for more than the chosen Batch has left (after the cart) opens the split modal instead of refusing. The database stays the authority: if another sale takes the stone while the order is open, Record Sale is refused, the message shows and the cart keeps its lines ([[readable-refusals]]).
 

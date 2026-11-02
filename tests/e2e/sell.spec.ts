@@ -78,6 +78,7 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await expect(fifo).toHaveCount(2);
   await expect(fifo.nth(0)).toContainText("BP-OLD-01");
   await expect(fifo.nth(0)).toContainText("232 days");
+  await expect(fifo.nth(0).getByTestId("fifo-batch-number")).toHaveText("4 ft Slot · 12");
   await fifo.nth(0).click();
 
   await page.getByLabel("Quantity Sold").fill("1");
@@ -610,4 +611,22 @@ test("the split modal lists only the batches that still have stock", async ({ pa
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText("BP-MID-01");
   await expect(rows.nth(1)).toContainText("BP-NEW-01");
+});
+
+test("a batch with no batch number shows no Stack pill, and one with a typed slot shows it in full", async ({
+  page,
+  signIn,
+}) => {
+  await sql(`update public.batches set stack_number = null where batch_code = 'BP-OLD-01'`);
+  await sql(`update public.batches set slot = 'Back Corner', stack_number = '7' where batch_code = 'BP-NEW-01'`);
+  await signIn("operator");
+  await page.goto("/sell");
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: BLACK_PEARL }).click();
+
+  const fifo = page.getByTestId("fifo-batch");
+  await expect(fifo).toHaveCount(2);
+  await expect(fifo.nth(0)).toContainText("BP-OLD-01");
+  await expect(fifo.nth(0).getByTestId("fifo-batch-number")).toHaveCount(0);
+  await expect(fifo.nth(1).getByTestId("fifo-batch-number")).toHaveText("Back Corner · 7");
 });
