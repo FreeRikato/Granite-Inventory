@@ -53,13 +53,17 @@ test("a sale row on the customer page shows the per sq ft working, nested bill l
     where b.batch_code = 'BP-NEW-01' and c.name = 'Murugan Constructions'`);
   await sql(`update public.batches set units_sold = units_sold + 10 where batch_code = 'BP-NEW-01'`);
   await sql(`with bill as (
-      insert into public.bills (customer_id, sale_date, payment_mode)
-      select id, private.ist_today() - 2, 'UPI' from public.customers where name = 'Murugan Constructions'
-      returning id, customer_id, sale_date, payment_mode
+      insert into public.bills (customer_id, sale_date)
+      select id, private.ist_today() - 2 from public.customers where name = 'Murugan Constructions'
+      returning id, customer_id, sale_date
+    ), sold as (
+      insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, bill_id)
+      select bill.sale_date, b.id, bill.customer_id, 3, 900, null, 900, bill.id
+      from bill, public.batches b where b.batch_code = 'DS-CROSS-01'
+      returning bill_id, quantity * (sale_price + stickering_price) as paid
     )
-    insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode, bill_id)
-    select bill.sale_date, b.id, bill.customer_id, 3, 900, null, 900, bill.payment_mode, bill.id
-    from bill, public.batches b where b.batch_code = 'DS-CROSS-01'`);
+    insert into public.bill_payments (bill_id, payment_mode, amount)
+    select bill_id, 'UPI', sum(paid) from sold group by bill_id`);
   await sql(`update public.batches set units_sold = units_sold + 3 where batch_code = 'DS-CROSS-01'`);
 
   await signIn("operator");

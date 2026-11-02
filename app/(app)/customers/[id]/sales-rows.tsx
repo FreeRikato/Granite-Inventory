@@ -5,8 +5,9 @@ import { ChevronRight } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatPercent, formatRupees, formatSaleLine, formatSize } from "@/lib/format";
 import { rowStateClass } from "@/lib/query/row-style";
+import { describePayments } from "@/lib/payment-split";
 import { cn } from "@/lib/utils";
-import { BillActions, SaleActions, type SaleEditLists } from "./sale-actions";
+import { BillActions, SaleActions, type BillPayments, type SaleEditLists } from "./sale-actions";
 
 type Sale = Tables<"v_sales">;
 
@@ -37,13 +38,21 @@ function groupByBill(sales: readonly Sale[]): readonly Entry[] {
 export function SalesRows({
   sales,
   editLists,
+  billPayments,
 }: {
   readonly sales: readonly Sale[];
   readonly editLists: SaleEditLists | null;
+  readonly billPayments: Readonly<Record<string, BillPayments>>;
 }) {
   return groupByBill(sales).map((entry) =>
     entry.kind === "bill" ? (
-      <BillRows key={entry.billId} billId={entry.billId} lines={entry.lines} editLists={editLists} />
+      <BillRows
+        key={entry.billId}
+        billId={entry.billId}
+        lines={entry.lines}
+        editLists={editLists}
+        bill={billPayments[entry.billId] ?? null}
+      />
     ) : (
       <SaleRow key={entry.sale.id} sale={entry.sale} editLists={editLists} />
     ),
@@ -54,10 +63,12 @@ function BillRows({
   billId,
   lines,
   editLists,
+  bill,
 }: {
   readonly billId: string;
   readonly lines: readonly Sale[];
   readonly editLists: SaleEditLists | null;
+  readonly bill: BillPayments | null;
 }) {
   const [open, setOpen] = useState(false);
   const itemCount = `${lines.length} ${lines.length === 1 ? "item" : "items"}`;
@@ -85,6 +96,14 @@ function BillRows({
             <ChevronRight className={cn("size-4 transition-transform", open && "rotate-90")} />
             {itemCount}
           </button>
+          {bill ? (
+            <span
+              className="block pl-5.5 text-xs font-normal text-muted-foreground tabular"
+              data-testid="bill-payments"
+            >
+              {describePayments(bill.payments)}
+            </span>
+          ) : null}
         </td>
         <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
           <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
@@ -97,7 +116,17 @@ function BillRows({
           </td>
         ) : null}
       </tr>
-      {open ? lines.map((line) => <SaleRow key={line.id} sale={line} editLists={editLists} nested />) : null}
+      {open
+        ? lines.map((line) => (
+            <SaleRow
+              key={line.id}
+              sale={line}
+              editLists={editLists}
+              bill={bill ? { ...bill, lines: lines.length } : null}
+              nested
+            />
+          ))
+        : null}
     </Fragment>
   );
 }
@@ -105,10 +134,12 @@ function BillRows({
 function SaleRow({
   sale: s,
   editLists,
+  bill = null,
   nested = false,
 }: {
   readonly sale: Sale;
   readonly editLists: SaleEditLists | null;
+  readonly bill?: (BillPayments & { readonly lines: number }) | null;
   readonly nested?: boolean;
 }) {
   return (
@@ -155,7 +186,7 @@ function SaleRow({
       {editLists ? (
         <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4">
           <MobileLabel>Actions</MobileLabel>
-          <SaleActions sale={s} lists={editLists} />
+          <SaleActions sale={s} lists={editLists} bill={bill} />
         </td>
       ) : null}
     </tr>

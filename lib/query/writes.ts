@@ -38,6 +38,7 @@ const SALE_READS = [
   "dashboard-kpis",
   "fast-moving",
   "margin-by-period",
+  "payments-by-mode",
   "top-customers",
   "customer-list",
 ];

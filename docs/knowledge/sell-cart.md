@@ -18,10 +18,12 @@ code:
   - tests/e2e/accessibility.spec.ts
   - tests/seam/api-observations.test.ts
   - tests/tooling/cart.test.ts
+  - components/payment-split.tsx
+  - lib/payment-split.ts
 ---
 # Sell cart
 
-Sell Stone builds an order before it records anything. The price field is the Sale Rate: its label stays "Stone Sale Price (₹)" and its hint reads "Per sq ft" once a sized Batch is picked and "Per piece" for a Memorial Batch, like Inward's Unit Purchase Price ([[batches]]). Stickering Cost and Price stay per piece. Customer, Sale Date and Payment Mode are chosen once at the top; below them the user picks a Stock Line and Batch, quantity, Stone Sale Price and stickering, then presses "Add to order". "This order" lists the lines with a count such as "2 lines · 9 pieces", and one Record Sale press sends every line to `record_bill` ([[sales-and-stock-lines]]), which saves all of them or none.
+Sell Stone builds an order before it records anything. The price field is the Sale Rate: its label stays "Stone Sale Price (₹)" and its hint reads "Per sq ft" once a sized Batch is picked and "Per piece" for a Memorial Batch, like Inward's Unit Purchase Price ([[batches]]). Stickering Cost and Price stay per piece. Customer, Sale Date and Payment Mode are chosen once at the top; below them the user picks a Stock Line and Batch, quantity, Stone Sale Price and stickering, then presses "Add to order". "This order" lists the lines with a count such as "2 lines · 9 pieces", and one Record Sale press sends every line to `record_bill` ([[sales-and-stock-lines]]), which saves all of them or none. The Payment Mode chips are multi-select; with two or more picked, the Order Summary shows "Customer pays" and an amount box per mode, the last one filling itself with the rest ([[bill-payments]]).
 
 ## The cart lives in the browser until Record Sale
 

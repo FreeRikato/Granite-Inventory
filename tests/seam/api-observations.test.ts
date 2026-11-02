@@ -111,7 +111,7 @@ describe("API observations: readable refusals", () => {
     const order = {
       customerId: "00000000-0000-4000-8000-000000000004",
       saleDate: today(),
-      paymentMode: "CASH",
+      payments: [{ paymentMode: "CASH" }],
     };
 
     const empty = billSchema.safeParse({ ...order, lines: [] });
@@ -138,7 +138,7 @@ describe("API observations: readable refusals", () => {
     const parsed = billSchema.parse({
       customerId: "00000000-0000-4000-8000-000000000004",
       saleDate: today(),
-      paymentMode: "UPI",
+      payments: [{ paymentMode: "UPI" }],
       lines: [
         {
           batchId: "00000000-0000-4000-8000-000000000003",

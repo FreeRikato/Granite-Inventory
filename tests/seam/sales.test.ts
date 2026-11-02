@@ -121,7 +121,7 @@ describe("sales: record_sale, v_sales, v_stock_lines", () => {
       const { error } = await operator.rpc("record_bill", {
         p_customer_id: customerId,
         p_sale_date: today(),
-        p_payment_mode: "CASH",
+        p_payments: [{ payment_mode: "CASH" }],
         p_lines: [{ batch_id: batchId, quantity: 1, ...line }],
       });
       expect(expectError({ error }).message).toBe(message);

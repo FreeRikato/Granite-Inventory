@@ -184,13 +184,44 @@ export type Database = {
           },
         ]
       }
+      bill_payments: {
+        Row: {
+          amount: number
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          payment_mode: string
+        }
+        Insert: {
+          amount: number
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          payment_mode: string
+        }
+        Update: {
+          amount?: number
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          payment_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bills: {
         Row: {
           created_at: string
           created_by: string | null
           customer_id: string
           id: string
-          payment_mode: string
           sale_date: string
           updated_at: string
           updated_by: string | null
@@ -200,7 +231,6 @@ export type Database = {
           created_by?: string | null
           customer_id: string
           id?: string
-          payment_mode: string
           sale_date: string
           updated_at?: string
           updated_by?: string | null
@@ -210,7 +240,6 @@ export type Database = {
           created_by?: string | null
           customer_id?: string
           id?: string
-          payment_mode?: string
           sale_date?: string
           updated_at?: string
           updated_by?: string | null
@@ -322,7 +351,7 @@ export type Database = {
           landed_cost: number
           misc_expense: number
           notes: string | null
-          payment_mode: string
+          payment_mode: string | null
           quantity: number
           sale_date: string
           sale_price: number | null
@@ -344,7 +373,7 @@ export type Database = {
           landed_cost: number
           misc_expense?: number
           notes?: string | null
-          payment_mode: string
+          payment_mode?: string | null
           quantity: number
           sale_date: string
           sale_price?: number | null
@@ -366,7 +395,7 @@ export type Database = {
           landed_cost?: number
           misc_expense?: number
           notes?: string | null
-          payment_mode?: string
+          payment_mode?: string | null
           quantity?: number
           sale_date?: string
           sale_price?: number | null
@@ -734,6 +763,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_chat_payments: {
+        Row: {
+          amount: number | null
+          bill_id: string | null
+          customer_alias: string | null
+          margin_share: number | null
+          payment_mode: string | null
+          sale_date: string | null
+          sale_id: string | null
+        }
+        Relationships: []
+      }
       v_chat_products: {
         Row: {
           category: string | null
@@ -893,6 +934,20 @@ export type Database = {
           mtd_revenue: number | null
           mtd_sales: number | null
           units_sold_total: number | null
+        }
+        Relationships: []
+      }
+      v_payments: {
+        Row: {
+          amount: number | null
+          bill_id: string | null
+          customer_id: string | null
+          margin_share: number | null
+          payment_mode: string | null
+          sale_date: string | null
+          sale_id: string | null
+          total: number | null
+          total_margin: number | null
         }
         Relationships: []
       }
@@ -1136,7 +1191,8 @@ export type Database = {
           p_customer_id: string
           p_has_stickering?: boolean
           p_notes?: string
-          p_payment_mode: string
+          p_payment_mode?: string
+          p_payments?: Json
           p_quantity: number
           p_sale_date: string
           p_sale_id: string
@@ -1156,7 +1212,7 @@ export type Database = {
           landed_cost: number
           misc_expense: number
           notes: string | null
-          payment_mode: string
+          payment_mode: string | null
           quantity: number
           sale_date: string
           sale_price: number | null
@@ -1221,7 +1277,10 @@ export type Database = {
       }
       delete_batch: { Args: { p_batch_id: string }; Returns: undefined }
       delete_bill: { Args: { p_bill_id: string }; Returns: undefined }
-      delete_sale: { Args: { p_sale_id: string }; Returns: undefined }
+      delete_sale: {
+        Args: { p_payments?: Json; p_sale_id: string }
+        Returns: undefined
+      }
       fast_moving: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {
@@ -1241,6 +1300,17 @@ export type Database = {
         }[]
       }
       member_role: { Args: never; Returns: string }
+      payments_by_mode: {
+        Args: { p_from?: string; p_range: string; p_to?: string }
+        Returns: {
+          collected: number
+          margin: number
+          margin_pct: number
+          payment_mode: string
+          range_from: string
+          range_to: string
+        }[]
+      }
       preview_batch_code: {
         Args: { p_date: string; p_product_id: string }
         Returns: string
@@ -1249,7 +1319,7 @@ export type Database = {
         Args: {
           p_customer_id: string
           p_lines: Json
-          p_payment_mode: string
+          p_payments: Json
           p_sale_date: string
         }
         Returns: Json
@@ -1279,7 +1349,7 @@ export type Database = {
           landed_cost: number
           misc_expense: number
           notes: string | null
-          payment_mode: string
+          payment_mode: string | null
           quantity: number
           sale_date: string
           sale_price: number | null

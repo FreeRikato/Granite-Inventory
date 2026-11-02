@@ -22,6 +22,7 @@ const CHAT_VIEWS = [
   "v_chat_kpis",
   "v_chat_products",
   "v_chat_suppliers",
+  "v_chat_payments",
 ];
 
 describe("chat_query: a member's SELECT over the chat views, read-only", () => {

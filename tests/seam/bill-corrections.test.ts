@@ -97,7 +97,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
     expect(stored.data?.bill_id).toBe(billId);
   });
 
-  it("refuses changing a Bill Sale's customer, date or payment mode and changes nothing", async () => {
+  it("refuses changing a Bill Sale's customer or date and changes nothing", async () => {
     const otherCustomerId = await createCustomer(operator, { name: "Other Buyer" });
     const sameHeader = {
       p_sale_id: blackSaleId,
@@ -108,11 +108,11 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
       p_sale_rate: 206.25,
       p_payment_mode: "CASH",
     };
-    const changes = [{ p_customer_id: otherCustomerId }, { p_sale_date: daysAgo(1) }, { p_payment_mode: "UPI" }];
+    const changes = [{ p_customer_id: otherCustomerId }, { p_sale_date: daysAgo(1) }];
 
     for (const change of changes) {
       const refused = await admin.rpc("correct_sale", { ...sameHeader, ...change });
-      expect(expectError(refused).message).toMatch(/^Customer, sale date and payment mode come from the bill/);
+      expect(expectError(refused).message).toMatch(/^Customer and sale date come from the bill/);
     }
 
     const stored = await admin
@@ -123,7 +123,7 @@ describe("bill corrections: delete_sale and correct_sale on a Bill's Sales", () 
     expect(stored.data).toEqual({
       customer_id: customerId,
       sale_date: today(),
-      payment_mode: "CASH",
+      payment_mode: null,
       bill_id: billId,
     });
   });

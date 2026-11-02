@@ -16,14 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import {
-  CUSTOMER_TYPES,
-  CUSTOMER_TYPE_LABEL,
-  PAYMENT_MODES,
-  PAYMENT_MODE_LABEL,
-  isCustomerType,
-  type PaymentMode,
-} from "@/lib/domain";
+import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, isCustomerType } from "@/lib/domain";
+import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
+import { checkSplit, singleMode, type PaymentSplit } from "@/lib/payment-split";
 import type { Tables } from "@/lib/database.types";
 import { formatDate, formatRupees, formatSaleLine, formatSize, todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
@@ -75,7 +70,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const preselected = batches.find((b) => b.id === preselectBatchId) ?? null;
 
   const [saleDate, setSaleDate] = useState(todayIso());
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>("CASH");
+  const [payment, setPayment] = useState<PaymentSplit>(singleMode("CASH"));
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [lineKey, setLineKey] = useState<string | null>(preselected?.line_key ?? null);
   const [batchId, setBatchId] = useState<string | null>(preselected?.id ?? null);
@@ -100,7 +95,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     stickeringCost,
     stickeringPrice,
   ]);
-  const { error, refuse, clear } = useRefusal([saleDate, paymentMode, customerId, cart]);
+  const { error, refuse, clear } = useRefusal([saleDate, payment, customerId, cart]);
 
   const customer = customers.find((c) => c.id === customerId) ?? null;
   const lineBatches = useMemo(() => (lineKey ? batches.filter((b) => b.line_key === lineKey) : []), [batches, lineKey]);
@@ -200,13 +195,18 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   function submit(event: React.FormEvent) {
     event.preventDefault();
     clear();
+    const paid = checkSplit(payment, figures.revenue);
+    if (paid.kind === "refused") {
+      refuse(paid.message);
+      return;
+    }
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof recordBillAction>>;
       try {
         result = await recordBillAction({
           customerId,
           saleDate,
-          paymentMode,
+          payments: paid.payments,
           lines: cart.map((l) => ({
             batchId: l.batchId,
             quantity: l.quantity,
@@ -230,6 +230,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       await wait(EXIT_MS);
       setCart([]);
       setLeavingIds([]);
+      setPayment(singleMode(payment.modes[0]));
       resetLineFields();
       afterWrite("record-sale");
     });
@@ -254,14 +255,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                 className="h-11"
               />
             </Field>
-            <Field label="Payment Mode">
-              <div className="flex min-h-11 flex-wrap items-center gap-2" role="radiogroup" aria-label="Payment Mode">
-                {PAYMENT_MODES.map((m) => (
-                  <Chip key={m} active={paymentMode === m} onClick={() => setPaymentMode(m)}>
-                    {PAYMENT_MODE_LABEL[m]}
-                  </Chip>
-                ))}
-              </div>
+            <Field label="Payment Mode" hint="Tap more than one to split the payment">
+              <PaymentModeChips split={payment} onChange={setPayment} />
             </Field>
           </div>
         </Card>
@@ -565,6 +560,17 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             {figures.marginPct === null ? "0%" : `${figures.marginPct.toFixed(1)}%`}
           </span>
         </div>
+        {cart.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-tile bg-muted/60 p-4" data-testid="order-payment">
+            <div className="flex items-baseline justify-between gap-4 text-sm">
+              <span className="font-semibold">Customer pays</span>
+              <span className="font-bold tabular" data-testid="customer-pays">
+                {formatRupees(figures.revenue)}
+              </span>
+            </div>
+            <PaymentAmounts split={payment} total={figures.revenue} onChange={setPayment} idPrefix="pay" />
+          </div>
+        ) : null}
         {error ? (
           <Notice tone="error" icon="alert" className="mt-4">
             {error}

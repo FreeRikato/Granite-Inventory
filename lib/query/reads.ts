@@ -181,6 +181,32 @@ export const marginByPeriodQuery = (grain: "week" | "month") =>
       ),
   });
 
+export type PaymentRange =
+  | { readonly kind: "week" }
+  | { readonly kind: "month" }
+  | { readonly kind: "custom"; readonly from: string; readonly to: string };
+
+export type PaymentModeRow = {
+  readonly payment_mode: string;
+  readonly collected: number;
+  readonly margin: number;
+  readonly margin_pct: number | null;
+  readonly range_from: string;
+  readonly range_to: string;
+};
+
+export const paymentsByModeQuery = (range: PaymentRange) =>
+  queryOptions({
+    queryKey: ["payments-by-mode", range],
+    queryFn: () =>
+      rows<PaymentModeRow>(
+        createClient().rpc(
+          "payments_by_mode",
+          range.kind === "custom" ? { p_range: "custom", p_from: range.from, p_to: range.to } : { p_range: range.kind },
+        ),
+      ),
+  });
+
 export type TopCustomerWindow = "month" | "90d" | "all";
 
 const topCustomerProducts = z.array(z.object({ name: z.string(), pieces: z.number() }));

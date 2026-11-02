@@ -372,7 +372,7 @@ describe("answerChat", () => {
          where table_schema = 'public' and table_name like 'v\\_chat\\_%'`,
       );
       const views = new Set(columns.map((c) => c.table_name));
-      expect(views.size).toBe(7);
+      expect(views.size).toBe(8);
       for (const view of views) expect(text).toContain(view);
       for (const c of columns) expect(text).toContain(`${c.table_name}(`);
       for (const c of columns) expect(text).toContain(c.column_name);

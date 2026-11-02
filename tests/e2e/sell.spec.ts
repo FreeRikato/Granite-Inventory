@@ -59,7 +59,11 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await expect(page.getByLabel("Misc Expense (₹)")).toHaveCount(0);
   await expect(page.getByTestId("order-summary")).not.toContainText("Misc Expense");
 
-  await page.getByRole("radio", { name: "UPI" }).click();
+  const modes = page.getByRole("group", { name: "Payment Mode" });
+  await modes.getByRole("button", { name: "UPI" }).click();
+  await modes.getByRole("button", { name: "Cash" }).click();
+  await expect(modes.getByRole("button", { name: "UPI" })).toHaveAttribute("aria-pressed", "true");
+  await expect(modes.getByRole("button", { name: "Cash" })).toHaveAttribute("aria-pressed", "false");
 
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByPlaceholder("Name or phone...").fill("98765");

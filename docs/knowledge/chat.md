@@ -37,6 +37,7 @@ code:
   - lib/use-online.ts
   - app/(app)/layout.tsx
   - tests/e2e/chat.spec.ts
+  - supabase/migrations/20261101100000_bill_payments.sql
 ---
 # Chat
 
