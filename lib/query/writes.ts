@@ -8,6 +8,7 @@ export type Write =
   | "record-sale"
   | "correct-sale"
   | "delete-sale"
+  | "delete-bill"
   | "inward-batch"
   | "correct-batch"
   | "archive-batch"
@@ -55,6 +56,7 @@ const EFFECTS: Record<Write, Effect> = {
   "record-sale": { keys: SALE_READS, serverRefresh: false },
   "correct-sale": { keys: SALE_READS, serverRefresh: true },
   "delete-sale": { keys: SALE_READS, serverRefresh: true },
+  "delete-bill": { keys: SALE_READS, serverRefresh: true },
   "inward-batch": { keys: BATCH_READS, serverRefresh: false },
   "correct-batch": { keys: [...BATCH_READS, "fast-moving", "top-customers"], serverRefresh: false },
   "archive-batch": {
