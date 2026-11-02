@@ -15,7 +15,10 @@ export type YardQuery = {
   readonly sort: "oldest" | "newest";
   readonly sold: boolean;
   readonly archived: boolean;
+  readonly low: boolean;
 };
+
+export const LOW_STOCK_BELOW = 5;
 
 type Raw = Record<string, string | string[] | undefined>;
 
@@ -41,12 +44,14 @@ export function parseYardQuery(raw: Raw): YardQuery {
     sort: one(raw, "sort") === "newest" ? "newest" : "oldest",
     sold: one(raw, "sold") === "1",
     archived: one(raw, "archived") === "1",
+    low: one(raw, "low") === "1",
   };
 }
 
 export function matchesFilters(b: YardBatch, q: YardQuery): boolean {
   if (!q.archived && b.archived_at) return false;
   if (!q.sold && b.sold_out) return false;
+  if (q.low && (b.available ?? 0) >= LOW_STOCK_BELOW) return false;
   if (q.slot && b.slot !== q.slot) return false;
   if (q.product && b.product_id !== q.product) return false;
   if (q.thickness !== null && b.thickness_mm !== q.thickness) return false;

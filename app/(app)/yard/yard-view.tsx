@@ -62,7 +62,8 @@ export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
     query.supplier ||
     query.age !== null ||
     query.band ||
-    query.line,
+    query.line ||
+    query.low,
   );
 
   const slotOptions = slots.map((slot) => ({ value: slot, label: slotLabel(slot) }));

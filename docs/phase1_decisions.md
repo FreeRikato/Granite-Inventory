@@ -100,6 +100,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 - One section per Stack (Slot plus Batch number), ordered by Slot then Batch number, with Batches oldest first inside (Newest first as the only alternative sort). Batches without a Batch number share a final "No batch number" section. No slot tabs or size sub-tabs.
 - Filters: search text (also matches the Batch number), Slot, Product, Thickness, Supplier, Age.
 - Sold Out Batches hidden by default, "Show sold out" toggle. Archived Batches hidden by default, "Show archived" toggle; their Available is left out of the Stack's count.
+- "Less than 5 left" toggle (`?low=1`) keeps only Batches whose own Available is under 5; Stack and Stock Line totals are not used. It narrows with every other filter and leaves Sold Out to "Show sold out", so it shows 1 to 4 left by default and 0 to 4 with sold out shown.
 - The Slot filter lists the built-in slots, then typed slots alphabetically, which is also the Stack section order.
 - Within a Stack, Batches are shown grouped by Stock Line (lines ordered by their oldest Batch) so a Clamp separator sits between every pair of consecutive Batches of the same line, labelled "New batch arrived N days later".
 - `/yard?line=<line_key>` deep-links to one Stock Line, showing every Stack that holds it; the palette and the stale panel use it. The Age filter includes a "Stale band" option that follows the configured threshold.

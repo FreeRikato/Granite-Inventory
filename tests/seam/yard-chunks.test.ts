@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHUNK_SIZE, chunkStacks, groupByStack, type YardBatch } from "@/lib/yard";
+import { CHUNK_SIZE, chunkStacks, groupByStack, matchesFilters, parseYardQuery, type YardBatch } from "@/lib/yard";
 
 function batch(n: number): YardBatch {
   const day = String(n).padStart(2, "0");
@@ -72,5 +72,25 @@ describe("chunkStacks", () => {
 
   it("keeps a stack of any size as one chunk when the size is unbounded", () => {
     expect(chunkStacks(stackOf(CHUNK_SIZE * 5), "oldest", Infinity)).toHaveLength(1);
+  });
+});
+
+describe("matchesFilters low", () => {
+  const withAvailable = (available: number) => ({ ...batch(1), available, sold_out: available === 0 });
+
+  it("keeps Batches with fewer than 5 left and drops those with 5 or more", () => {
+    const low = parseYardQuery({ low: "1" });
+    expect(matchesFilters(withAvailable(4), low)).toBe(true);
+    expect(matchesFilters(withAvailable(1), low)).toBe(true);
+    expect(matchesFilters(withAvailable(5), low)).toBe(false);
+  });
+
+  it("shows a Sold Out Batch only when Show sold out is on", () => {
+    expect(matchesFilters(withAvailable(0), parseYardQuery({ low: "1" }))).toBe(false);
+    expect(matchesFilters(withAvailable(0), parseYardQuery({ low: "1", sold: "1" }))).toBe(true);
+  });
+
+  it("leaves Batches with 5 or more in place when the filter is off", () => {
+    expect(matchesFilters(withAvailable(5), parseYardQuery({}))).toBe(true);
   });
 });
