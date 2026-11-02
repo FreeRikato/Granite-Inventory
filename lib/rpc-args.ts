@@ -38,6 +38,8 @@ export function billRpcArgs(b: BillInput) {
     p_customer_id: b.customerId,
     p_sale_date: b.saleDate,
     p_payments: paymentsRpcArg(b.payments),
+    p_on_credit: b.onCredit ? true : undefined,
+    p_pay_by: b.onCredit ? b.payBy : undefined,
     p_lines: b.lines.map((l) => ({
       batch_id: l.batchId,
       quantity: l.quantity,

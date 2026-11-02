@@ -6,6 +6,7 @@ import {
   PlusCircle,
   Settings,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "@/lib/domain";
@@ -24,6 +25,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/sell", label: "Sell Stone", shortLabel: "Sell", icon: MinusCircle, shell: true },
   { href: "/yard", label: "Yard Slots", shortLabel: "Yard", icon: MapIcon, shell: true },
   { href: "/customers", label: "Customers", shortLabel: "Customers", icon: Users, shell: true },
+  { href: "/credit", label: "Credit", shortLabel: "Credit", icon: Wallet, shell: true },
   { href: "/public-link", label: "Public Catalog", shortLabel: "Catalog", icon: Globe },
 ];
 

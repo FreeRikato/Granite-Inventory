@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Check, ChevronsUpDown, Plus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -12,6 +12,7 @@ export type SearchOption = {
   readonly value: string;
   readonly label: string;
   readonly hint?: string;
+  readonly trailing?: ReactNode;
   readonly phone?: string | null;
   readonly keywords?: readonly string[];
 };
@@ -134,6 +135,7 @@ export function SearchSelect({
                     <span className="truncate">{option.label}</span>
                     {option.hint ? <span className="truncate text-xs text-muted-foreground">{option.hint}</span> : null}
                   </span>
+                  {option.trailing}
                   <Check className={cn("ml-auto size-4", value === option.value ? "opacity-100" : "opacity-0")} />
                   {optionActions?.map((action) => (
                     <Button

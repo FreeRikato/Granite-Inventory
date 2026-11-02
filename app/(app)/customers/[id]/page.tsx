@@ -2,43 +2,71 @@ import { notFound } from "next/navigation";
 import { CustomerTypeBadge, initialsOf } from "@/components/customer-type-badge";
 import { getSession } from "@/lib/auth";
 import { formatRupees, relativeDays } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { ViewReady } from "@/components/view-state";
 import { rowStateClass } from "@/lib/query/row-style";
 import { CustomerActions } from "./customer-actions";
 import { isPaymentMode } from "@/lib/domain";
+import { toCreditRow } from "@/lib/query/reads";
 import { type BillPayments, type SaleEditLists } from "./sale-actions";
-import { SalesRows } from "./sales-rows";
+import { SalesRows, type LaterPayment } from "./sales-rows";
 
 export default async function CustomerPage(props: PageProps<"/customers/[id]">) {
   const { id } = await props.params;
   const supabase = await createClient();
-  const [{ data: customer }, { data: sales }, { data: paid }, session] = await Promise.all([
-    supabase.from("v_customers").select("*").eq("id", id).maybeSingle(),
-    supabase
-      .from("v_sales")
-      .select("*")
-      .eq("customer_id", id)
-      .order("sale_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("v_payments")
-      .select("bill_id, payment_mode, amount, total")
-      .eq("customer_id", id)
-      .not("bill_id", "is", null)
-      .order("payment_mode"),
-    getSession(),
-  ]);
+  const [{ data: customer }, { data: sales }, { data: paid }, { data: credit }, { data: receipts }, session] =
+    await Promise.all([
+      supabase.from("v_customers").select("*").eq("id", id).maybeSingle(),
+      supabase
+        .from("v_sales")
+        .select("*")
+        .eq("customer_id", id)
+        .order("sale_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("bill_payments")
+        .select("bill_id, payment_mode, amount, bills!inner(customer_id)")
+        .eq("bills.customer_id", id)
+        .order("payment_mode"),
+      supabase.from("v_credit").select("*").eq("customer_id", id),
+      supabase
+        .from("credit_payments")
+        .select("id, bill_id, paid_on, credit_payment_lines(payment_mode, amount), bills!inner(customer_id)")
+        .eq("bills.customer_id", id)
+        .order("paid_on")
+        .order("created_at"),
+      getSession(),
+    ]);
   if (!customer) notFound();
+  const billTotals = new Map<string, number>();
+  for (const sale of sales ?? []) {
+    if (sale.bill_id) billTotals.set(sale.bill_id, (billTotals.get(sale.bill_id) ?? 0) + (sale.revenue ?? 0));
+  }
+  const creditRows = new Map((credit ?? []).map((row) => [row.bill_id ?? "", toCreditRow(row)]));
   const billPayments: Record<string, BillPayments> = {};
   for (const p of paid ?? []) {
-    if (!p.bill_id || !isPaymentMode(p.payment_mode)) continue;
-    const bill = billPayments[p.bill_id] ?? { total: p.total ?? 0, payments: [] };
+    if (!isPaymentMode(p.payment_mode)) continue;
+    const bill = billPayments[p.bill_id] ?? {
+      total: billTotals.get(p.bill_id) ?? 0,
+      onCredit: creditRows.has(p.bill_id),
+      payments: [],
+    };
     billPayments[p.bill_id] = {
       ...bill,
-      payments: [...bill.payments, { paymentMode: p.payment_mode, amount: p.amount ?? 0 }],
+      payments: [...bill.payments, { paymentMode: p.payment_mode, amount: p.amount }],
     };
+  }
+  for (const [billId, row] of creditRows) {
+    billPayments[billId] ??= { total: row.total, onCredit: true, payments: [] };
+  }
+  const laterPayments: Record<string, LaterPayment[]> = {};
+  for (const r of receipts ?? []) {
+    const lines = r.credit_payment_lines.flatMap((l) =>
+      isPaymentMode(l.payment_mode) ? [{ paymentMode: l.payment_mode, amount: l.amount }] : [],
+    );
+    laterPayments[r.bill_id] = [...(laterPayments[r.bill_id] ?? []), { id: r.id, paidOn: r.paid_on, lines }];
   }
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: SaleEditLists | null = isAdmin
@@ -84,12 +112,17 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
         </div>
       </div>
 
-      <dl className="flex divide-x divide-border">
+      <dl className="flex flex-wrap divide-x divide-border">
         <Kpi label="Sales" value={String(customer.sale_count ?? 0)} />
         <Kpi label="Lifetime revenue" value={formatRupees(customer.lifetime_revenue ?? 0)} />
         <Kpi
           label="Last purchase"
           value={customer.last_purchase_date ? relativeDays(customer.last_purchase_date) : "No purchases"}
+        />
+        <Kpi
+          label="Balance"
+          value={formatRupees(customer.owed ?? 0)}
+          className="max-sm:basis-full max-sm:border-l-0 max-sm:pt-4 max-sm:pl-0"
         />
       </dl>
 
@@ -116,7 +149,13 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
                 </tr>
               </thead>
               <tbody className="block sm:table-row-group">
-                <SalesRows sales={sales} editLists={editLists} billPayments={billPayments} />
+                <SalesRows
+                  sales={sales}
+                  editLists={editLists}
+                  billPayments={billPayments}
+                  credit={creditRows}
+                  laterPayments={laterPayments}
+                />
               </tbody>
             </table>
           </div>
@@ -126,9 +165,9 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-1 pr-6 pl-6 first:pl-0">
+    <div className={cn("flex flex-col gap-1 pr-6 pl-6 first:pl-0", className)}>
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-2xl font-bold tabular">{value}</dd>
     </div>

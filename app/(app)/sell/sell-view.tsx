@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { DataAge } from "@/components/data-age";
-import { customersQuery, stockLinesQuery, yardBatchesQuery } from "@/lib/query/reads";
+import { customerOwedQuery, customersQuery, stockLinesQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
 import { ViewError, ViewReady } from "@/components/view-state";
 import { SellForm } from "./sell-form";
@@ -15,6 +15,7 @@ export function SellView({ skeleton }: { readonly skeleton: ReactNode }) {
   const customers = useQuery(customersQuery);
   const lines = useQuery(stockLinesQuery);
   const batches = useQuery(yardBatchesQuery);
+  const owed = useQuery(customerOwedQuery);
 
   if (!hydrated || !customers.isSuccess || !lines.isSuccess || !batches.isSuccess) {
     const failed = [customers, lines, batches].find((q) => q.isError);
@@ -39,7 +40,13 @@ export function SellView({ skeleton }: { readonly skeleton: ReactNode }) {
       <div className="-mt-4 flex justify-end">
         <DataAge updatedAt={updatedAt} fetching={fetching} />
       </div>
-      <SellForm customers={customers.data} lines={lines.data} batches={sellable} preselectBatchId={preselect} />
+      <SellForm
+        customers={customers.data}
+        owed={owed.data ?? []}
+        lines={lines.data}
+        batches={sellable}
+        preselectBatchId={preselect}
+      />
     </ViewReady>
   );
 }

@@ -9,6 +9,10 @@ export type Write =
   | "correct-sale"
   | "delete-sale"
   | "delete-bill"
+  | "record-credit-payment"
+  | "correct-credit-payment"
+  | "delete-credit-payment"
+  | "extend-pay-by"
   | "inward-batch"
   | "correct-batch"
   | "archive-batch"
@@ -43,6 +47,17 @@ const SALE_READS = [
   "received-by-period",
   "top-customers",
   "customer-list",
+  "credit",
+  "credit-payments",
+  "customer-owed",
+];
+const CREDIT_READS = [
+  "credit",
+  "credit-payments",
+  "customer-list",
+  "customer-owed",
+  "payments-by-mode",
+  "received-by-period",
 ];
 const BATCH_READS = ["yard-batches", "stock-lines", "recent-batches", "recent-stacks", "dashboard-kpis"];
 const PRODUCT_NAME_READS = [
@@ -60,6 +75,10 @@ const EFFECTS: Record<Write, Effect> = {
   "correct-sale": { keys: SALE_READS, serverRefresh: true },
   "delete-sale": { keys: SALE_READS, serverRefresh: true },
   "delete-bill": { keys: SALE_READS, serverRefresh: true },
+  "record-credit-payment": { keys: CREDIT_READS, serverRefresh: false },
+  "correct-credit-payment": { keys: CREDIT_READS, serverRefresh: false },
+  "delete-credit-payment": { keys: CREDIT_READS, serverRefresh: false },
+  "extend-pay-by": { keys: CREDIT_READS, serverRefresh: false },
   "inward-batch": { keys: BATCH_READS, serverRefresh: false },
   "correct-batch": { keys: [...BATCH_READS, "fast-moving", "top-customers"], serverRefresh: false },
   "archive-batch": {

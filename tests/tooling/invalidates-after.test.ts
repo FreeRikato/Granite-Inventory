@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  creditPaymentsQuery,
+  creditQuery,
+  customerOwedQuery,
   customerListQuery,
   customersQuery,
   dashboardKpisQuery,
@@ -19,7 +22,10 @@ import {
 import { invalidatesAfter, type Write } from "@/lib/query/writes";
 
 const SALE_READS = [
+  "credit",
+  "credit-payments",
   "customer-list",
+  "customer-owed",
   "dashboard-kpis",
   "fast-moving",
   "margin-by-period",
@@ -29,6 +35,14 @@ const SALE_READS = [
   "stock-lines",
   "top-customers",
   "yard-batches",
+];
+const CREDIT_READS = [
+  "credit",
+  "credit-payments",
+  "customer-list",
+  "customer-owed",
+  "payments-by-mode",
+  "received-by-period",
 ];
 const BATCH_READS = ["dashboard-kpis", "recent-batches", "recent-stacks", "stock-lines", "yard-batches"];
 const RENAMED_PRODUCT_READS = [
@@ -47,6 +61,10 @@ const CASES: readonly Case[] = [
   ["record-sale", SALE_READS, false],
   ["correct-sale", SALE_READS, true],
   ["delete-sale", SALE_READS, true],
+  ["record-credit-payment", CREDIT_READS, false],
+  ["correct-credit-payment", CREDIT_READS, false],
+  ["delete-credit-payment", CREDIT_READS, false],
+  ["extend-pay-by", CREDIT_READS, false],
   ["inward-batch", BATCH_READS, false],
   ["correct-batch", [...BATCH_READS, "fast-moving", "top-customers"], false],
   ["archive-batch", ["dashboard-kpis", "recent-batches", "stock-lines", "yard-batches"], false],
@@ -82,6 +100,9 @@ const READ_ROOTS = [
   productsQuery,
   suppliersQuery,
   customerListQuery,
+  creditQuery,
+  creditPaymentsQuery("bill"),
+  customerOwedQuery,
   recentBatchesQuery(false),
   recentBatchesQuery(true),
   dashboardKpisQuery,
