@@ -26,6 +26,7 @@ Data and rules (Postgres)
 - [[bill-payments]]: a Bill paid in more than one Payment Mode, and Margin shared across them
 - [[readable-refusals]]: every refusal reads as a business rule, never raw Postgres
 - [[public-catalog]]: what anonymous visitors can read
+- [[product-images]]: one photo per Product, the Storage bucket, upload and cleanup
 - [[dashboard]]: derived figures and the two charts
 - [[chat]]: the read-only path the Overview chat uses, and what it may see
 

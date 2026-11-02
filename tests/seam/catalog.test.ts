@@ -33,7 +33,16 @@ describe("public catalog: v_public_catalog for anon", () => {
       length_ft: 4,
     });
     expect(Object.keys(data?.[0] ?? {}).sort()).toEqual(
-      ["available", "breadth_ft", "category", "length_ft", "line_key", "product_name", "thickness_mm"].sort(),
+      [
+        "available",
+        "breadth_ft",
+        "category",
+        "image_path",
+        "length_ft",
+        "line_key",
+        "product_name",
+        "thickness_mm",
+      ].sort(),
     );
   });
 

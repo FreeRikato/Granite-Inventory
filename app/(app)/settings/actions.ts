@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/lib/domain";
 import { fail, messageOf, ok, type ActionResult } from "@/lib/action-result";
-import { memberSchema, renameSchema, settingsSchema } from "@/lib/schemas/settings";
+import { deleteProduct, removeProductImageFile } from "@/lib/product-images";
+import { memberSchema, productImageSchema, renameSchema, settingsSchema } from "@/lib/schemas/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 import {
@@ -110,7 +111,10 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
     return fail(deleteBlockedMessage(table, references.data.batches, references.data.rowName));
   }
 
-  const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
+  const { data, error } =
+    table === "products"
+      ? await deleteProduct(supabase, id)
+      : await supabase.from(table).delete().eq("id", id).select("id");
   if (error) {
     if (error.code === "23503") {
       const latest = await findDeleteReferences(supabase, table, id);
@@ -121,6 +125,33 @@ export async function deleteRowAction(table: AdminListTable, id: string): Promis
     return fail(messageOf(error));
   }
   if (!data || data.length === 0) return fail("Only an Admin can delete");
+  revalidatePath("/", "layout");
+  return ok(null);
+}
+
+export async function setProductImageAction(input: unknown): Promise<ActionResult<null>> {
+  const parsed = productImageSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid image");
+  const { productId, path } = parsed.data;
+  const supabase = await createClient();
+  const previous = await supabase.from("products").select("image_path").eq("id", productId).maybeSingle();
+  const { data, error } = await supabase.from("products").update({ image_path: path }).eq("id", productId).select("id");
+  if (error || !data || data.length === 0) {
+    await removeProductImageFile(supabase, path);
+    return fail(error ? messageOf(error) : "Only an Admin can set images");
+  }
+  await removeProductImageFile(supabase, previous.data?.image_path ?? null);
+  revalidatePath("/", "layout");
+  return ok(null);
+}
+
+export async function removeProductImageAction(productId: string): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const previous = await supabase.from("products").select("image_path").eq("id", productId).maybeSingle();
+  const { data, error } = await supabase.from("products").update({ image_path: null }).eq("id", productId).select("id");
+  if (error) return fail(messageOf(error));
+  if (!data || data.length === 0) return fail("Only an Admin can remove images");
+  await removeProductImageFile(supabase, previous.data?.image_path ?? null);
   revalidatePath("/", "layout");
   return ok(null);
 }

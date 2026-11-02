@@ -7,7 +7,7 @@ Yard inventory and sales tracking for a granite, memorial stone and construction
 ### Stock
 
 **Product**:
-A stone material, such as Black Pearl, Jet Black, G20 or Doom Stone. Belongs to a Category.
+A stone material, such as Black Pearl, Jet Black, G20 or Doom Stone. Belongs to a Category. May have one image, set by an Admin in Settings, shown on every size of it in the Public Catalog and its preview; without one the catalog shows a colour swatch.
 _Avoid_: Material, stone type, item
 
 **Variant**:

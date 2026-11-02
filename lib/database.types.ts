@@ -316,6 +316,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          image_path: string | null
           name: string
         }
         Insert: {
@@ -325,6 +326,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          image_path?: string | null
           name: string
         }
         Update: {
@@ -334,6 +336,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          image_path?: string | null
           name?: string
         }
         Relationships: []
@@ -985,6 +988,7 @@ export type Database = {
           available: number | null
           breadth_ft: number | null
           category: string | null
+          image_path: string | null
           length_ft: number | null
           line_key: string | null
           product_name: string | null

@@ -7,9 +7,10 @@ import { PublicLinkControls } from "./public-link-controls";
 
 export default async function PublicLinkPage() {
   const supabase = await createClient();
-  const [{ data: settings }, { data: lines }, session, h] = await Promise.all([
+  const [{ data: settings }, { data: lines }, { data: images }, session, h] = await Promise.all([
     supabase.from("settings").select("catalog_public, whatsapp_number, business_name").maybeSingle(),
     supabase.from("v_stock_lines").select("*").gt("available", 0).order("available", { ascending: false }),
+    supabase.from("products").select("id, image_path"),
     getSession(),
     headers(),
   ]);
@@ -18,6 +19,7 @@ export default async function PublicLinkPage() {
     h.get("x-forwarded-proto") ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
   const url = `${proto}://${host}/catalog`;
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
+  const imagePaths = new Map((images ?? []).map((p) => [p.id, p.image_path]));
   const preview = (lines ?? []).slice(0, 3);
   const more = Math.max(0, (lines ?? []).length - preview.length);
 
@@ -42,7 +44,11 @@ export default async function PublicLinkPage() {
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {preview.map((l) => (
-              <StoneTile key={l.line_key} line={l} compact />
+              <StoneTile
+                key={l.line_key}
+                line={{ ...l, image_path: l.product_id ? imagePaths.get(l.product_id) : null }}
+                compact
+              />
             ))}
             {more > 0 ? (
               <a

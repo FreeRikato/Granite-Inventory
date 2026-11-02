@@ -2,6 +2,11 @@ import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 import { sql } from "../seam/harness";
 
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 test.beforeAll(async () => {
   await ensureTestUsers();
 });
@@ -56,4 +61,49 @@ test("an operator cannot switch the catalog", async ({ page, signIn }) => {
   await signIn("operator");
   await page.goto("/public-link");
   await expect(page.getByRole("switch", { name: "Catalog is live" })).toBeDisabled();
+});
+
+test("an Admin sets a Product image in Settings and a visitor sees it on the catalog", async ({
+  page,
+  signIn,
+  browser,
+}) => {
+  await sql(`update public.settings set catalog_public = true`);
+  await signIn("admin");
+  await page.goto("/settings");
+
+  const card = page.getByTestId("catalog-image-tile").filter({ hasText: "Black Pearl" }).locator("visible=true");
+  await expect(card).toContainText("Colour swatch");
+  await expect(async () => {
+    await page
+      .getByLabel("Image file for Black Pearl")
+      .setInputFiles({ name: "stone.png", mimeType: "image/png", buffer: PNG });
+    await expect(page.getByText("Image saved")).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
+  await expect(card).toContainText("Image set");
+  await expect(card.locator("img")).toBeVisible();
+
+  const visitor = await browser.newContext();
+  const anon = await visitor.newPage();
+  await anon.goto("/catalog");
+  const tiles = anon.getByTestId("catalog-tile");
+  await expect(tiles).toHaveCount(3);
+  const photo = tiles.filter({ hasText: "Black Pearl" }).locator("img");
+  await expect(photo).toHaveCount(1);
+  await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(tiles.filter({ hasText: "Doom Stone" }).locator("img")).toHaveCount(0);
+  await expect(tiles.filter({ hasText: "Jet Black" }).locator("img")).toHaveCount(0);
+
+  await page.goto("/public-link");
+  await expect(page.getByTestId("catalog-tile").filter({ hasText: "Black Pearl" }).locator("img")).toHaveCount(1);
+
+  await page.goto("/settings");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Remove image for Black Pearl" }).click();
+    await expect(page.getByText("Image removed")).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
+  await expect(card).toContainText("Colour swatch");
+  await anon.reload();
+  await expect(tiles.filter({ hasText: "Black Pearl" }).locator("img")).toHaveCount(0);
+  await visitor.close();
 });

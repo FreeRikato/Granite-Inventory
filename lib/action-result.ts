@@ -21,6 +21,8 @@ export function cleanPgMessage(message: string): string {
   if (/duplicate key.*products_abbreviation_key/.test(message)) return "That abbreviation is already used";
   if (/duplicate key.*suppliers_name_key/.test(message)) return "A supplier with that name already exists";
   if (/duplicate key.*customers_phone_key/.test(message)) return "A customer with that phone already exists";
+  if (/violates check constraint "products_image_path_own"/.test(message))
+    return "That image belongs to another Product";
   if (/violates foreign key constraint/.test(message)) return "Still used by batches or sales in the yard";
   if (/violates check constraint "batches_purchase_date_range"/.test(message))
     return "Purchase date cannot be in the future";
