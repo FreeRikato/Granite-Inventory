@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, isCustomerType } from "@/lib/domain";
+import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, isCustomerType, stackLabel } from "@/lib/domain";
 import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
 import { checkSplit, singleMode, type PaymentSplit } from "@/lib/payment-split";
 import type { Tables } from "@/lib/database.types";
@@ -362,7 +362,17 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                         {b.supplier_name}
                       </span>
                     </span>
-                    <AgeingBadge band={b.ageing_band} days={b.age_days} />
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      {b.slot && b.stack_number ? (
+                        <span
+                          data-testid="fifo-batch-number"
+                          className="inline-flex h-6 max-w-32 items-center rounded-full bg-secondary px-2.5 text-xs font-semibold text-secondary-foreground"
+                        >
+                          <span className="truncate">{stackLabel(b.slot, b.stack_number)}</span>
+                        </span>
+                      ) : null}
+                      <AgeingBadge band={b.ageing_band} days={b.age_days} />
+                    </span>
                   </button>
                 );
               })}
