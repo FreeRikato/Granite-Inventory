@@ -390,7 +390,7 @@ describe("chat_query: a member's SELECT over the chat views, read-only", () => {
         customerId,
         quantity: 2,
         saleRate: 250,
-        stickering: { cost: 100, price: 150 },
+        stickering: { costRate: 12.5, priceRate: 18.75 },
       });
       await sql(`update public.settings set ageing_after_days = 90, stale_after_days = 180`);
       await operator.rpc("archive_batch", { p_batch_id: batchIds[1] });

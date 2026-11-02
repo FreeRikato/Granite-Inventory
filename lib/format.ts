@@ -57,19 +57,44 @@ export function formatRate(value: number): string {
   return `₹${rateFmt.format(value)}`;
 }
 
+function formatWorking(working: {
+  readonly quantity: number;
+  readonly areaSqft: number | null;
+  readonly rate: number;
+  readonly total: number;
+}): string {
+  const total = formatRupees(working.total);
+  return working.areaSqft === null
+    ? `${working.quantity} × ${formatRate(working.rate)} = ${total}`
+    : `${working.quantity} × ${areaFmt.format(working.areaSqft)} sq ft × ${formatRate(working.rate)}/sq ft = ${total}`;
+}
+
 export function formatSaleLine(line: {
   readonly quantity: number;
   readonly areaSqft: number | null;
   readonly saleRate: number;
   readonly stoneTotal: number;
-  readonly stickeringPrice: number | null;
 }): string {
-  const total = formatRupees(line.stoneTotal);
-  const working =
-    line.areaSqft === null
-      ? `${line.quantity} × ${formatRate(line.saleRate)} = ${total}`
-      : `${line.quantity} × ${areaFmt.format(line.areaSqft)} sq ft × ${formatRate(line.saleRate)}/sq ft = ${total}`;
-  return line.stickeringPrice === null ? working : `${working} + ${formatRupees(line.stickeringPrice)} stickering`;
+  return formatWorking({
+    quantity: line.quantity,
+    areaSqft: line.areaSqft,
+    rate: line.saleRate,
+    total: line.stoneTotal,
+  });
+}
+
+export function formatStickeringLine(line: {
+  readonly quantity: number;
+  readonly areaSqft: number | null;
+  readonly stickeringRate: number;
+  readonly stickeringTotal: number;
+}): string {
+  return formatWorking({
+    quantity: line.quantity,
+    areaSqft: line.areaSqft,
+    rate: line.stickeringRate,
+    total: line.stickeringTotal,
+  });
 }
 
 export function formatPercent(value: number): string {

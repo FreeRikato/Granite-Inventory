@@ -94,8 +94,8 @@ test("operator sells from the oldest batch and sees margin live, then available 
   await page.getByLabel("Quantity Sold").fill("1");
   await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
-  await page.getByLabel("Stickering Cost (₹)").fill("100");
-  await page.getByLabel("Stickering Price (₹)").fill("250");
+  await page.getByLabel("Stickering Cost (₹)").fill("12.5");
+  await page.getByLabel("Stickering Price (₹)").fill("31.25");
   await page.getByRole("button", { name: "Add to order" }).click();
   await expect(page.getByTestId("cart-line")).toHaveCount(2);
   await expect(page.getByTestId("order-summary")).toContainText("Stickering Margin");
@@ -132,6 +132,7 @@ test("adding Jet Black x4 and Black Pearl x5 records one bill that drops both ba
   await expect(summary).toContainText("₹18,650");
   await expect(page.getByTestId("total-margin")).toHaveText("₹1,800");
   await expect(summary).not.toContainText("Stickering Margin");
+  await expect(summary).not.toContainText("Stickering Price");
 
   await page.getByRole("button", { name: "Record Sale (2 lines)" }).click();
   await expect(page.getByText(/Sale recorded: 4 from JB-FIVE-01, 5 from BP-OLD-01/)).toBeVisible();
@@ -468,6 +469,54 @@ test("the stone price is typed per sq ft for sized stone and per piece for a Mem
   ]);
 });
 
+test("Stickering is typed per sq ft for sized stone and per piece for a Memorial, with its working shown live", async ({
+  page,
+  signIn,
+}) => {
+  await signIn("operator");
+  await page.goto("/sell");
+  await chooseCustomer(page, /Murugan Constructions/);
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: JET_BLACK }).click();
+  await page.getByLabel("Quantity Sold").fill("4");
+  await page.getByLabel("Stone Sale Price (₹)").fill("100");
+  await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
+  await expect(page.getByText("Per sq ft, paid to the engraver")).toBeVisible();
+  await expect(page.getByText("Per sq ft, charged to the customer")).toBeVisible();
+  await page.getByLabel("Stickering Cost (₹)").fill("40");
+  await page.getByLabel("Stickering Price (₹)").fill("60");
+  await expect(page.getByTestId("stickering-working")).toHaveText("4 × 15 sq ft × ₹60/sq ft = ₹3,600 stickering");
+  await page.getByRole("button", { name: "Add to order" }).click();
+
+  const summary = page.getByTestId("order-summary");
+  await expect(page.getByTestId("cart-line")).toContainText("Stickering 4 × 15 sq ft × ₹60/sq ft = ₹3,600");
+  await expect(summary).toContainText("Stone Sale Price₹6,000");
+  await expect(summary).toContainText("Stickering Price₹3,600");
+  await expect(summary).toContainText("Stickering Margin₹1,200");
+
+  await page.getByRole("combobox", { name: "Product" }).click();
+  await page.getByRole("option", { name: DOOM_STONE }).click();
+  await page.getByLabel("Quantity Sold").fill("3");
+  await page.getByLabel("Stone Sale Price (₹)").fill("900");
+  await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
+  await expect(page.getByText("Per piece, paid to the engraver")).toBeVisible();
+  await page.getByLabel("Stickering Price (₹)").fill("250");
+  await expect(page.getByTestId("stickering-working")).toHaveText("3 × ₹250 = ₹750 stickering");
+  await page.getByRole("button", { name: "Add to order" }).click();
+  await expect(summary).toContainText("Stickering Price₹4,350");
+
+  await page.getByRole("button", { name: "Record Sale (2 lines)" }).click();
+  await expect(page.getByText(/Sale recorded/)).toBeVisible();
+  const stored = await sql<{ batch_code: string; stickering_rate: string; stickering_price: string }>(
+    `select b.batch_code, s.stickering_rate, s.stickering_price from public.sales s join public.batches b on b.id = s.batch_id order by b.batch_code`,
+  );
+  expect(stored.map((r) => [r.batch_code, Number(r.stickering_rate), Number(r.stickering_price)])).toEqual([
+    ["DS-CROSS-01", 250, 250],
+    ["JB-FIVE-01", 60, 900],
+  ]);
+});
+
 async function seedSplitStock() {
   await sql(`update public.batches set initial_units = 14, units_sold = 0 where batch_code = 'BP-OLD-01'`);
   await sql(`update public.batches set initial_units = 30, units_sold = 0 where batch_code = 'BP-NEW-01'`);
@@ -498,8 +547,8 @@ test("asking for more than the selected batch holds splits the quantity across b
   await page.getByLabel("Quantity Sold").fill("20");
   await page.getByLabel("Stone Sale Price (₹)").fill("206.25");
   await page.getByRole("switch", { name: "Add Stickering / Engraving Service" }).click();
-  await page.getByLabel("Stickering Cost (₹)").fill("100");
-  await page.getByLabel("Stickering Price (₹)").fill("250");
+  await page.getByLabel("Stickering Cost (₹)").fill("12.5");
+  await page.getByLabel("Stickering Price (₹)").fill("31.25");
   await page.getByRole("button", { name: "Add to order" }).click();
 
   const dialog = page.getByRole("dialog", { name: "Split 20 pieces across batches" });
@@ -533,8 +582,10 @@ test("asking for more than the selected batch holds splits the quantity across b
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const lines = page.getByTestId("cart-line");
   await expect(lines).toHaveCount(2);
-  await expect(lines.nth(0)).toContainText("BP-OLD-01 · 14 × 8 sq ft × ₹206.25/sq ft = ₹23,100 + ₹250 stickering");
-  await expect(lines.nth(1)).toContainText("BP-NEW-01 · 6 × 8 sq ft × ₹206.25/sq ft = ₹9,900 + ₹250 stickering");
+  await expect(lines.nth(0)).toContainText("BP-OLD-01 · 14 × 8 sq ft × ₹206.25/sq ft = ₹23,100");
+  await expect(lines.nth(0)).toContainText("Stickering 14 × 8 sq ft × ₹31.25/sq ft = ₹3,500");
+  await expect(lines.nth(1)).toContainText("BP-NEW-01 · 6 × 8 sq ft × ₹206.25/sq ft = ₹9,900");
+  await expect(lines.nth(1)).toContainText("Stickering 6 × 8 sq ft × ₹31.25/sq ft = ₹1,500");
   await expect(page.getByTestId("order-count")).toHaveText("2 lines · 20 pieces");
   const product = page.getByRole("combobox", { name: "Product" });
   await expect.poll(() => product.evaluate((element) => document.activeElement === element)).toBe(true);

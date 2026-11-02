@@ -84,7 +84,7 @@ export type SaleInput = {
   quantity?: number;
   saleRate?: number;
   paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER";
-  stickering?: { cost: number; price: number };
+  stickering?: { costRate: number; priceRate: number };
 };
 
 export function recordSale(db: Db, input: SaleInput) {
@@ -96,8 +96,8 @@ export function recordSale(db: Db, input: SaleInput) {
     p_sale_rate: input.saleRate ?? 206.25,
     p_payment_mode: input.paymentMode ?? "CASH",
     p_has_stickering: input.stickering !== undefined,
-    p_stickering_cost: input.stickering?.cost ?? 0,
-    p_stickering_price: input.stickering?.price ?? 0,
+    p_stickering_cost_rate: input.stickering?.costRate ?? 0,
+    p_stickering_rate: input.stickering?.priceRate ?? 0,
   });
 }
 
@@ -105,7 +105,7 @@ export type BillLineInput = {
   batchId: string;
   quantity?: number;
   saleRate?: number;
-  stickering?: { cost: number; price: number };
+  stickering?: { costRate: number; priceRate: number };
 };
 
 export type BillPayment = { payment_mode: "CASH" | "UPI" | "BANK_TRANSFER"; amount?: number };
@@ -128,8 +128,8 @@ export function recordBill(db: Db, input: BillInput) {
       quantity: line.quantity ?? 1,
       sale_rate: line.saleRate ?? 206.25,
       has_stickering: line.stickering !== undefined,
-      stickering_cost: line.stickering?.cost ?? 0,
-      stickering_price: line.stickering?.price ?? 0,
+      stickering_cost_rate: line.stickering?.costRate ?? 0,
+      stickering_rate: line.stickering?.priceRate ?? 0,
     })),
   });
 }

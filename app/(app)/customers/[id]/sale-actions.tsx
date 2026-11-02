@@ -17,9 +17,9 @@ import { Switch } from "@/components/ui/switch";
 import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL, isPaymentMode, type PaymentMode } from "@/lib/domain";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatRupees, formatSaleLine, formatSize, todayIso } from "@/lib/format";
+import { formatDate, formatRupees, formatSaleLine, formatSize, formatStickeringLine, todayIso } from "@/lib/format";
 import { checkSplit, singleMode, splitFromPayments, type PaymentSplit } from "@/lib/payment-split";
-import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
+import { pieceArea, pricePerPiece } from "@/lib/sale-price";
 import { saleSchema } from "@/lib/schemas/sale";
 import { useRefusal } from "@/lib/use-refusal";
 import { correctSaleAction, deleteBillAction, deleteSaleAction } from "@/app/(app)/sell/actions";
@@ -201,8 +201,8 @@ function SaleEditForm({
     saleRate: sale.sale_rate?.toString() ?? "",
     paymentMode: isPaymentMode(sale.payment_mode) ? sale.payment_mode : "CASH",
     hasStickering: sale.has_stickering ?? false,
-    stickeringCost: sale.stickering_cost?.toString() ?? "0",
-    stickeringPrice: sale.stickering_price?.toString() ?? "0",
+    stickeringCostRate: sale.stickering_cost_rate?.toString() ?? "0",
+    stickeringRate: sale.stickering_rate?.toString() ?? "0",
   });
   const [split, setSplit] = useState<PaymentSplit>(() => splitOf(bill));
   const { error, refuse, clear } = useRefusal([form, split]);
@@ -218,21 +218,30 @@ function SaleEditForm({
         ? undefined
         : pieceArea(chosen.length_ft, chosen.breadth_ft);
   const memorial = areaSqft === null;
-  const entered = saleSchema.pick({ quantity: true, saleRate: true, stickeringPrice: true }).safeParse(form);
+  const entered = saleSchema.pick({ quantity: true, saleRate: true, stickeringRate: true }).safeParse(form);
   const working =
     areaSqft !== undefined && entered.success
       ? formatSaleLine({
           quantity: entered.data.quantity,
           saleRate: entered.data.saleRate,
           areaSqft,
-          stoneTotal: entered.data.quantity * salePricePerPiece(areaSqft, entered.data.saleRate),
-          stickeringPrice: form.hasStickering ? entered.data.stickeringPrice : null,
+          stoneTotal: entered.data.quantity * pricePerPiece(areaSqft, entered.data.saleRate),
+        })
+      : null;
+  const stickeringWorking =
+    areaSqft !== undefined && entered.success && form.hasStickering
+      ? formatStickeringLine({
+          quantity: entered.data.quantity,
+          areaSqft,
+          stickeringRate: entered.data.stickeringRate,
+          stickeringTotal: entered.data.quantity * pricePerPiece(areaSqft, entered.data.stickeringRate),
         })
       : null;
   const newRevenue =
     areaSqft !== undefined && entered.success
       ? entered.data.quantity *
-        (salePricePerPiece(areaSqft, entered.data.saleRate) + (form.hasStickering ? entered.data.stickeringPrice : 0))
+        (pricePerPiece(areaSqft, entered.data.saleRate) +
+          (form.hasStickering ? pricePerPiece(areaSqft, entered.data.stickeringRate) : 0))
       : (sale.revenue ?? 0);
   const billTotal = bill ? round2(bill.total - (sale.revenue ?? 0) + newRevenue) : 0;
   const options = lists.batches
@@ -370,27 +379,32 @@ function SaleEditForm({
       </div>
       {form.hasStickering ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Stickering Cost (₹)" htmlFor="es-scost">
+          <Field label="Stickering Cost (₹)" htmlFor="es-scost" hint={memorial ? "Per piece" : "Per sq ft"}>
             <Input
               id="es-scost"
               type="number"
               min="0"
               step="1"
-              value={form.stickeringCost}
-              onChange={(e) => set("stickeringCost", e.target.value)}
+              value={form.stickeringCostRate}
+              onChange={(e) => set("stickeringCostRate", e.target.value)}
             />
           </Field>
-          <Field label="Stickering Price (₹)" htmlFor="es-sprice">
+          <Field label="Stickering Price (₹)" htmlFor="es-sprice" hint={memorial ? "Per piece" : "Per sq ft"}>
             <Input
               id="es-sprice"
               type="number"
               min="0"
               step="1"
-              value={form.stickeringPrice}
-              onChange={(e) => set("stickeringPrice", e.target.value)}
+              value={form.stickeringRate}
+              onChange={(e) => set("stickeringRate", e.target.value)}
             />
           </Field>
         </div>
+      ) : null}
+      {stickeringWorking ? (
+        <p className="text-sm tabular text-muted-foreground" data-testid="stickering-working">
+          Stickering {stickeringWorking}
+        </p>
       ) : null}
       <Notice tone="accent" className="text-xs">
         Moving the sale to another batch re-snapshots the landed cost from that batch; otherwise the original cost

@@ -20,10 +20,10 @@ import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, isCustomerType, stackLabel } from 
 import { PaymentAmounts, PaymentModeChips } from "@/components/payment-split";
 import { checkSplit, singleMode, type PaymentSplit } from "@/lib/payment-split";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatRupees, formatSaleLine, formatSize, todayIso } from "@/lib/format";
+import { formatDate, formatRupees, formatSaleLine, formatSize, formatStickeringLine, todayIso } from "@/lib/format";
 import { useRefusal } from "@/lib/use-refusal";
 import { marginHealth } from "@/lib/margin";
-import { pieceArea } from "@/lib/sale-price";
+import { pieceArea, pricePerPiece } from "@/lib/sale-price";
 import { billLineSchema, type BillLineInput } from "@/lib/schemas/sale";
 import { phoneDigits } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,7 @@ export function customerDraftFromQuery(query: string): CustomerDraft {
 }
 
 function lineId(line: CartLine): string {
-  return `${line.batchId}-${line.saleRate}-${line.stickering?.cost ?? "none"}-${line.stickering?.price ?? "none"}`;
+  return `${line.batchId}-${line.saleRate}-${line.stickering?.costRate ?? "none"}-${line.stickering?.priceRate ?? "none"}`;
 }
 
 export function SellForm({ customers: initialCustomers, lines, batches, preselectBatchId }: Props) {
@@ -77,8 +77,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
   const [quantity, setQuantity] = useState("1");
   const [saleRate, setSaleRate] = useState("");
   const [stickering, setStickering] = useState(false);
-  const [stickeringCost, setStickeringCost] = useState("");
-  const [stickeringPrice, setStickeringPrice] = useState("");
+  const [stickeringCostRate, setStickeringCostRate] = useState("");
+  const [stickeringRate, setStickeringRate] = useState("");
   const [newCustomer, setNewCustomer] = useState<CustomerDraft | null>(null);
   const [listed, setCart] = useState<readonly CartLine[]>([]);
   const [leavingIds, setLeavingIds] = useState<readonly string[]>([]);
@@ -92,8 +92,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     quantity,
     saleRate,
     stickering,
-    stickeringCost,
-    stickeringPrice,
+    stickeringCostRate,
+    stickeringRate,
   ]);
   const { error, refuse, clear } = useRefusal([saleDate, payment, customerId, cart]);
 
@@ -110,6 +110,21 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     return (options.find((b) => remaining(b) > 0) ?? options[0])?.id ?? null;
   };
 
+  const typedStickering = billLineSchema
+    .pick({ quantity: true, stickeringRate: true })
+    .safeParse({ quantity, stickeringRate: stickeringRate || 0 });
+  const batchArea = batch ? pieceArea(batch.length_ft, batch.breadth_ft) : null;
+  const stickeringWorking =
+    batch && stickering && stickeringRate !== "" && typedStickering.success
+      ? formatStickeringLine({
+          quantity: typedStickering.data.quantity,
+          areaSqft: batchArea,
+          stickeringRate: typedStickering.data.stickeringRate,
+          stickeringTotal:
+            typedStickering.data.quantity * pricePerPiece(batchArea, typedStickering.data.stickeringRate),
+        })
+      : null;
+
   const figures = orderFigures(cart);
   const health = marginHealth(cart.length > 0 ? figures.marginPct : null);
 
@@ -119,8 +134,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
     setQuantity("1");
     setSaleRate("");
     setStickering(false);
-    setStickeringCost("");
-    setStickeringPrice("");
+    setStickeringCostRate("");
+    setStickeringRate("");
   }
 
   function addToOrder() {
@@ -130,8 +145,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       quantity,
       saleRate,
       hasStickering: stickering,
-      stickeringCost: stickeringCost || 0,
-      stickeringPrice: stickeringPrice || 0,
+      stickeringCostRate: stickeringCostRate || 0,
+      stickeringRate: stickeringRate || 0,
     });
     if (!parsed.success) {
       addRefusal.refuse(parsed.error.issues[0]?.message ?? "Check the line");
@@ -161,7 +176,7 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
       quantity: pieces,
       saleRate: line.saleRate,
       landedCost: b.landed_cost ?? 0,
-      stickering: line.hasStickering ? { cost: line.stickeringCost, price: line.stickeringPrice } : null,
+      stickering: line.hasStickering ? { costRate: line.stickeringCostRate, priceRate: line.stickeringRate } : null,
     };
   }
 
@@ -212,8 +227,8 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
             quantity: l.quantity,
             saleRate: l.saleRate,
             hasStickering: l.stickering !== null,
-            stickeringCost: l.stickering?.cost ?? 0,
-            stickeringPrice: l.stickering?.price ?? 0,
+            stickeringCostRate: l.stickering?.costRate ?? 0,
+            stickeringRate: l.stickering?.priceRate ?? 0,
           })),
         });
       } catch (error) {
@@ -426,7 +441,11 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
           </div>
           {stickering ? (
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Stickering Cost (₹)" htmlFor="stickeringCost" hint="Per piece, paid to the engraver">
+              <Field
+                label="Stickering Cost (₹)"
+                htmlFor="stickeringCost"
+                hint={`${memorial ? "Per piece" : "Per sq ft"}, paid to the engraver`}
+              >
                 <Input
                   id="stickeringCost"
                   type="number"
@@ -434,12 +453,16 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   min="0"
                   step="1"
                   placeholder="0"
-                  value={stickeringCost}
-                  onChange={(e) => setStickeringCost(e.target.value)}
+                  value={stickeringCostRate}
+                  onChange={(e) => setStickeringCostRate(e.target.value)}
                   className="h-11"
                 />
               </Field>
-              <Field label="Stickering Price (₹)" htmlFor="stickeringPrice" hint="Per piece, charged to the customer">
+              <Field
+                label="Stickering Price (₹)"
+                htmlFor="stickeringPrice"
+                hint={`${memorial ? "Per piece" : "Per sq ft"}, charged to the customer`}
+              >
                 <Input
                   id="stickeringPrice"
                   type="number"
@@ -447,12 +470,17 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                   min="0"
                   step="1"
                   placeholder="0"
-                  value={stickeringPrice}
-                  onChange={(e) => setStickeringPrice(e.target.value)}
+                  value={stickeringRate}
+                  onChange={(e) => setStickeringRate(e.target.value)}
                   className="h-11"
                 />
               </Field>
             </div>
+          ) : null}
+          {stickeringWorking ? (
+            <p className="mt-3 text-xs text-muted-foreground tabular" data-testid="stickering-working">
+              {stickeringWorking} stickering
+            </p>
           ) : null}
         </Card>
 
@@ -508,9 +536,19 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
                         areaSqft: pieceArea(l.lengthFt, l.breadthFt),
                         saleRate: l.saleRate,
                         stoneTotal: lineMargin(l).stoneTotal,
-                        stickeringPrice: l.stickering?.price ?? null,
                       })}
                     </span>
+                    {l.stickering ? (
+                      <span className="text-xs text-muted-foreground">
+                        Stickering{" "}
+                        {formatStickeringLine({
+                          quantity: l.quantity,
+                          areaSqft: pieceArea(l.lengthFt, l.breadthFt),
+                          stickeringRate: l.stickering.priceRate,
+                          stickeringTotal: lineMargin(l).stickeringTotal,
+                        })}
+                      </span>
+                    ) : null}
                   </span>
                   <AreaCard lengthFt={l.lengthFt} breadthFt={l.breadthFt} quantity={l.quantity} />
                   <span className="shrink-0 text-sm font-semibold tabular">{formatRupees(lineMargin(l).revenue)}</span>
@@ -539,6 +577,9 @@ export function SellForm({ customers: initialCustomers, lines, batches, preselec
         <h2 className="text-base font-bold">Order Summary</h2>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <Row label="Stone Sale Price" value={formatRupees(figures.stoneTotal)} />
+          {cart.some((l) => l.stickering) ? (
+            <Row label="Stickering Price" value={formatRupees(figures.stickeringTotal)} />
+          ) : null}
           <Row
             label="Landed Cost (auto)"
             sub="From the batch, freight included"

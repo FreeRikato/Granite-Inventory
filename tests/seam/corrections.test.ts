@@ -105,8 +105,8 @@ describe("corrections: correct_batch, delete_batch, correct_sale, delete_sale", 
       p_sale_rate: 312.5,
       p_payment_mode: "UPI",
       p_has_stickering: true,
-      p_stickering_cost: 100,
-      p_stickering_price: 300,
+      p_stickering_cost_rate: 12.5,
+      p_stickering_rate: 37.5,
     });
     expect(moved.error).toBeNull();
     expect(moved.data?.landed_cost).toBe(16000);

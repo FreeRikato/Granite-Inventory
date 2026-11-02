@@ -7,6 +7,7 @@ import {
   prefillSplit,
   removeLine,
   splitCovers,
+  stickeringPerPiece,
   type CartLine,
 } from "@/app/(app)/sell/cart";
 
@@ -43,13 +44,14 @@ describe("addLine", () => {
     expect(cart.map((l) => l.batchCode)).toEqual(["BP-OLD-01", "BP-NEW-01"]);
   });
 
-  it("keeps a second line when stickering is added or its amounts differ", () => {
-    const withStickering = line({ stickering: { cost: 100, price: 250 } });
+  it("keeps a second line when stickering is added or its rates differ", () => {
+    const withStickering = line({ stickering: { costRate: 12.5, priceRate: 31.25 } });
     expect(addLine([line()], withStickering)).toHaveLength(2);
-    expect(addLine([withStickering], line({ stickering: { cost: 100, price: 300 } }))).toHaveLength(2);
-    expect(addLine([withStickering], line({ stickering: { cost: 100, price: 250 }, quantity: 4 }))[0]?.quantity).toBe(
-      6,
-    );
+    expect(addLine([withStickering], line({ stickering: { costRate: 12.5, priceRate: 37.5 } }))).toHaveLength(2);
+    expect(addLine([withStickering], line({ stickering: { costRate: 15, priceRate: 31.25 } }))).toHaveLength(2);
+    expect(
+      addLine([withStickering], line({ stickering: { costRate: 12.5, priceRate: 31.25 }, quantity: 4 }))[0]?.quantity,
+    ).toBe(6);
   });
 
   it("leaves the cart it was given untouched", () => {
@@ -130,7 +132,7 @@ describe("orderFigures", () => {
 
   it("adds each stickering line's margin to the order total", () => {
     const cart = [
-      line({ quantity: 5, saleRate: 206.25, landedCost: 1450, stickering: { cost: 100, price: 250 } }),
+      line({ quantity: 5, saleRate: 206.25, landedCost: 1450, stickering: { costRate: 12.5, priceRate: 31.25 } }),
       line({ batchId: "batch-new", quantity: 2, saleRate: 125, landedCost: 900 }),
     ];
     const figures = orderFigures(cart);
@@ -139,6 +141,29 @@ describe("orderFigures", () => {
     expect(figures.stickeringMargin).toBe(750);
     expect(figures.margin).toBe(1000 + 200 + 750);
     expect(figures.revenue).toBe(11500);
+  });
+
+  it("prices Stickering as Area x rate x pieces on a sized line", () => {
+    const jetBlack = line({ lengthFt: 5, breadthFt: 3, quantity: 4, stickering: { costRate: 40, priceRate: 60 } });
+    expect(stickeringPerPiece(jetBlack)).toEqual({ cost: 600, price: 900 });
+    const figures = orderFigures([jetBlack]);
+    expect(figures.stickeringTotal).toBe(3600);
+    expect(figures.stickeringMargin).toBe(1200);
+  });
+
+  it("prices Stickering per piece on a Memorial line, which has no Area", () => {
+    const memorial = line({
+      lengthFt: null,
+      breadthFt: null,
+      quantity: 3,
+      stickering: { costRate: 100, priceRate: 250 },
+    });
+    expect(stickeringPerPiece(memorial)).toEqual({ cost: 100, price: 250 });
+    expect(orderFigures([memorial]).stickeringTotal).toBe(750);
+  });
+
+  it("has no Stickering figures on a line without it", () => {
+    expect(stickeringPerPiece(line())).toBeNull();
   });
 
   it("reads an empty order as zeros with no percentage", () => {

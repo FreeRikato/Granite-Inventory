@@ -22,8 +22,8 @@ export const saleSchema = z.object({
   saleRate: requiredMoney("Stone Sale Price"),
   paymentMode: z.enum(PAYMENT_MODES),
   hasStickering: z.boolean(),
-  stickeringCost: money("Stickering Cost").default(0),
-  stickeringPrice: money("Stickering Price").default(0),
+  stickeringCostRate: money("Stickering Cost").default(0),
+  stickeringRate: money("Stickering Price").default(0),
   notes: z.string().trim().max(500).optional(),
 });
 
@@ -45,8 +45,8 @@ export const billLineSchema = saleSchema.pick({
   quantity: true,
   saleRate: true,
   hasStickering: true,
-  stickeringCost: true,
-  stickeringPrice: true,
+  stickeringCostRate: true,
+  stickeringRate: true,
 });
 
 export const billSchema = z.object({

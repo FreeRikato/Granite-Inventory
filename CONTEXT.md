@@ -96,8 +96,16 @@ What the Customer pays per piece for the stone alone, excluding Stickering. Deri
 _Avoid_: Rate, selling rate
 
 **Stickering**:
-Engraving of names, scripture or donor details onto stone, sold as an add-on to a Sale. Has a per-piece Stickering Cost (paid to the engraver) and a per-piece Stickering Price (charged to the Customer).
+Engraving of names, scripture or donor details onto stone, sold as an add-on to a Sale and priced like the stone: Area times a rate times the pieces. Has a Stickering Cost (paid to the engraver) and a Stickering Price (charged to the Customer), each worked out per piece as the Area of the piece times its rate (the rate itself for Memorial), rounded to paise. 4 pieces of 5 × 3 ft at ₹60 per sq ft is a Stickering Price of ₹3,600, and at ₹40 per sq ft a Stickering Cost of ₹2,400.
 _Avoid_: Lettering, engraving service (as the canonical term)
+
+**Stickering Rate**:
+What the Customer pays per square foot of Area for Stickering; for Memorial, which has no Size, per piece. It is the figure typed on Sell Stone and Edit sale, under the label "Stickering Price (₹)" with the hint "Per sq ft, charged to the customer" or "Per piece, charged to the customer". A Sale stores it as typed; the per piece Stickering Price is derived from it.
+_Avoid_: Stickering price per sq ft (as the canonical term)
+
+**Stickering Cost Rate**:
+What the engraver is paid per square foot of Area; for Memorial, per piece. It is typed under the label "Stickering Cost (₹)" with the hint "Per sq ft, paid to the engraver" or "Per piece, paid to the engraver". The per piece Stickering Cost is derived from it.
+_Avoid_: Engraver rate
 
 **Payment Mode**:
 How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than one (see Payment Split); a Sale recorded without a Bill has exactly one. Every Sale is treated as paid in full; credit and dues are out of scope.
@@ -139,7 +147,7 @@ _Avoid_: User, staff, account
 Admin or Yard Operator. Both see all stock, costs and margins; only Admin makes Corrections, changes Settings and manages Team Members.
 
 **Margin**:
-Per Sale: (Sale Price − Landed Cost) × quantity, where the Sale Price is Area × Sale Rate, plus (Stickering Price − Stickering Cost) × quantity. Margin percentage is Margin divided by total billed (stone plus Stickering).
+Per Sale: (Sale Price − Landed Cost) × quantity, where the Sale Price is Area × Sale Rate, plus (Stickering Price − Stickering Cost) × quantity, where the Stickering Price is Area × Stickering Rate and the Stickering Cost is Area × Stickering Cost Rate. Margin percentage is Margin divided by total billed (stone plus Stickering).
 _Avoid_: Profit, markup
 
 **Size**:

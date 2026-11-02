@@ -111,7 +111,7 @@ describe("sale rate: the Sale Rate is stored and the per piece Sale Price is der
   it("derives stone and stickering margin from the per piece Sale Price", async () => {
     const { error } = await recordBill(operator, {
       customerId,
-      lines: [{ batchId, quantity: 10, saleRate: 250, stickering: { cost: 100, price: 300 } }],
+      lines: [{ batchId, quantity: 10, saleRate: 250, stickering: { costRate: 12.5, priceRate: 37.5 } }],
     });
     expect(error).toBeNull();
     const { data } = await operator

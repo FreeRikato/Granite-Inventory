@@ -356,8 +356,10 @@ export type Database = {
           sale_date: string
           sale_price: number | null
           sale_rate: number
-          stickering_cost: number
-          stickering_price: number
+          stickering_cost: number | null
+          stickering_cost_rate: number
+          stickering_price: number | null
+          stickering_rate: number
           updated_at: string
           updated_by: string | null
         }
@@ -378,8 +380,10 @@ export type Database = {
           sale_date: string
           sale_price?: number | null
           sale_rate: number
-          stickering_cost?: number
-          stickering_price?: number
+          stickering_cost?: number | null
+          stickering_cost_rate?: number
+          stickering_price?: number | null
+          stickering_rate?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -400,8 +404,10 @@ export type Database = {
           sale_date?: string
           sale_price?: number | null
           sale_rate?: number
-          stickering_cost?: number
-          stickering_price?: number
+          stickering_cost?: number | null
+          stickering_cost_rate?: number
+          stickering_price?: number | null
+          stickering_rate?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -826,8 +832,10 @@ export type Database = {
           sale_rate: number | null
           slot: string | null
           stickering_cost: number | null
+          stickering_cost_rate: number | null
           stickering_margin: number | null
           stickering_price: number | null
+          stickering_rate: number | null
           stickering_total: number | null
           stone_margin: number | null
           stone_total: number | null
@@ -1025,8 +1033,10 @@ export type Database = {
           sale_rate: number | null
           slot: string | null
           stickering_cost: number | null
+          stickering_cost_rate: number | null
           stickering_margin: number | null
           stickering_price: number | null
+          stickering_rate: number | null
           stickering_total: number | null
           stone_margin: number | null
           stone_total: number | null
@@ -1197,8 +1207,8 @@ export type Database = {
           p_sale_date: string
           p_sale_id: string
           p_sale_rate: number
-          p_stickering_cost?: number
-          p_stickering_price?: number
+          p_stickering_cost_rate?: number
+          p_stickering_rate?: number
         }
         Returns: {
           area_sqft: number | null
@@ -1217,8 +1227,10 @@ export type Database = {
           sale_date: string
           sale_price: number | null
           sale_rate: number
-          stickering_cost: number
-          stickering_price: number
+          stickering_cost: number | null
+          stickering_cost_rate: number
+          stickering_price: number | null
+          stickering_rate: number
           updated_at: string
           updated_by: string | null
         }
@@ -1334,8 +1346,8 @@ export type Database = {
           p_quantity: number
           p_sale_date: string
           p_sale_rate: number
-          p_stickering_cost?: number
-          p_stickering_price?: number
+          p_stickering_cost_rate?: number
+          p_stickering_rate?: number
         }
         Returns: {
           area_sqft: number | null
@@ -1354,8 +1366,10 @@ export type Database = {
           sale_date: string
           sale_price: number | null
           sale_rate: number
-          stickering_cost: number
-          stickering_price: number
+          stickering_cost: number | null
+          stickering_cost_rate: number
+          stickering_price: number | null
+          stickering_rate: number
           updated_at: string
           updated_by: string | null
         }

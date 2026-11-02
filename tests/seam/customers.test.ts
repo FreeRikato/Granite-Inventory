@@ -40,7 +40,7 @@ describe("customers: v_customers and deletion rules", () => {
       quantity: 1,
       saleRate: 187.5,
       saleDate: daysAgo(3),
-      stickering: { cost: 100, price: 250 },
+      stickering: { costRate: 12.5, priceRate: 31.25 },
     });
 
     const { data } = await operator

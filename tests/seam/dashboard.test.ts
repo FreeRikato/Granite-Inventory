@@ -63,7 +63,7 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
       quantity: 3,
       saleRate: 187.5,
       saleDate: iso(monthStart),
-      stickering: { cost: 100, price: 300 },
+      stickering: { costRate: 12.5, priceRate: 37.5 },
     });
     await recordSale(operator, {
       batchId: b.data?.id ?? "",

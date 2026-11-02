@@ -3,7 +3,14 @@
 import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
-import { formatDate, formatPercent, formatRupees, formatSaleLine, formatSize } from "@/lib/format";
+import {
+  formatDate,
+  formatPercent,
+  formatRupees,
+  formatSaleLine,
+  formatSize,
+  formatStickeringLine,
+} from "@/lib/format";
 import { rowStateClass } from "@/lib/query/row-style";
 import { describePayments } from "@/lib/payment-split";
 import { cn } from "@/lib/utils";
@@ -196,15 +203,27 @@ function SaleRow({
 function SaleWorking({ sale }: { readonly sale: Sale }) {
   if (sale.quantity === null || sale.sale_rate === null || sale.stone_total === null) return null;
   return (
-    <span className="block text-xs font-normal text-muted-foreground tabular">
-      {formatSaleLine({
-        quantity: sale.quantity,
-        areaSqft: sale.area_sqft,
-        saleRate: sale.sale_rate,
-        stoneTotal: sale.stone_total,
-        stickeringPrice: sale.has_stickering ? sale.stickering_price : null,
-      })}
-    </span>
+    <>
+      <span className="block text-xs font-normal text-muted-foreground tabular">
+        {formatSaleLine({
+          quantity: sale.quantity,
+          areaSqft: sale.area_sqft,
+          saleRate: sale.sale_rate,
+          stoneTotal: sale.stone_total,
+        })}
+      </span>
+      {sale.has_stickering && sale.stickering_rate !== null && sale.stickering_total !== null ? (
+        <span className="block text-xs font-normal text-muted-foreground tabular" data-testid="stickering-working">
+          Stickering{" "}
+          {formatStickeringLine({
+            quantity: sale.quantity,
+            areaSqft: sale.area_sqft,
+            stickeringRate: sale.stickering_rate,
+            stickeringTotal: sale.stickering_total,
+          })}
+        </span>
+      ) : null}
+    </>
   );
 }
 

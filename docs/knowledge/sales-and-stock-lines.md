@@ -6,9 +6,11 @@ code:
   - supabase/migrations/20261029200000_remove_misc_expense.sql
   - supabase/migrations/20261029210000_bills.sql
   - supabase/migrations/20261030100000_sale_rate.sql
+  - supabase/migrations/20261102100000_stickering_rate.sql
   - lib/margin.ts
   - lib/sale-price.ts
   - tests/seam/sale-rate.test.ts
+  - tests/seam/stickering-rate.test.ts
   - tests/tooling/sale-price.test.ts
   - lib/whatsapp.ts
   - app/(app)/customers/actions.ts
@@ -31,6 +33,16 @@ The 20261030100000 migration moved every earlier Sale over: `sale_rate = round(s
 
 The client mirrors the derivation in `lib/sale-price.ts` (`pieceArea`, `salePricePerPiece`) so the Sell preview shows what the database will store. It rounds a half paise up despite float noise, as Postgres does; the value stored is always the database's.
 
+## The Stickering rates
+
+Stickering is priced the way the stone is: Area times a rate times pieces, the client's formula for the engraving service. A Sale stores `stickering_rate` (what the Customer pays per sq ft) and `stickering_cost_rate` (what the engraver is paid per sq ft), and `stickering_price` and `stickering_cost` became stored generated columns, `round(coalesce(area_sqft, 1) * rate, 2)`, over the same `area_sqft` snapshot the Sale Rate uses. Both amounts are rates so the Stickering Margin compares like with like: a per sq ft price against a per piece cost would turn a ₹40 per sq ft engraver bill typed as ₹40 into a large negative margin. Keeping the column names and their per piece meaning is what lets `v_sales`, Margin, the dashboard and Ask carry on unchanged; the views only gained the two rate columns. A Memorial has no Area, so its rates are per piece, as its Sale Rate is.
+
+`private.validate_sale_input` keeps its Stickering sentences and adds "Stickering Price per piece is too large" and "Stickering Cost per piece is too large", checked on the same `round(..., 10)` and `round(..., 2)` the generated columns apply so nothing that passes can overflow `numeric(12,2)` after the insert. `record_sale`, `correct_sale` and the `record_bill` lines take `stickering_cost_rate` and `stickering_rate`; the per piece argument names were dropped with their signatures, so PostgREST cannot match an old caller to anything. `correct_sale` re-derives both figures from the Sale's kept Area, or the new Batch's Area when the Batch moves ([[corrections]]).
+
+The 20261102100000 migration converted every earlier Sale with `rate = round(amount / coalesce(area_sqft, 1), 10)` and raises if any Sale's Stickering Cost or Stickering Price differs afterwards, the same guard the Sale Rate migration used. It drops and rebuilds the dependent views through the same `pg_depend` walk. `stickering-rate.test.ts` checks that the conversion formula gives back every stored paise, that a converted Sale keeps its Stickering Margin, and that the worked example (4 pieces of 5 × 3 ft at ₹60 and ₹40 per sq ft) stores 900 and 600 per piece.
+
+The client mirrors the derivation with `pricePerPiece` in `lib/sale-price.ts`, which stone and Stickering both use.
+
 ## Bills
 
 A Bill groups the Sales of one purchase: `bills` holds customer and sale date, `bill_payments` holds how it was paid ([[bill-payments]]), and `sales.bill_id` points at it (null for Sales recorded before Bills, and for `record_sale`). A Bill carries no money, so totals are always derived from its Sales and cannot disagree with them. Like `sales`, `bills` has a select policy for members and no write policy; only `record_bill` creates one.
@@ -41,7 +53,7 @@ A Bill groups the Sales of one purchase: `bills` holds customer and sale date, `
 
 The page reads `v_sales` for the customer as before and `sales-rows.tsx` groups the rows by `bill_id` in the browser. A Bill becomes one collapsed row showing the date, the item count ("2 items", "1 item" for a one-line Bill) and the sum of its lines' totals; opening it lists the lines as the usual rows, each with its own Edit and Delete for Admins. A Sale with a null `bill_id` renders as a single row exactly as before. The Bill row takes the place of its newest line, so Bills and single Sales stay in date order together. Grouping needs no query of its own because a Bill holds no money and no fields beyond what its Sales already carry. Deleting the last line leaves no row to show because `delete_sale` removes the Bill with it ([[corrections]]).
 
-Every Sale row spells out its working under the stone name, nested Bill lines included: `formatSaleLine` is fed the row's `quantity`, `area_sqft`, `sale_rate`, the view's `stone_total` (the browser never re-derives the total) and the Stickering price, so a sized Sale reads `10 × 8 sq ft × ₹250/sq ft = ₹20,000` and a Memorial one `10 × ₹2,000 = ₹20,000`, with ` + ₹300 stickering` after it when the Sale has Stickering; `formatSaleLine` is the only place that suffix is written. It is the same formatter the Sell cart uses ([[sell-cart]]), so the line a customer saw at the counter is the line in their history.
+Every Sale row spells out its working under the stone name, nested Bill lines included: `formatSaleLine` is fed the row's `quantity`, `area_sqft`, `sale_rate` and the view's `stone_total` (the browser never re-derives the total), so a sized Sale reads `10 × 8 sq ft × ₹250/sq ft = ₹20,000` and a Memorial one `10 × ₹2,000 = ₹20,000`, and, when the Sale has Stickering, a second line under it, `Stickering 10 × 8 sq ft × ₹60/sq ft = ₹4,800` (`Stickering 3 × ₹250 = ₹750` for Memorial), built by `formatStickeringLine` from `stickering_rate` and the view's `stickering_total`. The old suffix ` + ₹300 stickering` is gone: it was a per piece figure that read like a total. Both formatters are the ones the Sell cart uses ([[sell-cart]]), so the lines a customer saw at the counter are the lines in their history.
 
 ## Stock Lines
 

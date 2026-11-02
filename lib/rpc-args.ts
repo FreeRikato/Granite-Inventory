@@ -27,8 +27,8 @@ export function saleRpcArgs(s: SaleInput) {
     p_sale_rate: s.saleRate,
     p_payment_mode: s.paymentMode,
     p_has_stickering: s.hasStickering,
-    p_stickering_cost: s.hasStickering ? s.stickeringCost : 0,
-    p_stickering_price: s.hasStickering ? s.stickeringPrice : 0,
+    p_stickering_cost_rate: s.hasStickering ? s.stickeringCostRate : 0,
+    p_stickering_rate: s.hasStickering ? s.stickeringRate : 0,
     p_notes: s.notes,
   };
 }
@@ -43,8 +43,8 @@ export function billRpcArgs(b: BillInput) {
       quantity: l.quantity,
       sale_rate: l.saleRate,
       has_stickering: l.hasStickering,
-      stickering_cost: l.hasStickering ? l.stickeringCost : 0,
-      stickering_price: l.hasStickering ? l.stickeringPrice : 0,
+      stickering_cost_rate: l.hasStickering ? l.stickeringCostRate : 0,
+      stickering_rate: l.hasStickering ? l.stickeringRate : 0,
     })),
   };
 }
