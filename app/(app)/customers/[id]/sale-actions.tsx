@@ -22,7 +22,7 @@ import { checkSplit, singleMode, splitFromPayments, type PaymentSplit } from "@/
 import { pieceArea, salePricePerPiece } from "@/lib/sale-price";
 import { saleSchema } from "@/lib/schemas/sale";
 import { useRefusal } from "@/lib/use-refusal";
-import { correctSaleAction, deleteSaleAction } from "@/app/(app)/sell/actions";
+import { correctSaleAction, deleteBillAction, deleteSaleAction } from "@/app/(app)/sell/actions";
 
 type Sale = Tables<"v_sales">;
 type BatchOption = Pick<
@@ -147,6 +147,34 @@ export function SaleActions({
           ) : null}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+export function BillActions({ billId, lines }: { readonly billId: string; readonly lines: readonly Sale[] }) {
+  const afterWrite = useAfterWrite();
+  const removal = useRowRemoval("delete-bill");
+  const pieces = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
+
+  function remove() {
+    removal.remove(
+      () => deleteBillAction(billId),
+      "Bill deleted, pieces returned to their batches",
+      () => afterWrite("delete-bill"),
+    );
+  }
+
+  return (
+    <div className="flex justify-end gap-2">
+      <RowMark state={removal.state} />
+      <ConfirmDelete
+        title="Delete this bill?"
+        description={`All ${lines.length} sale(s) on it are deleted and ${pieces} piece(s) go back to their batches.`}
+        label="Delete bill"
+        onConfirm={remove}
+        disabled={removal.pending}
+        pending={removal.pending}
+      />
     </div>
   );
 }

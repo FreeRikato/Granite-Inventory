@@ -1276,6 +1276,7 @@ export type Database = {
         }
       }
       delete_batch: { Args: { p_batch_id: string }; Returns: undefined }
+      delete_bill: { Args: { p_bill_id: string }; Returns: undefined }
       delete_sale: {
         Args: { p_payments?: Json; p_sale_id: string }
         Returns: undefined

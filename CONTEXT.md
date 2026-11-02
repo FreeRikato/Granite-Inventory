@@ -80,7 +80,7 @@ A quantity of pieces taken from exactly one Batch by one Customer on one date. T
 _Avoid_: Order, invoice, outward entry, transaction
 
 **Bill**:
-The Sales recorded together in one purchase by one Customer on one date, paid through its Payment Split. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. A Sale on a Bill keeps the Bill's Customer and Sale date: correcting the Sale cannot change them. How it was paid lives on the Bill, not on its Sales.
+The Sales recorded together in one purchase by one Customer on one date, paid through its Payment Split. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. An Admin can delete a whole Bill at once: all its Sales go and their pieces return to their Batches. A Sale on a Bill keeps the Bill's Customer and Sale date: correcting the Sale cannot change them. How it was paid lives on the Bill, not on its Sales.
 _Avoid_: Invoice, order, receipt, cart (the cart is the unsaved screen state before a Bill exists)
 
 **FIFO Listing**:

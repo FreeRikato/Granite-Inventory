@@ -57,21 +57,7 @@ test("a bill's sales sit under one collapsed row, each line is editable and dele
   page,
   signIn,
 }) => {
-  await sql(`with bill as (
-      insert into public.bills (customer_id, sale_date)
-      select id, private.ist_today() - 1 from public.customers where name = 'Murugan Constructions'
-      returning id, customer_id, sale_date
-    ), lines (code, quantity) as (values ('BP-NEW-01', 2), ('JB-FIVE-01', 1)),
-    sold as (
-      insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, bill_id)
-      select bill.sale_date, b.id, bill.customer_id, lines.quantity, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, b.unit_purchase_price, bill.id
-      from bill, lines join public.batches b on b.batch_code = lines.code
-      returning bill_id, quantity * (sale_price + stickering_price) as paid
-    )
-    insert into public.bill_payments (bill_id, payment_mode, amount)
-    select bill_id, 'UPI', sum(paid) from sold group by bill_id`);
-  await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-NEW-01'`);
-  await sql(`update public.batches set units_sold = units_sold + 1 where batch_code = 'JB-FIVE-01'`);
+  await seedBill();
 
   await signIn("admin");
   await page.goto("/customers");
@@ -105,14 +91,49 @@ test("a bill's sales sit under one collapsed row, each line is editable and dele
   await expect(page.getByText("Sale updated")).toBeVisible();
   await expect(bill).toContainText("₹6,600");
 
-  await confirmDelete(page, page.getByRole("button", { name: "Delete" }).first());
+  await confirmDelete(page, page.getByRole("button", { name: "Delete", exact: true }).first());
   await expect(page.getByText(/Sale deleted/)).toBeVisible();
   await expect(bill.getByRole("button", { name: "1 item", exact: true })).toBeVisible();
-  await confirmDelete(page, page.getByRole("button", { name: "Delete" }).first());
+  await confirmDelete(page, page.getByRole("button", { name: "Delete", exact: true }).first());
   await expect(bill).toHaveCount(0);
   await expect(page.getByTestId("sale-row")).toHaveCount(1);
   await expect(page.getByTestId("sale-row")).toContainText("BP-OLD-01");
 });
+
+test("admin deletes a whole bill from its row and every line's pieces go back", async ({ page, signIn }) => {
+  await seedBill();
+  await signIn("admin");
+  await page.goto("/customers");
+  await page.getByTestId("customer-row").filter({ hasText: "Murugan" }).click();
+
+  const bill = page.getByTestId("bill-row");
+  await confirmDelete(page, bill.getByRole("button", { name: "Delete bill" }), "Delete bill");
+  await expect(page.getByText("Bill deleted, pieces returned to their batches")).toBeVisible();
+  await expect(bill).toHaveCount(0);
+  await expect(page.getByTestId("sale-row")).toHaveCount(1);
+  await expect(page.getByTestId("sale-row")).toContainText("BP-OLD-01");
+
+  await page.goto("/yard?slot=5FT");
+  await expect(page.locator('[data-batch-code="JB-FIVE-01"]')).toContainText("Sold:0");
+});
+
+async function seedBill() {
+  await sql(`with bill as (
+      insert into public.bills (customer_id, sale_date)
+      select id, private.ist_today() - 1 from public.customers where name = 'Murugan Constructions'
+      returning id, customer_id, sale_date
+    ), lines (code, quantity) as (values ('BP-NEW-01', 2), ('JB-FIVE-01', 1)),
+    sold as (
+      insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, bill_id)
+      select bill.sale_date, b.id, bill.customer_id, lines.quantity, 1650 / coalesce(b.length_ft * b.breadth_ft, 1), b.length_ft * b.breadth_ft, b.unit_purchase_price, bill.id
+      from bill, lines join public.batches b on b.batch_code = lines.code
+      returning bill_id, quantity * (sale_price + stickering_price) as paid
+    )
+    insert into public.bill_payments (bill_id, payment_mode, amount)
+    select bill_id, 'UPI', sum(paid) from sold group by bill_id`);
+  await sql(`update public.batches set units_sold = units_sold + 2 where batch_code = 'BP-NEW-01'`);
+  await sql(`update public.batches set units_sold = units_sold + 1 where batch_code = 'JB-FIVE-01'`);
+}
 
 test("switching a batch between a sized and a Memorial product clears its price, since one is per sq ft and the other per piece", async ({
   page,
