@@ -143,7 +143,7 @@ function BillRows({
         {editLists ? (
           <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4" colSpan={2}>
             <MobileLabel>Actions</MobileLabel>
-            <BillActions billId={billId} lines={lines} />
+            <BillActions billId={billId} lines={lines} laterTotal={bill?.laterTotal ?? 0} />
           </td>
         ) : null}
       </tr>

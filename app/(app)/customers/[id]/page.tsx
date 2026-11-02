@@ -51,6 +51,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
     const bill = billPayments[p.bill_id] ?? {
       total: billTotals.get(p.bill_id) ?? 0,
       onCredit: creditRows.has(p.bill_id),
+      laterTotal: 0,
       payments: [],
     };
     billPayments[p.bill_id] = {
@@ -59,13 +60,17 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
     };
   }
   for (const [billId, row] of creditRows) {
-    billPayments[billId] ??= { total: row.total, onCredit: true, payments: [] };
+    billPayments[billId] ??= { total: row.total, onCredit: true, laterTotal: 0, payments: [] };
   }
   const laterPayments: Record<string, LaterPayment[]> = {};
   for (const r of receipts ?? []) {
     const lines = r.credit_payment_lines.flatMap((l) =>
       isPaymentMode(l.payment_mode) ? [{ paymentMode: l.payment_mode, amount: l.amount }] : [],
     );
+    const known = billPayments[r.bill_id];
+    if (known) {
+      billPayments[r.bill_id] = { ...known, laterTotal: known.laterTotal + lines.reduce((t, l) => t + l.amount, 0) };
+    }
     laterPayments[r.bill_id] = [...(laterPayments[r.bill_id] ?? []), { id: r.id, paidOn: r.paid_on, lines }];
   }
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";

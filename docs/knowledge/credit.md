@@ -65,7 +65,7 @@ A later payment is one receipt: a `credit_payments` row (date, audit) with `cred
 - Credit: `v_credit` rows are read whole and sorted in the browser, like the Customers list. "Overdue first" is most late first, the larger balance first on a tie. "Pay-by date" lists what is coming up in date order and then what is late, so the two chips differ. "Paid" lists settled Bills, which the other two leave out. The payments of a card load when it opens and are cached per Bill.
 - Record payment and Edit payment are one dialog. The amount is typed; with two or more modes the last picked mode takes the rest of the amount, the same rule as Sell ([[bill-payments]]). Edit checks against the balance without that receipt, as the database does.
 - Customer page and Customers list read `v_customers.owed` and `credit_days_left`; the Sell Customer picker reads them through its own query so a payment refreshes the badges without reloading the Customers. Nothing here blocks a sale.
-- Edit sale shows a credit Bill's total and a note instead of the split, and the delete confirm never asks for one.
+- Edit sale shows a credit Bill's total and a note instead of the split, and the delete confirm never asks for one. Deleting a Bill, or its last Sale, takes its later payments with it (the foreign keys cascade), so those confirms name the amount of later payments that goes too.
 - The Margin table shows the Unpaid row only when something in its range is unpaid, so a shop without credit sees the table as before.
 
 ## Tests

@@ -135,7 +135,7 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
   const figures = orderFigures(cart);
   const credit = partPayment && customer?.is_walk_in !== true;
   const suggestedPayBy = defaultPayBy(saleDate);
-  const payBy = payByTyped ?? suggestedPayBy;
+  const payBy = payByTyped || suggestedPayBy;
   const paidNow = partPaid(payment);
   const owedById = useMemo(() => new Map(owed.map((o) => [o.id, o])), [owed]);
   const health = marginHealth(cart.length > 0 ? figures.marginPct : null);
