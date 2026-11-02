@@ -2,6 +2,7 @@
 code:
   - supabase/migrations/20261101100000_bill_payments.sql
   - supabase/migrations/20261104100000_received_by_period.sql
+  - supabase/migrations/20261105100000_credit.sql
   - lib/payment-split.ts
   - components/payment-split.tsx
   - components/dashboard/payment-table.tsx
@@ -33,7 +34,7 @@ A Bill can be paid in more than one [Payment Mode](../../CONTEXT.md): its Paymen
 
 ## One write path
 
-`private.set_bill_payments` is the only code that writes the table. `record_bill` calls it after inserting the lines, so it can compare the split with the real total; a refusal rolls back the whole Bill. For a single payment it ignores any amount sent and stores the total, so the Sell screen never has to send a figure it computed in floating point. `private.follow_bill_total` runs after a correction or delete that sent no split: it moves a single payment to the new total, and refuses when a split no longer adds up. A split-only fix is a `correct_sale` with the same values and a new `p_payments`, so there is no separate function to secure.
+`private.set_bill_payments` is the only code that writes the table for a Bill not sold on credit; a credit Bill's payments are written by `private.set_credit_bill_payments` and refused here ([[credit]]). `record_bill` calls it after inserting the lines, so it can compare the split with the real total; a refusal rolls back the whole Bill. For a single payment it ignores any amount sent and stores the total, so the Sell screen never has to send a figure it computed in floating point. `private.follow_bill_total` runs after a correction or delete that sent no split: it moves a single payment to the new total, and refuses when a split no longer adds up. A split-only fix is a `correct_sale` with the same values and a new `p_payments`, so there is no separate function to secure.
 
 Refusals format rupees through `private.rupees` (whole rupees when there are no paise) so the sentence reads "₹45000", not "45000.00" ([[readable-refusals]]).
 
@@ -43,7 +44,7 @@ Refusals format rupees through `private.rupees` (whole rupees when there are no 
 
 `payments_by_mode` sums `v_payments` over a date range and always returns the three modes in Cash, UPI, Bank Transfer order, zero when empty, so the table never jumps. Week and Month are worked out in the database from `private.ist_today()` ([[ist-calendar]]), not in the browser, whose clock may be in another zone; it returns the range it used so the card can label it.
 
-`received_by_period` is the second reader of `v_payments`: it sums `amount` per mode over 12 weeks, 12 months or every day of a custom range for the Money received card, and each payment falls in the period of its Sale date ([[dashboard]]).
+`received_by_period` is the second reader of `v_payments`: it sums `amount` per mode over 12 weeks, 12 months or every day of a custom range for the Money received card, and each payment falls in the period of its `received_on` ([[dashboard]]). Credit ([[credit]]) added later payments to `v_payments` as rows after the at-sale ones, ordered by receipt date, so their Margin shares telescope on the same running sum; `payments_by_mode` adds one Unpaid row from the Bills' balances so its Total still equals Margin.
 
 `v_chat_payments` repeats the `v_payments` query instead of selecting from it. `v_payments` is `security_invoker`, so reading it through a chat view checks `bill_payments` as `chat_reader`, which has no grant there. The same reason keeps `v_chat_sales` a copy of `v_sales` ([[chat]]).
 

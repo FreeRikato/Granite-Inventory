@@ -80,7 +80,7 @@ A quantity of pieces taken from exactly one Batch by one Customer on one date. T
 _Avoid_: Order, invoice, outward entry, transaction
 
 **Bill**:
-The Sales recorded together in one purchase by one Customer on one date, paid through its Payment Split. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. An Admin can delete a whole Bill at once: all its Sales go and their pieces return to their Batches. A Sale on a Bill keeps the Bill's Customer and Sale date: correcting the Sale cannot change them. How it was paid lives on the Bill, not on its Sales.
+The Sales recorded together in one purchase by one Customer on one date, paid through its Payment Split, or sold on Credit and paid later. A Bill holds no money of its own: its totals are the sum of its Sales, and each Sale still takes from exactly one Batch. Created only by `record_bill`; a Bill with no Sales left is removed. An Admin can delete a whole Bill at once: all its Sales go and their pieces return to their Batches. A Sale on a Bill keeps the Bill's Customer and Sale date: correcting the Sale cannot change them. How it was paid lives on the Bill, not on its Sales.
 _Avoid_: Invoice, order, receipt, cart (the cart is the unsaved screen state before a Bill exists)
 
 **FIFO Listing**:
@@ -108,15 +108,31 @@ What the engraver is paid per square foot of Area; for Memorial, per piece. It i
 _Avoid_: Engraver rate
 
 **Payment Mode**:
-How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than one (see Payment Split); a Sale recorded without a Bill has exactly one. Every Sale is treated as paid in full; credit and dues are out of scope.
+How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than one (see Payment Split), and each later payment on a Credit Bill may be too; a Sale recorded without a Bill has exactly one. A Sale is paid in full unless its Bill was sold on Credit.
 
 **Money received**:
-The payment amounts that came in per Payment Mode over a period, summed from each Bill's Payment Split and from Sales without a Bill. It counts what the Customer paid, not Margin, and a payment falls in the period of its Sale date. Shown on Overview in the Money received card.
+The payment amounts that came in per Payment Mode over a period, summed from each Bill's Payment Split, from later payments on Credit Bills and from Sales without a Bill. It counts what the Customer paid, not Margin. A payment made at the sale falls in the period of its Sale date; a later payment falls in the period of the day it was received. Shown on Overview in the Money received card.
 _Avoid_: Collected (the Margin Table's word for the same sum over its own range), Revenue
 
 **Payment Split**:
-How one Bill was paid: an amount per Payment Mode, each mode at most once, for example ₹30,000 Cash + ₹20,000 UPI on a ₹50,000 Bill. The amounts always add up exactly to what the Customer pays for the Bill (Stone Sale Price plus Stickering Price over its Sales). A Bill paid in one mode has one payment of its whole total, which follows the total when a Sale is corrected or deleted. A mixed Bill's Margin is shared across its payments in proportion to amount.
-_Avoid_: Part payment, partial payment (nothing is ever left unpaid)
+How one Bill was paid: an amount per Payment Mode, each mode at most once, for example ₹30,000 Cash + ₹20,000 UPI on a ₹50,000 Bill. The amounts always add up exactly to what the Customer pays for the Bill (Stone Sale Price plus Stickering Price over its Sales). A Bill paid in one mode has one payment of its whole total, which follows the total when a Sale is corrected or deleted. A mixed Bill's Margin is shared across its payments in proportion to amount. On a Credit Bill the Payment Split is what was paid at the sale and may add up to less than the total; the rest is the Balance.
+_Avoid_: Part payment (for the split itself; a part payment is the Credit way to pay less than the total)
+
+**Credit**:
+A Bill the Customer pays for later. It is a fact typed on Sell Stone (the Part payment switch), stays true after the Bill is paid off, and needs a named Customer: the Walk-in Customer cannot buy on credit. Selling on credit is never blocked by what a Customer already owes.
+_Avoid_: Dues, udhaar, pending, loan
+
+**Balance**:
+What a Credit Bill still owes: its total (Stone Sale Price plus Stickering Price over its Sales) minus everything received on it, at the sale and later. Never stored; derived in `v_credit`. A Balance of zero closes the Bill. Moves with a Correction of the Bill's total, which is refused if it would go below what was already received. No write-off.
+_Avoid_: Outstanding (for one Bill; Outstanding is the sum of Balances), due
+
+**Later payment**:
+Money received on a Credit Bill after the sale, on a date between the sale and today, in one or more Payment Modes, recorded as one receipt that cannot exceed the Balance. Only an Admin can edit or delete one, and always as a whole.
+_Avoid_: Instalment, repayment
+
+**Pay-by date**:
+The day a Customer promised to settle a Credit Bill. The first one defaults to the Saturday of the sale week (a Saturday or Sunday sale goes to the coming Saturday) and the operator can change it on Sell Stone; that date is the original. Extending adds a new date and keeps every earlier one, so the Bill shows the current date and "was" the original. Days late count from the current date.
+_Avoid_: Due date, deadline
 
 **Customer**:
 The person or organisation a Sale is made to. Every Sale has a Customer; anonymous cash buyers go to a shared Walk-in Customer.
