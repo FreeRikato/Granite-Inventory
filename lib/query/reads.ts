@@ -207,6 +207,26 @@ export const paymentsByModeQuery = (range: PaymentRange) =>
       ),
   });
 
+export type ReceivedRow = {
+  readonly period_start: string;
+  readonly cash: number;
+  readonly upi: number;
+  readonly bank_transfer: number;
+  readonly total: number;
+};
+
+export const receivedByPeriodQuery = (range: PaymentRange) =>
+  queryOptions({
+    queryKey: ["received-by-period", range],
+    queryFn: () =>
+      rows<ReceivedRow>(
+        createClient().rpc(
+          "received_by_period",
+          range.kind === "custom" ? { p_range: "custom", p_from: range.from, p_to: range.to } : { p_range: range.kind },
+        ),
+      ),
+  });
+
 export type TopCustomerWindow = "month" | "90d" | "all";
 
 const topCustomerProducts = z.array(z.object({ name: z.string(), pieces: z.number() }));

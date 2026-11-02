@@ -1,6 +1,7 @@
 ---
 code:
   - supabase/migrations/20261101100000_bill_payments.sql
+  - supabase/migrations/20261104100000_received_by_period.sql
   - lib/payment-split.ts
   - components/payment-split.tsx
   - components/dashboard/payment-table.tsx
@@ -42,6 +43,8 @@ Refusals format rupees through `private.rupees` (whole rupees when there are no 
 
 `payments_by_mode` sums `v_payments` over a date range and always returns the three modes in Cash, UPI, Bank Transfer order, zero when empty, so the table never jumps. Week and Month are worked out in the database from `private.ist_today()` ([[ist-calendar]]), not in the browser, whose clock may be in another zone; it returns the range it used so the card can label it.
 
+`received_by_period` is the second reader of `v_payments`: it sums `amount` per mode over 12 weeks, 12 months or every day of a custom range for the Money received card, and each payment falls in the period of its Sale date ([[dashboard]]).
+
 `v_chat_payments` repeats the `v_payments` query instead of selecting from it. `v_payments` is `security_invoker`, so reading it through a chat view checks `bill_payments` as `chat_reader`, which has no grant there. The same reason keeps `v_chat_sales` a copy of `v_sales` ([[chat]]).
 
 ## Screens
@@ -52,4 +55,4 @@ On Sell the chips stay at the top of the form, but the amount boxes sit in the O
 
 Edit sale estimates the new Bill total in the browser (old Bill total minus this Sale's old revenue plus its new revenue) only to drive the rest box; the database checks the real total. It always sends the split for a Bill Sale, which also lets a one-mode Bill switch modes. The delete confirm asks for a split only when the Bill has more than one payment and other Sales stay, and disables Delete until the split works, since closing an alert dialog cannot be stopped from the action button ([[corrections]]).
 
-The overview Margin card keeps separate state for the Chart's grain and the Table's range, so switching views does not lose either ([[dashboard]]). The table query key `payments-by-mode` is in the sale writes' invalidation list ([[browser-reads]]).
+The overview Margin card keeps separate state for the Chart's grain and the Table's range, so switching views does not lose either ([[dashboard]]). The query keys `payments-by-mode` and `received-by-period` are in the sale writes' invalidation list ([[browser-reads]]).

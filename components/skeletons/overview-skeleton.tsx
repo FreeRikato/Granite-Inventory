@@ -35,6 +35,7 @@ export function OverviewSkeleton() {
         <ChartCardSkeleton chart="h-[184px] md:h-[264px]" />
         <ChartCardSkeleton chart="h-[184px] md:h-[264px]" />
       </div>
+      <ChartCardSkeleton chart="h-[853px] sm:h-[917px]" />
       <div className="grid gap-4 md:grid-cols-[400px_minmax(0,1fr)]">
         <ChartCardSkeleton chart="h-28 md:h-[150px]" />
         <ChartCardSkeleton chart="h-28 md:h-[150px]" />

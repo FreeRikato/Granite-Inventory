@@ -11,6 +11,8 @@ import { DataAge } from "@/components/data-age";
 import { MarginBars, type MarginGrain } from "@/components/dashboard/margin-bars";
 import { MovingBars } from "@/components/dashboard/moving-bars";
 import { PaymentTable } from "@/components/dashboard/payment-table";
+import { ReceivedBars, type ReceivedGrain } from "@/components/dashboard/received-bars";
+import { ReceivedTable } from "@/components/dashboard/received-table";
 import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
@@ -23,6 +25,7 @@ import {
   fastMovingQuery,
   marginByPeriodQuery,
   paymentsByModeQuery,
+  receivedByPeriodQuery,
   staleAfterDaysQuery,
   topCustomersQuery,
   yardBatchesQuery,
@@ -152,6 +155,96 @@ function MarginCard() {
   );
 }
 
+const RECEIVED_GRAIN = { week: "week", month: "month", custom: "day" } as const satisfies Record<
+  RangeKind,
+  ReceivedGrain
+>;
+
+function ReceivedCard() {
+  const [rangeKind, setRangeKind] = useState<RangeKind>("week");
+  const [custom, setCustom] = useState(() => ({ from: `${todayIso().slice(0, 8)}01`, to: todayIso() }));
+  const range: PaymentRange | null =
+    rangeKind !== "custom"
+      ? { kind: rangeKind }
+      : custom.from && custom.to && custom.from <= custom.to
+        ? { kind: "custom", from: custom.from, to: custom.to }
+        : null;
+  const received = useQuery({
+    ...receivedByPeriodQuery(range ?? { kind: "week" }),
+    enabled: range !== null,
+    placeholderData: keepPreviousData,
+  });
+  const shownKind = useShownWhileSettled(rangeKind, !received.isPlaceholderData);
+  const subtitle =
+    range === null
+      ? ""
+      : range.kind === "custom"
+        ? rangeLabel(range.from, range.to)
+        : `last 12 ${range.kind === "week" ? "weeks" : "months"}`;
+
+  return (
+    <section className="min-w-0 rounded-card bg-card p-6 shadow-sm" data-testid="received-card">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-base font-bold">Money received</h2>
+          <span className="text-xs text-muted-foreground" data-testid="received-subtitle">
+            {subtitle}
+          </span>
+        </div>
+        <SegmentedToggle
+          label="Money received range"
+          options={RANGE_OPTIONS}
+          value={rangeKind}
+          onChange={setRangeKind}
+        />
+      </div>
+      {rangeKind === "custom" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+          <Input
+            type="date"
+            aria-label="Received from"
+            max={custom.to || todayIso()}
+            value={custom.from}
+            onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))}
+            className="h-9 w-auto"
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            aria-label="Received to"
+            min={custom.from}
+            max={todayIso()}
+            value={custom.to}
+            onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))}
+            className="h-9 w-auto"
+          />
+        </div>
+      ) : null}
+      <div className="mt-4">
+        {range === null ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Pick a start date on or before the end date.</p>
+        ) : received.isSuccess ? (
+          <div className="grid gap-5">
+            <ReceivedBars rows={received.data} grain={RECEIVED_GRAIN[shownKind]} />
+            <ReceivedTable rows={received.data} grain={RECEIVED_GRAIN[shownKind]} />
+            {received.data.every((r) => r.total === 0) ? (
+              <p className="text-xs text-muted-foreground" data-testid="received-empty">
+                No money received {range.kind === "custom" ? "in this range" : `in these ${range.kind}s`}.
+              </p>
+            ) : null}
+          </div>
+        ) : received.isError ? (
+          <p className="py-6 text-center text-sm text-destructive">
+            Could not load money received: {received.error.message}
+          </p>
+        ) : (
+          <div className="h-[807px] animate-pulse sm:h-[909px] rounded-lg bg-muted" />
+        )}
+      </div>
+    </section>
+  );
+}
+
 const WINDOW_OPTIONS = [
   { value: "month", label: "This month" },
   { value: "90d", label: "Last 90 days" },
@@ -274,6 +367,8 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
         <MarginCard />
         <TopCustomersCard />
       </div>
+
+      <ReceivedCard />
 
       <div className="@container">
         <div className="grid gap-4 @min-[640px]:grid-cols-[400px_minmax(0,1fr)]">

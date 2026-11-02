@@ -1331,6 +1331,16 @@ export type Database = {
         Args: { p_date: string; p_product_id: string }
         Returns: string
       }
+      received_by_period: {
+        Args: { p_from?: string; p_range: string; p_to?: string }
+        Returns: {
+          bank_transfer: number
+          cash: number
+          period_start: string
+          total: number
+          upi: number
+        }[]
+      }
       record_bill: {
         Args: {
           p_customer_id: string
