@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test, ensureTestUsers, resetDomainData } from "./fixtures";
 import { seedYard } from "./seed";
 
@@ -10,8 +11,7 @@ test.beforeEach(async () => {
   await seedYard();
 });
 
-test("a Bill paid Cash + UPI on Sell shows on both rows of the Margin table", async ({ page, signIn }) => {
-  await signIn("operator");
+async function recordCashUpiBill(page: Page) {
   await page.goto("/sell");
   await page.getByRole("combobox", { name: "Customer" }).click();
   await page.getByRole("option", { name: /Walk-in Customer/ }).click();
@@ -29,6 +29,11 @@ test("a Bill paid Cash + UPI on Sell shows on both rows of the Margin table", as
   await expect(page.getByRole("textbox", { name: /UPI/ })).toHaveValue("₹2,600");
   await page.getByRole("button", { name: "Record Sale" }).click();
   await expect(page.getByText(/Sale recorded/)).toBeVisible();
+}
+
+test("a Bill paid Cash + UPI on Sell shows on both rows of the Margin table", async ({ page, signIn }) => {
+  await signIn("operator");
+  await recordCashUpiBill(page);
 
   await page.goto("/");
   const card = page.getByTestId("margin-card");
@@ -38,4 +43,20 @@ test("a Bill paid Cash + UPI on Sell shows on both rows of the Margin table", as
   await expect(rows.filter({ hasText: "Cash" })).toContainText("₹4,000");
   await expect(rows.filter({ hasText: "UPI" })).toContainText("₹2,600");
   await expect(card.getByTestId("payment-total")).toContainText("₹6,600");
+});
+
+test("a Bill paid Cash + UPI on Sell shows both amounts in the Money received card", async ({ page, signIn }) => {
+  await signIn("operator");
+  await recordCashUpiBill(page);
+
+  await page.goto("/");
+  const card = page.getByTestId("received-card");
+  await expect(card.getByTestId("received-row")).toHaveCount(12);
+  const now = card.getByTestId("received-row").first();
+  await expect(now).toHaveAttribute("data-now", "true");
+  await expect(now.getByTestId("received-cash")).toHaveText("₹4,000");
+  await expect(now.getByTestId("received-upi")).toHaveText("₹2,600");
+  await expect(now.getByTestId("received-bank")).toHaveText("₹0");
+  await expect(now.getByTestId("received-row-total")).toHaveText("₹6,600");
+  await expect(card.getByTestId("received-grand-total")).toHaveText("₹6,600");
 });

@@ -40,6 +40,7 @@ const SALE_READS = [
   "fast-moving",
   "margin-by-period",
   "payments-by-mode",
+  "received-by-period",
   "top-customers",
   "customer-list",
 ];

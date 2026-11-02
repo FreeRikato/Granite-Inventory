@@ -110,6 +110,10 @@ _Avoid_: Engraver rate
 **Payment Mode**:
 How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than one (see Payment Split); a Sale recorded without a Bill has exactly one. Every Sale is treated as paid in full; credit and dues are out of scope.
 
+**Money received**:
+The payment amounts that came in per Payment Mode over a period, summed from each Bill's Payment Split and from Sales without a Bill. It counts what the Customer paid, not Margin, and a payment falls in the period of its Sale date. Shown on Overview in the Money received card.
+_Avoid_: Collected (the Margin Table's word for the same sum over its own range), Revenue
+
 **Payment Split**:
 How one Bill was paid: an amount per Payment Mode, each mode at most once, for example ₹30,000 Cash + ₹20,000 UPI on a ₹50,000 Bill. The amounts always add up exactly to what the Customer pays for the Bill (Stone Sale Price plus Stickering Price over its Sales). A Bill paid in one mode has one payment of its whole total, which follows the total when a Sale is corrected or deleted. A mixed Bill's Margin is shared across its payments in proportion to amount.
 _Avoid_: Part payment, partial payment (nothing is ever left unpaid)
