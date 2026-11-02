@@ -41,3 +41,8 @@ export const renameSchema = z.object({
   category: z.enum(CATEGORIES).optional(),
   phone: z.string().trim().max(20).optional(),
 });
+
+export const productImageSchema = z.object({
+  productId: z.string().uuid(),
+  path: z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|jpg)$/, "Invalid image"),
+});

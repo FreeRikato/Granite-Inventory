@@ -4,6 +4,7 @@ code:
   - supabase/migrations/20260911100000_stock.sql
   - supabase/migrations/20260911120000_sales.sql
   - supabase/migrations/20260911160000_corrections.sql
+  - supabase/migrations/20261103100000_product_images.sql
   - supabase/seed.sql
   - lib/auth.ts
   - tests/seam/access.test.ts
@@ -25,5 +26,9 @@ Trigger functions live in the `private` schema and run as the calling role, so m
 Members read and create directly under RLS, but there is deliberately no update or delete policy on Batches or Sales. They change only through security definer functions (`record_sale` and the [[corrections]] functions), whose first statement is the member or Admin check. That is how an operator can decrement a Batch through a sale without being allowed to update Batches at all, and why Available can never drift. See [ADR 0001](../adr/0001-inventory-rules-in-postgres.md).
 
 Views that resolve names (`v_batches` and friends) use `security_invoker`, so RLS on the underlying tables still applies. The exception is [[public-catalog]].
+
+## Product images
+
+The `product-images` Storage bucket is public for reading by URL, and its policies on `storage.objects` (select, insert, update, delete) all require `is_admin()`. Setting `products.image_path` is an ordinary Product update, which only an Admin may do. See [[product-images]].
 
 Related: [[auth-session]], [[sales-and-stock-lines]].

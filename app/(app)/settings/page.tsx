@@ -6,6 +6,7 @@ import { roleLabel } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { AdminLists } from "./admin-lists";
 import { Appearance } from "./appearance";
+import { CatalogImages } from "./catalog-images";
 import { InventoryRules } from "./inventory-rules";
 import { TeamAccess } from "./team-access";
 
@@ -18,7 +19,9 @@ export default async function SettingsPage() {
   const [{ data: team }, { data: settings }, products, suppliers, batchReferences] = await Promise.all([
     isAdmin ? supabase.from("team_members").select("*").order("created_at") : empty,
     supabase.from("settings").select("*").maybeSingle(),
-    isAdmin ? supabase.from("products").select("id, name, abbreviation, category, archived_at").order("name") : empty,
+    isAdmin
+      ? supabase.from("products").select("id, name, abbreviation, category, archived_at, image_path").order("name")
+      : empty,
     isAdmin ? supabase.from("suppliers").select("id, name, archived_at").order("name") : empty,
     isAdmin ? supabase.from("v_batches").select("batch_code, product_id, supplier_id") : empty,
   ]);
@@ -58,6 +61,7 @@ export default async function SettingsPage() {
         <>
           <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} />
           <InventoryRules ageing={settings?.ageing_after_days ?? 90} stale={settings?.stale_after_days ?? 180} />
+          <CatalogImages products={products.data ?? []} />
           <AdminLists
             products={products.data ?? []}
             suppliers={suppliers.data ?? []}

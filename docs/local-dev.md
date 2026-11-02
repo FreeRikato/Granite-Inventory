@@ -89,6 +89,7 @@ The UI shows only "Continue with Google", but local Auth also has the email prov
 - `NEXT_PUBLIC_*` variables must be referenced literally (`process.env.NEXT_PUBLIC_X`), never through a computed key, or the browser bundle sees `undefined`.
 - Trigger functions in the `private` schema run as the calling role, so `authenticated` has `usage` on that schema; the schema is still not exposed through the API.
 - Never run `supabase db reset` while browser QA agents are using the shared stack; it wipes `auth.users` as well as data and every in-flight session breaks.
+- Every Storage upload failing with `database error, code: 42P10` means `storage.objects` has `idx_objects_current_version` and `idx_objects_null_version` without `collate "C"` (a stack first set up by another storage version, which the container's `create index if not exists` then skips). Recreate both as `(bucket_id, name collate "C")` with the same `where` clauses, as `supabase_admin`, instead of resetting the shared database; a fresh `supabase db reset` creates them correctly.
 - Playwright signs in through `POST /auth/test-login` (JSON `{email, password}`), which exists only when `E2E_TEST_LOGIN=1` and never in production builds.
 
 ## Non-interactive commands

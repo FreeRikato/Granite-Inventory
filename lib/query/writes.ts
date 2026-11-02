@@ -20,6 +20,7 @@ export type Write =
   | "create-supplier"
   | RowWrite
   | `settings-${RowWrite}`
+  | "settings-product-image"
   | "inventory-rules"
   | "team-access"
   | "public-link";
@@ -82,6 +83,7 @@ const EFFECTS: Record<Write, Effect> = {
   "settings-archive-supplier": { keys: ["suppliers"], serverRefresh: true },
   "settings-delete-product": { keys: ["products"], serverRefresh: true },
   "settings-delete-supplier": { keys: ["suppliers"], serverRefresh: true },
+  "settings-product-image": { keys: [], serverRefresh: true },
   "inventory-rules": { keys: ["stale-after-days", "yard-batches"], serverRefresh: true },
   "team-access": { keys: [], serverRefresh: true },
   "public-link": { keys: [], serverRefresh: true },

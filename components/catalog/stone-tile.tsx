@@ -1,4 +1,7 @@
+import Image from "next/image";
 import { formatSize, pluralUnits } from "@/lib/format";
+import { productImageUrl } from "@/lib/product-images";
+import { cn } from "@/lib/utils";
 
 type Line = {
   readonly product_name: string | null;
@@ -7,6 +10,7 @@ type Line = {
   readonly breadth_ft: number | null;
   readonly thickness_mm: number | null;
   readonly available: number | null;
+  readonly image_path?: string | null;
 };
 
 function swatch(name: string): string {
@@ -19,15 +23,33 @@ function swatch(name: string): string {
   return `linear-gradient(135deg, hsl(${h} 12% ${l1}%), hsl(${h} 10% ${l2}%))`;
 }
 
+export function ProductPhoto({
+  name,
+  imagePath,
+  className,
+}: {
+  readonly name: string;
+  readonly imagePath: string | null | undefined;
+  readonly className: string;
+}) {
+  return (
+    <div
+      className={cn("relative w-full overflow-hidden rounded-tile", className)}
+      style={{ background: swatch(name) }}
+      aria-hidden
+    >
+      {imagePath ? (
+        <Image src={productImageUrl(imagePath)} alt="" fill unoptimized sizes="400px" className="object-cover" />
+      ) : null}
+    </div>
+  );
+}
+
 export function StoneTile({ line, compact }: { readonly line: Line; readonly compact?: boolean }) {
   const name = line.product_name ?? "";
   return (
     <article className="rounded-card border border-border bg-card p-3 shadow-sm" data-testid="catalog-tile">
-      <div
-        className={compact ? "aspect-[2/1] w-full rounded-tile" : "aspect-[3/2] w-full rounded-tile"}
-        style={{ background: swatch(line.product_name ?? "") }}
-        aria-hidden
-      />
+      <ProductPhoto name={name} imagePath={line.image_path} className={compact ? "aspect-[2/1]" : "aspect-[3/2]"} />
       <h2 className="mt-3 text-[15px] font-semibold">{name}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         {line.length_ft === null

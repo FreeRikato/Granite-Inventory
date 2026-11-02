@@ -76,7 +76,7 @@ This is the first iteration after one rough call with the client. Expect heavy c
 ## Public Catalog
 
 - Route `/catalog` on the app domain, no tenant slug.
-- Lists Stock Lines with Available > 0 with exact counts, filterable by Category. No prices, costs, suppliers, batches, dates or photos.
+- Lists Stock Lines with Available > 0 with exact counts, filterable by Category. No prices, costs, suppliers, batches or dates. Photos: one per Product, set by an Admin in Settings (Catalog images), stored in the public `product-images` bucket (2 MiB, webp, jpeg or png, shrunk in the browser to 1200 px) and shown only on the Public Catalog and its preview.
 - `settings.catalog_public` toggle; when false the route returns 404.
 - "Call to Inquire" opens `wa.me/{settings.whatsapp_number}` with a prefilled message naming the Stock Line. Nothing is recorded.
 - Served from a `v_public_catalog` view granted to the anon role. It and `v_public_business` are owner-run views by design (ADR 0003); the Supabase advisor warning on them is expected.
@@ -123,7 +123,6 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 - Credit sales and dues
 - Receipts or invoices printed from a Bill
-- Photos in the catalog
 - Merge tool for duplicate Products or Customers
 - Audit log
 - Offline mode or service worker
