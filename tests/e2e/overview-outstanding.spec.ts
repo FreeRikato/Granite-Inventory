@@ -48,7 +48,9 @@ test("Overview shows what is still owed, agrees with Credit and moves with a Lat
 });
 
 test("a failed Credit read leaves the rest of Overview on screen", async ({ page, signIn }) => {
-  await page.route("**/rest/v1/v_credit*", (route) => route.abort());
+  await page.route("**/rest/v1/v_credit*", (route) =>
+    route.fulfill({ status: 500, json: { message: "Credit failed" } }),
+  );
   await signIn("operator");
 
   await page.goto("/");
