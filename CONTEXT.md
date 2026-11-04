@@ -134,6 +134,10 @@ _Avoid_: Dues, udhaar, pending, loan
 What a Credit Bill still owes: its total (Stone Sale Price plus Stickering Price over its Sales) minus everything received on it, at the sale and later. Never stored; derived in `v_credit`. A Balance of zero closes the Bill. Moves with a Correction of the Bill's total, which is refused if it would go below what was already received. No write-off.
 _Avoid_: Outstanding (for one Bill; Outstanding is the sum of Balances), due
 
+**Outstanding**:
+What Customers still owe today: the sum of the Balances of every open Credit Bill. A current figure, not a month-to-date one, so it can include Bills sold in earlier months. Shown on the Credit screen and beside MTD Revenue on Overview, and the two always read the same. A ₹10,000 Credit Bill with ₹6,000 paid reads ₹4,000, and ₹0 once the other ₹4,000 comes in. Money received and MTD Revenue do not wait for it: each payment counts on its own day and a Bill counts in full at the sale.
+_Avoid_: Dues, receivables, Balance (for the sum; a Balance is one Bill's)
+
 **Later payment**:
 Money received on a Credit Bill after the sale, on a date between the sale and today, in one or more Payment Modes, recorded as one receipt that cannot exceed the Balance. Only an Admin can edit or delete one, and always as a whole.
 _Avoid_: Instalment, repayment

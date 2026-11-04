@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Json } from "@/lib/database.types";
-import { defaultPayBy } from "@/lib/credit";
+import { creditTotals, defaultPayBy } from "@/lib/credit";
+import { readCredit, toCreditRow } from "@/lib/query/reads";
 import { ensureTestUsers, expectError, resetDomainData, signedInClient, sql, type Db } from "./harness";
 import {
   createBatch,
@@ -572,6 +573,51 @@ describe("credit: a Bill sold on credit and paid later", () => {
       expect(byDay[daysAgo(5)]).toMatchObject({ cash: 6000, upi: 0, bank_transfer: 0, total: 6000 });
       expect(byDay[daysAgo(1)]).toMatchObject({ cash: 500, upi: 1000, bank_transfer: 0, total: 1500 });
       expect(byDay[daysAgo(3)]).toMatchObject({ total: 0 });
+    });
+  });
+
+  describe("Outstanding", () => {
+    async function outstanding() {
+      return creditTotals((await readCredit(operator)).map(toCreditRow)).outstanding;
+    }
+
+    async function monthToDate() {
+      const { data, error } = await operator.from("v_dashboard_kpis").select("mtd_revenue, mtd_margin").single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function receivedOn(day: string) {
+      const { data, error } = await operator.rpc("received_by_period", {
+        p_range: "custom",
+        p_from: day,
+        p_to: day,
+      });
+      if (error) throw error;
+      return data?.[0]?.total;
+    }
+
+    it("reads ₹4,000 after ₹6,000 of a ₹10,000 Bill and ₹0 once the rest is paid, leaving the money figures alone", async () => {
+      const billId = await creditBill({ saleDate: daysAgo(3) });
+      expect(await outstanding()).toBe(4000);
+      expect(await receivedOn(daysAgo(3))).toBe(6000);
+      const before = await monthToDate();
+
+      const { error } = await pay(billId, [{ payment_mode: "CASH", amount: 4000 }], today());
+      expect(error).toBeNull();
+
+      expect(await outstanding()).toBe(0);
+      expect(await receivedOn(daysAgo(3))).toBe(6000);
+      expect(await receivedOn(today())).toBe(4000);
+      expect(await monthToDate()).toEqual(before);
+    });
+
+    it("sums the Balances of every open Bill and leaves a settled Bill out", async () => {
+      await creditBill({ saleDate: daysAgo(3) });
+      await creditBill({ saleDate: daysAgo(2), paid: [{ payment_mode: "UPI", amount: 7500 }] });
+      const settled = await creditBill({ saleDate: daysAgo(1), paid: [{ payment_mode: "CASH", amount: 1000 }] });
+      await pay(settled, [{ payment_mode: "CASH", amount: 9000 }], today());
+      expect(await outstanding()).toBe(6500);
     });
   });
 

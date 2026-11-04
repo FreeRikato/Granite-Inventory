@@ -18,9 +18,12 @@ import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
 import { ViewError, ViewReady } from "@/components/view-state";
 import { Input } from "@/components/ui/input";
-import { formatNumber, formatPercent, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
+import { Skeleton } from "@/components/ui/skeleton";
+import { creditTotals } from "@/lib/credit";
+import { formatNumber, formatPercent, formatRupees, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
+  creditQuery,
   dashboardKpisQuery,
   fastMovingQuery,
   marginByPeriodQuery,
@@ -283,6 +286,25 @@ function TopCustomersCard() {
   );
 }
 
+function OutstandingKpi() {
+  const credit = useQuery(creditQuery);
+
+  return (
+    <div className="flex flex-col gap-1 py-5">
+      <span className="text-sm text-muted-foreground">Outstanding</span>
+      {credit.isSuccess ? (
+        <span className="text-2xl font-bold tabular" data-testid="kpi-outstanding">
+          {formatRupees(creditTotals(credit.data).outstanding)}
+        </span>
+      ) : credit.isError ? (
+        <span className="text-sm leading-8 text-destructive">Could not load</span>
+      ) : (
+        <Skeleton className="h-8 w-28" />
+      )}
+    </div>
+  );
+}
+
 export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
   const hydrated = useHydrated();
   const kpis = useQuery(dashboardKpisQuery);
@@ -351,6 +373,7 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
               {formatRupeesCompact(k?.mtd_revenue ?? 0)}
             </span>
           </div>
+          <OutstandingKpi />
           <div className="flex flex-col gap-1 py-5">
             <span className="text-sm text-muted-foreground">MTD Margin</span>
             <span className="text-2xl font-bold tabular" data-testid="kpi-margin">

@@ -7,6 +7,7 @@ code:
   - tests/tooling/credit.test.ts
   - tests/tooling/invalidates-after.test.ts
   - tests/e2e/credit.spec.ts
+  - tests/e2e/overview-outstanding.spec.ts
   - tests/e2e/capture.spec.ts
   - lib/schemas/credit.ts
   - lib/schemas/sale.ts
@@ -66,10 +67,11 @@ A later payment is one receipt: a `credit_payments` row (date, audit) with `cred
 - Record payment and Edit payment are one dialog. The amount is typed; with two or more modes the last picked mode takes the rest of the amount, the same rule as Sell ([[bill-payments]]). Edit checks against the balance without that receipt, as the database does.
 - Customer page and Customers list read `v_customers.owed` and `credit_days_left`; the Sell Customer picker reads them through its own query so a payment refreshes the badges without reloading the Customers. Nothing here blocks a sale.
 - Edit sale shows a credit Bill's total and a note instead of the split, and the delete confirm never asks for one. Deleting a Bill, or its last Sale, takes its later payments with it (the foreign keys cascade), so those confirms name the amount of later payments that goes too.
+- Overview's Outstanding tile uses the same `creditQuery` and `creditTotals` as this screen, so both read the same figure ([[dashboard]]).
 - The Margin table shows the Unpaid row only when something in its range is unpaid, so a shop without credit sees the table as before.
 
 ## Tests
 
-`credit.test.ts` is the seam: the add-up rule, Walk-in refusal, the pay-by default for every weekday, overpay and date refusals, a receipt split across modes, a zero balance closing the Bill, Admin-only edit and delete, an operator and a stranger refused, a Correction that would take the total below what was received, the extension history and `days_left`, Money received and the Margin table equal to Margin. `tests/e2e/credit.spec.ts` is the one thin flow: sell on credit, record a mixed payment, see the Bill leave the open list and find it under Paid. The seven credit captures in `capture.spec.ts` run only with `CAPTURE=<dir>`. Memorial Batches keep the sums easy: a rate is a per piece price, so 5 pieces at 2000 is exactly a ₹10,000 Bill.
+`credit.test.ts` is the seam: the add-up rule, Walk-in refusal, the pay-by default for every weekday, overpay and date refusals, a receipt split across modes, a zero balance closing the Bill, Admin-only edit and delete, an operator and a stranger refused, a Correction that would take the total below what was received, the extension history and `days_left`, Money received and the Margin table equal to Margin. The Outstanding cases walk the client's example, ₹10,000 with ₹6,000 then ₹4,000, and check that Money received and the month-to-date figures stay as they are; they pin rules that already held, so they pass without the Overview tile. `tests/e2e/credit.spec.ts` is the one thin flow: sell on credit, record a mixed payment, see the Bill leave the open list and find it under Paid. `tests/e2e/overview-outstanding.spec.ts` is the Overview flow: the tile reads ₹4,000, Credit agrees, and it reads ₹0 after a Later payment. The seven credit captures in `capture.spec.ts` run only with `CAPTURE=<dir>`. Memorial Batches keep the sums easy: a rate is a per piece price, so 5 pieces at 2000 is exactly a ₹10,000 Bill.
 
 Related: [[testing]], [[readable-refusals]].

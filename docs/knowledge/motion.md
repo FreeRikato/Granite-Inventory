@@ -77,7 +77,7 @@ Under `prefers-reduced-motion: reduce`, `globals.css` zeroes every `tw-animate-c
 
 ## Page skeletons
 
-Each route has one skeleton built from `Skeleton`, in `components/skeletons/`: Overview, Yard, Sell, Inward, Customers and a customer's page. Every one is static markup with no state and no client hooks, shaped like the loaded page: the same grid, the same card padding, and block heights copied from what the loaded page measures (Overview's KPI row is 193px, its margin card 352px; the data age row is 16px). A skeleton that matches by height is what keeps layout shift on load under 0.02, because the content replaces it without moving anything below it.
+Each route has one skeleton built from `Skeleton`, in `components/skeletons/`: Overview, Yard, Sell, Inward, Customers and a customer's page. Every one is static markup with no state and no client hooks, shaped like the loaded page: the same grid, the same card padding, and block heights copied from what the loaded page measures (Overview's KPI row is 290px, its margin card 352px; the data age row is 16px). A skeleton that matches by height is what keeps layout shift on load under 0.02, because the content replaces it without moving anything below it.
 
 The same skeleton is used in three places and always inside one `aria-busy` wrapper, which `tests/e2e/loading.spec.ts` reads:
 
