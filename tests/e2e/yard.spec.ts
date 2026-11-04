@@ -122,3 +122,33 @@ test("a stack of more than six purchases is one framed section with one heading"
   await expect(stacks.getByRole("heading", { level: 2 })).toHaveText(["4 ft Slot · 99"]);
   await expect(stacks.getByTestId("yard-batch")).toHaveCount(7);
 });
+
+test("group by size lists every size with its batch numbers and lives in the url", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/yard");
+  const toggle = page.getByRole("radiogroup", { name: "Group by" });
+  await expect(toggle.getByRole("radio", { name: "Slot" })).toBeChecked();
+
+  await expect(async () => {
+    await toggle.getByRole("radio", { name: "Size" }).click();
+    await expect(page).toHaveURL(/group=size/, { timeout: 1000 });
+  }).toPass();
+
+  const stacks = page.getByTestId("yard-stack");
+  await expect(stacks.getByRole("heading", { level: 2 })).toHaveText(["4 × 2 ft", "5 × 3 ft", "No size"]);
+  await expect(stacks.nth(0)).toContainText("2 purchases · 14 available");
+  await expect(stacks.nth(0).getByTestId("yard-batch").nth(0)).toContainText("Batch number:4 ft Slot · 12");
+  await expect(stacks.nth(0).getByTestId("clamp")).toContainText("New batch arrived 229 days later");
+  await expect(stacks.nth(2).getByTestId("yard-batch")).toHaveAttribute("data-batch-code", "DS-CROSS-01");
+  await expect(stacks.nth(2).getByTestId("yard-batch")).not.toContainText("Batch number");
+
+  await page.reload();
+  await expect(toggle.getByRole("radio", { name: "Size" })).toBeChecked();
+
+  await expect(async () => {
+    await toggle.getByRole("radio", { name: "Slot" }).click();
+    await expect(page).not.toHaveURL(/group=/, { timeout: 1000 });
+  }).toPass();
+  await expect(stacks.getByRole("heading", { level: 2 }).first()).toHaveText("4 ft Slot · 12");
+  await expect(page.getByTestId("yard-batch").first()).not.toContainText("Batch number");
+});

@@ -8,6 +8,7 @@ code:
   - components/yard/yard-filters.tsx
   - components/yard/batch-card.tsx
   - components/yard/clamp.tsx
+  - components/skeletons/yard-skeleton.tsx
   - components/ageing-badge.tsx
   - tests/e2e/yard-cls.spec.ts
   - tests/e2e/yard-filter.spec.ts
@@ -23,9 +24,13 @@ Age, Ageing Band, Sold Out and the Clamp gap are all derived in the yard view fr
 
 ## Ordering and grouping
 
-The yard is one section per Stack, the pile named by a Slot and a Batch number ([[batches]]). `groupByStack` in `lib/yard.ts` orders sections by Slot, then by Batch number with a numeric compare so 2 sorts before 10; Batches without a number fall into a last "No batch number" section. Slot is an ordinary filter now, so `/yard?slot=5FT` still narrows the page. Typed slots ([[batches]]) sort after the built-ins, alphabetically, and appear in the Slot filter. Archived Batches are hidden unless `?archived=1` ("Show archived"), and a section's available count leaves them out, since they are not stock anyone can sell.
+By default the yard is one section per Stack, the pile named by a Slot and a Batch number ([[batches]]). `groupByStack` in `lib/yard.ts` orders sections by Slot, then by Batch number with a numeric compare so 2 sorts before 10; Batches without a number fall into a last "No batch number" section. Slot is an ordinary filter now, so `/yard?slot=5FT` still narrows the page. Typed slots ([[batches]]) sort after the built-ins, alphabetically, and appear in the Slot filter. Archived Batches are hidden unless `?archived=1` ("Show archived"), and a section's available count leaves them out, since they are not stock anyone can sell.
 
-Inside a section, Batches of one Stock Line stay together, so the Clamp (the virtual divider between two deliveries of the same stone) sits between them. Lines are ordered by their oldest batch, and batches within a line by date.
+Group by Size (`?group=size`) swaps `groupByStack` for `groupBySize`, which makes one section per exact length and breadth, thickness ignored, the same grouping as Overview's Fast vs slow moving. Sections run smallest first with a numeric compare, so 4 × 2 ft sits before 10 × 2 ft, and Batches with no Size share a last "No size" section. The heading comes from `formatDims`, the card's own Dimensions text; thickness stays on the card because one heading can hold several. Both groupers return a `YardSection` with its own `title`, and share the available count, so everything after grouping (chunks, windowing, Clamps, the section frame) works on either. Size section keys start with `size|`, because a typed Slot called "4" with Batch number 2 would otherwise share a key with 4 × 2 ft and the windowed list would reuse the height it measured for the other view.
+
+A Size section mixes Products and Slots, so it has no Stack in its heading: the section sets `showStack`, and `BatchCard` prints the Batch number ("4 ft Slot · 12") on each card, and leaves it out for Batches from before Stacks existed. The Slot view stays as it was, with the number in the heading only.
+
+Inside a section, Batches of one Stock Line stay together, so the Clamp (the virtual divider between two deliveries of the same stone) sits between them. Lines are ordered by their oldest batch, and batches within a line by date. Two lines whose oldest batches tie on date and entry time, as bulk-loaded rows do, fall back to `line_key`, because a compare that calls them equal lets the sort interleave them and the Clamp disappears.
 
 ## Windowing
 
@@ -35,7 +40,7 @@ Past `WINDOW_AFTER`, `chunkStacks` cuts each Stack into chunks of `CHUNK_SIZE` b
 
 ## Filters and links
 
-The filter row marks itself pending while a change is on its way to the URL, and the list dims until the new rows are shown ([[browser-reads]]). Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it. "Less than 5 left" (`?low=1`, threshold `LOW_STOCK_BELOW`) answers "which piles are nearly empty", so it checks each Batch's own Available, not the Stack's count or the Stock Line's total, the same per-Batch shape as every other filter in `matchesFilters`. It does not decide whether Sold Out Batches appear; "Show sold out" keeps that job, so the two toggles never contradict. It counts as a filter for the empty state, since it narrows the list.
+The filter row marks itself pending while a change is on its way to the URL, and the list dims until the new rows are shown ([[browser-reads]]). Every filter lives in the URL, so a filtered yard can be linked to from the dashboard or the palette. So does the grouping: nothing is remembered between visits, Slot is the default and clears `group` from the URL, and any other value reads as Slot, so older links keep working. The control is a `SegmentedToggle` rather than a select because there are only two choices and both should show at once. It is not a filter, so it does not count towards the "nothing matches" empty state. A deep link to a Stock Line (from the palette or the stale panel) shows every Stack that holds it. "Less than 5 left" (`?low=1`, threshold `LOW_STOCK_BELOW`) answers "which piles are nearly empty", so it checks each Batch's own Available, not the Stack's count or the Stock Line's total, the same per-Batch shape as every other filter in `matchesFilters`. It does not decide whether Sold Out Batches appear; "Show sold out" keeps that job, so the two toggles never contradict. It counts as a filter for the empty state, since it narrows the list.
 
 ## Empty states
 

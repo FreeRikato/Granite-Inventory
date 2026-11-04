@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardSkeleton, DataAgeRowSkeleton, SearchSkeleton, TitleSkeleton } from "./parts";
 
-const FILTER_WIDTHS = ["w-28", "w-28", "w-28", "w-28", "w-28", "w-44", "w-36"];
+const FILTER_WIDTHS = ["w-28", "w-28", "w-28", "w-28", "w-28", "w-44", "w-44", "w-36"];
 
 export function YardSkeleton() {
   return (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Archive, CircleOff } from "lucide-react";
 import { AgeingBanner } from "@/components/ageing-badge";
 import { Button } from "@/components/ui/button";
+import { stackLabel } from "@/lib/domain";
 import { formatDate, formatDims } from "@/lib/format";
 import type { YardBatch } from "@/lib/yard";
 import { rowStateClass } from "@/lib/query/row-style";
@@ -9,10 +10,11 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   readonly batch: YardBatch;
+  readonly showStack?: boolean;
   readonly actions?: React.ReactNode;
 };
 
-export function BatchCard({ batch, actions }: Props) {
+export function BatchCard({ batch, showStack = false, actions }: Props) {
   const stale = batch.ageing_band === "STALE";
   return (
     <article
@@ -46,6 +48,9 @@ export function BatchCard({ batch, actions }: Props) {
       </div>
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <dl className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+          {showStack && batch.slot && batch.stack_number ? (
+            <Stat label="Batch number" value={stackLabel(batch.slot, batch.stack_number)} />
+          ) : null}
           <Stat label="Dimensions" value={formatDims(batch.length_ft, batch.breadth_ft)} />
           {batch.thickness_mm !== null ? <Stat label="Thickness" value={`${batch.thickness_mm}mm`} /> : null}
           <Stat label="Bought" value={String(batch.initial_units ?? 0)} />

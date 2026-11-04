@@ -11,13 +11,14 @@ import { BatchActions, type EditLists } from "@/components/yard/batch-actions";
 import { BatchCard } from "@/components/yard/batch-card";
 import { Clamp } from "@/components/yard/clamp";
 import { YardFilters } from "@/components/yard/yard-filters";
-import { slotChoices, slotLabel, stackLabel } from "@/lib/domain";
+import { slotChoices, slotLabel } from "@/lib/domain";
 import { productsQuery, suppliersQuery, yardBatchesQuery } from "@/lib/query/reads";
 import { useHydrated } from "@/lib/query/provider";
 import { ViewError, ViewReady } from "@/components/view-state";
 import {
   WINDOW_AFTER,
   chunkStacks,
+  groupBySize,
   groupByStack,
   matchesFilters,
   parseYardQuery,
@@ -51,7 +52,7 @@ export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
     : null;
 
   const filtered = all.filter((b) => matchesFilters(b, query));
-  const groups = groupByStack(filtered);
+  const groups = query.group === "size" ? groupBySize(filtered) : groupByStack(filtered);
   const windowed = filtered.length > WINDOW_AFTER;
   const chunks = chunkStacks(groups, query.sort, windowed ? undefined : Infinity);
   const filtering = Boolean(
@@ -113,13 +114,16 @@ function frameClass({ leading, trailing }: StackChunk) {
 
 function StackChunkSection({ chunk, editLists }: { chunk: StackChunk; editLists: EditLists | null }) {
   const { group } = chunk;
-  const title = group.slot && group.stackNumber ? stackLabel(group.slot, group.stackNumber) : "No batch number";
   const count = group.batches.length;
   return (
-    <section className={frameClass(chunk)} aria-label={chunk.leading ? title : undefined} data-testid="yard-stack">
+    <section
+      className={frameClass(chunk)}
+      aria-label={chunk.leading ? group.title : undefined}
+      data-testid="yard-stack"
+    >
       {chunk.leading ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-bold">{title}</h2>
+          <h2 className="text-base font-bold">{group.title}</h2>
           <span className="text-sm text-muted-foreground tabular">
             {count} {count === 1 ? "purchase" : "purchases"} · {group.available} available
           </span>
@@ -131,6 +135,7 @@ function StackChunkSection({ chunk, editLists }: { chunk: StackChunk; editLists:
             {gap !== null ? <Clamp days={gap} /> : null}
             <BatchCard
               batch={batch}
+              showStack={group.showStack}
               actions={editLists ? <BatchActions batch={batch} lists={editLists} /> : undefined}
             />
           </div>
