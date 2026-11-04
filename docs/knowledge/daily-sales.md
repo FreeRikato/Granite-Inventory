@@ -16,6 +16,7 @@ code:
   - app/(app)/sales/later-payments.tsx
   - app/(app)/customers/[id]/page.tsx
   - app/(app)/customers/[id]/sales-rows.tsx
+  - app/(app)/customers/[id]/sale-actions.tsx
   - tests/seam/daily-sales.test.ts
   - tests/tooling/daily-sales.test.ts
   - tests/tooling/invalidates-after.test.ts
@@ -52,5 +53,17 @@ The field keeps its own draft text, because a date input reports a value on ever
 ## Corrections
 
 The Admin actions are the Customer page's, through the shared `SalesTable`, whose `lead` swaps the Date column for a linked Customer. The edit lists come from the cached Yard batches and customers queries, read only for an Admin. `correct-sale` still asks for a server refresh for the Customer page; here it only re-renders a shell with no data. Every write that changes a Sale, a receipt, a Bill's due badge, or a name on a row lists `daily-sales` ([[corrections]]).
+
+## Reading across a row
+
+A Bill row fills the same Qty, Total and Margin columns as its Sales, each the sum over them, so a blank never reads as zero. Its percentage is that Margin over that Total, not an average of the lines.
+
+Every cell is top aligned, because the Stone cell grows with credit and working lines and a vertically centred neighbour would drift away from its first line. The action cell has less padding than the text cells by exactly the difference between a 36px button and a 20px line, which puts the button's middle on that first line. The batch code is `text-xs`, so it takes the 20px line height of the cells around it.
+
+Sale rows indent the Stone by the width of the chevron and its gap, so a Sale's name starts under the Bill's item count. The toggle's focus ring is inset because `overflow-x-auto` on the table wrapper clips an outer ring at the left edge on a phone. The action cell's right padding keeps buttons off the edge of the Sale rows' band, and it sits on Bill rows too so both right edges match.
+
+## One control height
+
+Every control on the page is 36px, the height of `ConfirmDelete`'s button: the day picker's arrows, field and Today button, and Edit. The Daily Sales skeleton draws the picker at the same size so the page does not move when it loads. The four figures take fixed columns from `lg` up, so their dividers do not move from day to day as the amounts change; Money received is wider because its note names all three Payment Modes, and "Bank Transfer" uses non-breaking spaces so a narrow screen breaks between modes and not inside one. Later payments rows use the table's row padding.
 
 Related: [[sales-and-stock-lines]], [[bill-payments]], [[testing]].

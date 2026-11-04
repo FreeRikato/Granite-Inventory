@@ -30,6 +30,8 @@ export type LaterPayment = {
 
 type Lead = "date" | "customer";
 
+const ROW = "block border-t border-border py-2.5 sm:table-row sm:py-0 sm:[&>td]:align-top";
+
 type Entry =
   | { readonly kind: "sale"; readonly sale: Sale }
   | { readonly kind: "bill"; readonly billId: string; readonly lines: Sale[] };
@@ -76,7 +78,7 @@ export function SalesTable({
           <tr>
             <th className="py-2 pr-4 font-medium">{lead === "customer" ? "Customer" : "Date"}</th>
             <th className="py-2 pr-4 font-medium">Stone</th>
-            <th className="py-2 pr-4 font-medium">Batch</th>
+            <th className="py-2 pr-4 font-medium">Purchase code</th>
             <th className="py-2 pr-4 text-right font-medium">Qty</th>
             <th className="py-2 pr-4 text-right font-medium">Total</th>
             <th className="py-2 text-right font-medium">Margin</th>
@@ -112,7 +114,7 @@ export function SalesTable({
 
 function LeadCell({ sale, lead }: { readonly sale: Sale | undefined; readonly lead: Lead }) {
   return (
-    <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
+    <td className="block py-1.5 pr-0 sm:table-cell sm:py-3.5 sm:pr-4 sm:whitespace-nowrap">
       {lead === "customer" ? (
         <>
           <MobileLabel className="mr-2">Customer</MobileLabel>
@@ -150,18 +152,17 @@ function BillRows({
   const [open, setOpen] = useState(false);
   const itemCount = `${lines.length} ${lines.length === 1 ? "item" : "items"}`;
   const total = lines.reduce((sum, line) => sum + (line.revenue ?? 0), 0);
+  const margin = lines.reduce((sum, line) => sum + (line.margin ?? 0), 0);
+  const pieces = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
 
   return (
     <Fragment>
-      <tr
-        className={cn("block border-t border-border py-2.5 sm:table-row sm:py-0", rowStateClass)}
-        data-testid="bill-row"
-      >
+      <tr className={cn(ROW, rowStateClass)} data-testid="bill-row">
         <LeadCell sale={lines[0]} lead={lead} />
-        <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4" colSpan={3}>
+        <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-3.5 sm:pr-4" colSpan={2}>
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-sm text-left font-medium hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="-my-0.5 flex items-center gap-1.5 rounded-md py-0.5 pr-1.5 text-left font-medium hover:text-accent-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset focus-visible:outline-none"
             aria-label={itemCount}
             aria-expanded={open}
             onClick={() => setOpen((wasOpen) => !wasOpen)}
@@ -183,12 +184,17 @@ function BillRows({
           ) : null}
           {credit ? <CreditLine credit={credit} later={later} /> : null}
         </td>
-        <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
+        <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-3.5 sm:pr-4 sm:text-right">
+          <MobileLabel className="mr-2 font-sans">Qty</MobileLabel>
+          {pieces}
+        </td>
+        <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-3.5 sm:pr-4 sm:text-right">
           <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
           {formatRupees(total)}
         </td>
+        <MarginCell margin={margin} percent={total > 0 ? (margin / total) * 100 : null} />
         {editLists ? (
-          <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4" colSpan={2}>
+          <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-1.5 sm:pr-3 sm:pl-4">
             <MobileLabel>Actions</MobileLabel>
             <BillActions billId={billId} lines={lines} laterTotal={bill?.laterTotal ?? 0} />
           </td>
@@ -251,11 +257,7 @@ function SaleRow({
 }) {
   return (
     <tr
-      className={cn(
-        "block border-t border-border py-2.5 sm:table-row sm:py-0",
-        rowStateClass,
-        nested && "bg-muted/40 [&>td:first-child]:pl-6",
-      )}
+      className={cn(ROW, rowStateClass, nested && "bg-muted/40 max-sm:px-3 [&>td:first-child]:pl-6")}
       data-testid="sale-row"
     >
       {nested && lead === "customer" ? (
@@ -265,7 +267,7 @@ function SaleRow({
       ) : (
         <LeadCell sale={s} lead={lead} />
       )}
-      <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
+      <td className={cn("block py-1.5 pr-0 font-medium sm:table-cell sm:py-3.5 sm:pr-4", nested && "sm:pl-5.5")}>
         <MobileLabel className="mr-2">Stone</MobileLabel>
         {s.product_name}
         <span className="block text-xs font-normal text-muted-foreground">
@@ -274,32 +276,36 @@ function SaleRow({
         </span>
         <SaleWorking sale={s} />
       </td>
-      <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-2.5 sm:pr-4">
-        <MobileLabel className="mr-2 font-sans">Batch</MobileLabel>
+      <td className="block py-1.5 pr-0 font-mono text-xs sm:table-cell sm:py-3.5 sm:pr-4 sm:leading-5">
+        <MobileLabel className="mr-2 font-sans">Purchase code</MobileLabel>
         {s.batch_code}
       </td>
-      <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
+      <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-3.5 sm:pr-4 sm:text-right">
         <MobileLabel className="mr-2 font-sans">Qty</MobileLabel>
         {s.quantity}
       </td>
-      <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:pr-4 sm:text-right">
+      <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-3.5 sm:pr-4 sm:text-right">
         <MobileLabel className="mr-2 font-sans">Total</MobileLabel>
         {formatRupees(s.revenue ?? 0)}
       </td>
-      <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-2.5 sm:text-right">
-        <MobileLabel className="mr-2 font-sans">Margin</MobileLabel>
-        {formatRupees(s.margin ?? 0)}
-        {s.margin_pct !== null ? (
-          <span className="ml-1 text-xs text-muted-foreground">({formatPercent(s.margin_pct)})</span>
-        ) : null}
-      </td>
+      <MarginCell margin={s.margin ?? 0} percent={s.margin_pct} />
       {editLists ? (
-        <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pl-4">
+        <td className="flex items-center gap-2 py-1.5 pr-0 sm:table-cell sm:py-1.5 sm:pr-3 sm:pl-4">
           <MobileLabel>Actions</MobileLabel>
           <SaleActions sale={s} lists={editLists} bill={bill} />
         </td>
       ) : null}
     </tr>
+  );
+}
+
+function MarginCell({ margin, percent }: { readonly margin: number; readonly percent: number | null }) {
+  return (
+    <td className="block py-1.5 pr-0 tabular sm:table-cell sm:py-3.5 sm:text-right">
+      <MobileLabel className="mr-2 font-sans">Margin</MobileLabel>
+      {formatRupees(margin)}
+      {percent !== null ? <span className="ml-1 text-xs text-muted-foreground">({formatPercent(percent)})</span> : null}
+    </td>
   );
 }
 

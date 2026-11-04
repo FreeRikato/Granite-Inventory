@@ -95,11 +95,11 @@ export function SaleActions({
         ref={triggerRef}
         variant="outline"
         size="sm"
-        className="h-8 bg-card"
+        className="h-9 bg-card"
         onClick={() => setOpen(true)}
         aria-label={`Edit sale of ${sale.batch_code}`}
       >
-        <Pencil className="size-3.5" /> Edit
+        <Pencil className="size-4" /> Edit
       </Button>
       <ConfirmDelete
         title="Delete this sale?"

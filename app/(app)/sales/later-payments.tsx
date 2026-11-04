@@ -11,7 +11,7 @@ export function LaterPayments({ receipts }: { readonly receipts: readonly DayRec
         {receipts.map((receipt) => (
           <li
             key={receipt.id}
-            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border py-2.5"
+            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border py-3.5"
             data-testid="later-payment"
           >
             <span className="min-w-0">
