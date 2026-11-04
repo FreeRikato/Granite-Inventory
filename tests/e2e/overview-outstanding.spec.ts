@@ -46,3 +46,13 @@ test("Overview shows what is still owed, agrees with Credit and moves with a Lat
   await expect(page.getByTestId("kpi-outstanding")).toHaveText("₹0");
   await expect(page.getByTestId("kpi-revenue")).toHaveText("₹10,000");
 });
+
+test("a failed Credit read leaves the rest of Overview on screen", async ({ page, signIn }) => {
+  await page.route("**/rest/v1/v_credit*", (route) => route.abort());
+  await signIn("operator");
+
+  await page.goto("/");
+  await expect(page.getByTestId("kpi-revenue")).toHaveText("₹10,000");
+  await expect(page.getByText("Could not load", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("kpi-outstanding")).toHaveCount(0);
+});
