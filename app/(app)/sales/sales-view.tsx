@@ -48,7 +48,6 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
         aria-busy={daily.isPlaceholderData}
       >
         <Summary summary={summary} />
-        {customerSqft.length > 0 ? <CustomerSquareFeet rows={customerSqft} /> : null}
         <section className="rounded-card bg-card p-6 shadow-sm">
           <h2 className="text-base font-semibold">Sales</h2>
           {sales.length === 0 ? (
@@ -64,6 +63,7 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
             />
           )}
         </section>
+        {customerSqft.length > 0 ? <CustomerSquareFeet rows={customerSqft} /> : null}
         {laterToday.length > 0 ? <LaterPayments receipts={laterToday} /> : null}
       </div>
     </ViewReady>
@@ -77,7 +77,7 @@ function Summary({ summary }: { readonly summary: DailySummary }) {
       data-testid="daily-summary"
     >
       <Kpi label="Billed" value={formatRupees(summary.billed)} testId="daily-billed" />
-      <Kpi label="Square feet" value={formatSqftAmount(summary.sqft)} unit="sq ft" testId="daily-sqft" />
+      <Kpi label="Square feet sold" value={formatSqftAmount(summary.sqft)} unit="sq ft" testId="daily-sqft" />
       <Kpi
         label="Margin"
         value={formatRupees(summary.margin)}

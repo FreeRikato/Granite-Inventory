@@ -115,6 +115,14 @@ test.describe("route skeletons", () => {
       signIn,
     }, testInfo) => {
       testInfo.skip(testInfo.project.name !== "desktop", "Layout shift is measured on desktop");
+      if (route.name === "sales") {
+        await sql(
+          `insert into public.sales (sale_date, batch_id, customer_id, quantity, sale_rate, area_sqft, landed_cost, payment_mode)
+          select private.ist_today(), b.id, $1, 3, 206.25, b.length_ft * b.breadth_ft, 1450, 'CASH'
+          from public.batches b where b.batch_code = 'BP-NEW-01'`,
+          [customerId],
+        );
+      }
       await signIn("admin");
       await watchRoute(page);
 

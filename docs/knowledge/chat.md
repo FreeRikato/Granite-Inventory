@@ -10,6 +10,7 @@ code:
   - lib/chat/system-prompt.ts
   - supabase/migrations/20261030100000_sale_rate.sql
   - supabase/migrations/20261102100000_stickering_rate.sql
+  - supabase/migrations/20261107110000_square_feet_sold.sql
   - lib/chat/model.ts
   - lib/chat/test-model.ts
   - tests/seam/chat-answer.test.ts

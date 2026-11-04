@@ -12,7 +12,7 @@ const STALE_MS = 10_000;
 
 const KEEP_MS = 24 * 60 * 60 * 1000;
 
-const CACHE_SHAPE = "square-feet";
+const CACHE_VERSION = "2";
 
 type Props = { readonly children: ReactNode; readonly cacheKey: string };
 
@@ -35,7 +35,7 @@ export function QueryProvider({ children, cacheKey }: Props) {
   return (
     <PersistQueryClientProvider
       client={client}
-      persistOptions={{ persister, maxAge: KEEP_MS, buster: CACHE_SHAPE }}
+      persistOptions={{ persister, maxAge: KEEP_MS, buster: CACHE_VERSION }}
       onSuccess={refetchRestored}
     >
       {children}
