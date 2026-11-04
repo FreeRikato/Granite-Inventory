@@ -39,9 +39,13 @@ export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
   BANK_TRANSFER: "Bank Transfer",
 };
 
-export const ROLES = ["ADMIN", "YARD_OPERATOR"] as const;
+export const ROLES = ["ADMIN", "YARD_OPERATOR", "VIEWER"] as const;
 export type Role = (typeof ROLES)[number];
-export const ROLE_LABEL: Record<Role, string> = { ADMIN: "Admin", YARD_OPERATOR: "Yard operator" };
+export const ROLE_LABEL: Record<Role, string> = { ADMIN: "Admin", YARD_OPERATOR: "Yard operator", VIEWER: "Viewer" };
+
+export function canWrite(role: Role): boolean {
+  return role === "ADMIN" || role === "YARD_OPERATOR";
+}
 
 export const AGE_FILTERS = [90, 180, 365] as const;
 export type AgeFilter = (typeof AGE_FILTERS)[number];

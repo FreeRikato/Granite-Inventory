@@ -8,6 +8,7 @@ import { EXIT_MS, rowStateClass, wait, type RowState } from "@/lib/query/row-sty
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AddButton } from "@/components/add-button";
+import { useCanWrite } from "@/components/shell/member-provider";
 import { AgeingBadge } from "@/components/ageing-badge";
 import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
@@ -64,6 +65,7 @@ function lineId(line: CartLine): string {
 }
 
 export function SellForm({ customers: initialCustomers, owed, lines, batches, preselectBatchId }: Props) {
+  const canWrite = useCanWrite();
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [addedCustomers, setAddedCustomers] = useState<readonly Customer[]>([]);
@@ -221,6 +223,7 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!canWrite) return;
     clear();
     const paid = credit ? checkPartPayment(payment, figures.revenue) : checkSplit(payment, figures.revenue);
     if (paid.kind === "refused") {
@@ -273,6 +276,11 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
       noValidate
       className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
     >
+      {canWrite ? null : (
+        <Notice className="lg:col-span-2">
+          View only. Look up stock and customers here; a Viewer cannot record a Sale.
+        </Notice>
+      )}
       <div className="flex min-w-0 flex-col gap-4">
         <Card>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -307,16 +315,18 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
                   }))}
                   value={customerId}
                   onChange={setCustomerId}
-                  placeholder="Search or add customer"
+                  placeholder={canWrite ? "Search or add customer" : "Search customers"}
                   searchPlaceholder="Name or phone..."
-                  onCreate={(q) => setNewCustomer(customerDraftFromQuery(q))}
+                  onCreate={canWrite ? (q) => setNewCustomer(customerDraftFromQuery(q)) : undefined}
                   createLabel={(q) => `Add customer "${q}"`}
                   className="min-w-0 flex-1"
                 />
-                <AddButton
-                  label="Add new customer"
-                  onClick={() => setNewCustomer({ name: "", phone: "", customerType: "REGULAR" })}
-                />
+                {canWrite ? (
+                  <AddButton
+                    label="Add new customer"
+                    onClick={() => setNewCustomer({ name: "", phone: "", customerType: "REGULAR" })}
+                  />
+                ) : null}
               </div>
             </Field>
             <Field label="Contact Number" htmlFor="contact">
@@ -507,16 +517,18 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
               {addRefusal.error}
             </Notice>
           ) : null}
-          <Button
-            ref={addButtonRef}
-            type="button"
-            variant="secondary"
-            disabled={!batch || pending || leavingIds.length > 0}
-            onClick={addToOrder}
-            className="h-11 w-full"
-          >
-            Add to order
-          </Button>
+          {canWrite ? (
+            <Button
+              ref={addButtonRef}
+              type="button"
+              variant="secondary"
+              disabled={!batch || pending || leavingIds.length > 0}
+              onClick={addToOrder}
+              className="h-11 w-full"
+            >
+              Add to order
+            </Button>
+          ) : null}
         </div>
 
         <Card>
@@ -529,7 +541,9 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
             ) : null}
           </div>
           {listed.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">No lines yet. Add a product to start the order.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {canWrite ? "No lines yet. Add a product to start the order." : "No lines."}
+            </p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2">
               {listed.map((l) => (
@@ -600,7 +614,7 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
           <Row
             label="Landed Cost (auto)"
             sub="From the batch, freight included"
-            value={cart.length > 0 ? formatRupees(figures.landedTotal) : "Add a line"}
+            value={cart.length > 0 ? formatRupees(figures.landedTotal) : canWrite ? "Add a line" : formatRupees(0)}
             muted
           />
           <Row label="Base Margin" value={formatRupees(figures.stoneMargin)} />
@@ -700,13 +714,15 @@ export function SellForm({ customers: initialCustomers, owed, lines, batches, pr
             {error}
           </Notice>
         ) : null}
-        <Button
-          type="submit"
-          disabled={pending || cart.length === 0 || !customer}
-          className="mt-5 h-12 w-full text-base font-semibold"
-        >
-          {pending ? "Recording..." : cart.length > 1 ? `Record Sale (${cart.length} lines)` : "Record Sale"}
-        </Button>
+        {canWrite ? (
+          <Button
+            type="submit"
+            disabled={pending || cart.length === 0 || !customer}
+            className="mt-5 h-12 w-full text-base font-semibold"
+          >
+            {pending ? "Recording..." : cart.length > 1 ? `Record Sale (${cart.length} lines)` : "Record Sale"}
+          </Button>
+        ) : null}
       </aside>
 
       <SplitDialog

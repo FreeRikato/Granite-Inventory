@@ -57,4 +57,6 @@ The summary totals the whole order, not the line being typed: Stone Sale Price, 
 
 `billSchema` validates the order in the server action: a customer, a date, a payment mode and at least one line, each line under the same sentences as a single sale. `billRpcArgs` zeroes stickering on lines that do not have it, as `saleRpcArgs` does for one Sale. The seam test for both is in `tests/seam/api-observations.test.ts`. The merge, split prefill and cover, and order figure rules are tested as plain functions in `tests/tooling/cart.test.ts`; `sell.spec.ts` holds the wiring flow (two lines, one Bill, the Yard dropping) and one thin check per feature.
 
+A Viewer ([[access-model]]) gets the screen as a look-up: the pickers work, Add to order, Record Sale and the add-customer controls are gone, and `submit` returns early.
+
 Related: [[forms-and-components]], [[focus-after-write]].

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { initialsOf } from "@/components/customer-type-badge";
 import { DueBadge, ExtendedTag } from "@/components/due-badge";
+import { useCanWrite } from "@/components/shell/member-provider";
 import { Button } from "@/components/ui/button";
 import { isOpen, payByLine, formatDay, type CreditRow } from "@/lib/credit";
 import { formatRupees } from "@/lib/format";
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export function CreditCard({ row, isAdmin, onRecord, onExtend, onEdit }: Props) {
+  const canWrite = useCanWrite();
   const [open, setOpen] = useState(false);
   const share = row.total > 0 ? Math.min(100, (row.paid / row.total) * 100) : 0;
   const settled = !isOpen(row);
@@ -87,7 +89,7 @@ export function CreditCard({ row, isAdmin, onRecord, onExtend, onEdit }: Props) 
             Payments
             <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} aria-hidden />
           </Button>
-          {settled ? null : (
+          {settled || !canWrite ? null : (
             <>
               <Button type="button" variant="outline" size="sm" className="h-9 bg-card" onClick={onExtend}>
                 Change date

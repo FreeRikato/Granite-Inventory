@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
+import { canWrite } from "@/lib/domain";
 import { roleLabel } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { AdminLists } from "./admin-lists";
@@ -14,10 +15,11 @@ export default async function SettingsPage() {
   const session = await getSession();
   const member = session.status === "member" ? session.member : null;
   const isAdmin = member?.role === "ADMIN";
+  const isViewer = member !== null && !canWrite(member.role);
   const supabase = await createClient();
   const empty = Promise.resolve({ data: [] });
   const [{ data: team }, { data: settings }, products, suppliers, batchReferences] = await Promise.all([
-    isAdmin ? supabase.from("team_members").select("*").order("created_at") : empty,
+    isAdmin || isViewer ? supabase.from("team_members").select("*").order("created_at") : empty,
     supabase.from("settings").select("*").maybeSingle(),
     isAdmin
       ? supabase.from("products").select("id, name, abbreviation, category, archived_at, image_path").order("name")
@@ -57,10 +59,21 @@ export default async function SettingsPage() {
 
       <Appearance />
 
+      {isAdmin || isViewer ? (
+        <>
+          <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} canManage={isAdmin} />
+          <InventoryRules
+            ageing={settings?.ageing_after_days ?? 90}
+            stale={settings?.stale_after_days ?? 180}
+            canEdit={isAdmin}
+          />
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Team access and inventory rules are managed by an Admin.</p>
+      )}
+
       {isAdmin ? (
         <>
-          <TeamAccess members={team ?? []} currentEmail={member?.email ?? ""} />
-          <InventoryRules ageing={settings?.ageing_after_days ?? 90} stale={settings?.stale_after_days ?? 180} />
           <CatalogImages products={products.data ?? []} />
           <AdminLists
             products={products.data ?? []}
@@ -68,9 +81,7 @@ export default async function SettingsPage() {
             batchReferences={batchReferences.data ?? []}
           />
         </>
-      ) : (
-        <p className="text-sm text-muted-foreground">Team access and inventory rules are managed by an Admin.</p>
-      )}
+      ) : null}
     </>
   );
 }

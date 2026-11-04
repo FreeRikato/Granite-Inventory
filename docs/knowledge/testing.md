@@ -12,6 +12,7 @@ code:
   - tests/explore/sessions.e2e.ts
   - tests/e2e/settings.spec.ts
   - tests/e2e/credit.spec.ts
+  - tests/e2e/viewer.spec.ts
   - tests/tooling/comments.test.ts
   - tests/tooling/format.test.ts
   - tests/eval/chat.eval.ts
@@ -46,7 +47,7 @@ Findings land in `.e2e/report.json` with screenshots under `.e2e/results/`. Tick
 
 ## Seam harness
 
-`ensureTestUsers()` creates the three test accounts in Auth (idempotent) and puts admin and operator on the Team Member list; the stranger stays off it. Domain tables are left to each suite's own seeding, and `resetDomainData()` wipes them between suites while Team Members, settings and the Walk-in Customer stay. The fixtures are small domain builders that each return ids for the next call, and they speak the [[ist-calendar]].
+`ensureTestUsers()` creates the four test accounts in Auth (idempotent) and puts admin, operator and viewer on the Team Member list; the stranger stays off it. Domain tables are left to each suite's own seeding, and `resetDomainData()` wipes them between suites while Team Members, settings and the Walk-in Customer stay. The fixtures are small domain builders that each return ids for the next call, and they speak the [[ist-calendar]].
 
 The lock tests use a fresh lock directory per test so they never contend with the real lock the suite holds. The stale-owner case uses pid 2^22 + 1, which is above the default pid ceiling on macOS and Linux, so nothing is running there.
 

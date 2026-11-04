@@ -60,4 +60,6 @@ A card shows one Batch: the ageing banner (a warning for stale, a tag for fresh 
 
 No input is dispatched, so every shift counts. Chromium flags shifts under Playwright's mobile emulation as `hadRecentInput`, which would otherwise hide the very shift this test guards on the mobile project.
 
+A Viewer ([[access-model]]) gets no "Sell from this Batch" link.
+
 Related: [[browser-reads]], [[batches]].

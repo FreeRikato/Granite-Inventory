@@ -78,7 +78,7 @@ OPENROUTER_API_KEY=<from ~/.secrets.env>                # server-only, optional;
 
 The UI shows only "Continue with Google", but local Auth also has the email provider enabled, which tests use to mint sessions:
 
-- Seam tests (Vitest): create users with the secret key via the Auth admin API, one per role (`admin@test.local` on the Team Member list as ADMIN, `operator@test.local` as YARD_OPERATOR, `stranger@test.local` not on the list), sign in with password using supabase-js, and call views and functions as that user. Anonymous tests use the publishable key with no session. Truncate domain tables between tests; `supabase db reset` before the suite.
+- Seam tests (Vitest): create users with the secret key via the Auth admin API, one per role (`admin@test.local` on the Team Member list as ADMIN, `operator@test.local` as YARD_OPERATOR, `viewer@test.local` as VIEWER, `stranger@test.local` not on the list), sign in with password using supabase-js, and call views and functions as that user. Anonymous tests use the publishable key with no session. Truncate domain tables between tests; `supabase db reset` before the suite.
 - Playwright: sign in programmatically with the same email users through a small test-only route or by calling supabase-js in the test and setting the auth cookies, then visit pages. Never drive the real Google consent screen.
 
 ## Gotchas met while building

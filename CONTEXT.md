@@ -180,7 +180,7 @@ A Google account allowed to sign in, with a Role. Nobody outside the Team Member
 _Avoid_: User, staff, account
 
 **Role**:
-Admin or Yard Operator. Both see all stock, costs and margins; only Admin makes Corrections, changes Settings and manages Team Members.
+Admin, Yard Operator or Viewer. All three see all stock, costs and margins and can use Chat; only Admin makes Corrections, changes Settings and manages Team Members. A Viewer can read every screen but cannot create, edit or delete anything. An Admin assigns the Role in Team Members.
 
 **Margin**:
 Per Sale: (Sale Price − Landed Cost) × quantity, where the Sale Price is Area × Sale Rate, plus (Stickering Price − Stickering Cost) × quantity, where the Stickering Price is Area × Stickering Rate and the Stickering Cost is Area × Stickering Cost Rate. Margin percentage is Margin divided by total billed (stone plus Stickering).
