@@ -42,7 +42,7 @@ Added to credit reads `bill_payments` and not `v_bill_balances`, because the bal
 
 The list is one Customer per row because the Sales table is one Bill per row: a Customer can have several Bills and Sales without a Bill in a day. It rides in `daily_summary` as jsonb, like `top_customers`' `products`, so the total and its rows come from the same read, and `readDailySales` parses it with zod.
 
-The list sits under the Sales table and not above it because it exists only on a day with Sales. Above the table it would push the Sales card down on load, and a skeleton card there would shift an empty day instead; `route-cls.spec.ts` measures `/sales` with a Sale for this reason. The Daily Sales skeleton draws the same grid as `Summary`, so the rows of figures match at every width.
+The list sits under the Sales table and not above it because it exists only on a day with Sales. Above the table it would push the Sales card down on load, and a skeleton card there would shift an empty day instead; `route-cls.spec.ts` measures `/sales` with a Sale for this reason. The Daily Sales skeleton draws the same columns as `Summary` at every width; it has no note lines, so the row of figures grows slightly when Margin and Money received fill in, within the 0.02 budget.
 
 ## Which day is today
 
