@@ -18,9 +18,11 @@ import { StockDonut } from "@/components/dashboard/stock-donut";
 import { TopCustomers } from "@/components/dashboard/top-customers";
 import { ViewError, ViewReady } from "@/components/view-state";
 import { Input } from "@/components/ui/input";
-import { formatNumber, formatPercent, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
+import { creditTotals } from "@/lib/credit";
+import { formatNumber, formatPercent, formatRupees, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
+  creditQuery,
   dashboardKpisQuery,
   fastMovingQuery,
   marginByPeriodQuery,
@@ -286,12 +288,13 @@ function TopCustomersCard() {
 export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
   const hydrated = useHydrated();
   const kpis = useQuery(dashboardKpisQuery);
+  const credit = useQuery(creditQuery);
   const moving = useQuery(fastMovingQuery);
   const batches = useQuery(yardBatchesQuery);
   const staleAfter = useQuery(staleAfterDaysQuery);
 
-  if (!hydrated || !kpis.isSuccess || !moving.isSuccess || !batches.isSuccess) {
-    const failed = [kpis, moving, batches].find((q) => q.isError);
+  if (!hydrated || !kpis.isSuccess || !credit.isSuccess || !moving.isSuccess || !batches.isSuccess) {
+    const failed = [kpis, credit, moving, batches].find((q) => q.isError);
     if (failed?.isError) return <ViewError what="the overview" message={failed.error.message} />;
     return skeleton;
   }
@@ -301,8 +304,8 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
     .filter((b) => b.ageing_band === "STALE" && (b.available ?? 0) > 0 && !b.archived_at)
     .sort((a, b) => (a.purchase_date ?? "").localeCompare(b.purchase_date ?? ""))
     .slice(0, STALE_ROWS);
-  const fetching = kpis.isFetching || moving.isFetching || batches.isFetching;
-  const updatedAt = Math.min(kpis.dataUpdatedAt, moving.dataUpdatedAt, batches.dataUpdatedAt);
+  const fetching = kpis.isFetching || credit.isFetching || moving.isFetching || batches.isFetching;
+  const updatedAt = Math.min(kpis.dataUpdatedAt, credit.dataUpdatedAt, moving.dataUpdatedAt, batches.dataUpdatedAt);
 
   const active = k?.active_stock ?? 0;
   const lastMonth = k?.active_stock_last_month_end ?? 0;
@@ -349,6 +352,12 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
             <span className="text-sm text-muted-foreground">MTD Revenue</span>
             <span className="text-2xl font-bold tabular" data-testid="kpi-revenue">
               {formatRupeesCompact(k?.mtd_revenue ?? 0)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1 py-5">
+            <span className="text-sm text-muted-foreground">Outstanding</span>
+            <span className="text-2xl font-bold tabular" data-testid="kpi-outstanding">
+              {formatRupees(creditTotals(credit.data).outstanding)}
             </span>
           </div>
           <div className="flex flex-col gap-1 py-5">

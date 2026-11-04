@@ -28,6 +28,8 @@ code:
   - supabase/migrations/20261105100000_credit.sql
   - tests/seam/credit.test.ts
   - tests/e2e/mixed-payment.spec.ts
+  - tests/e2e/overview-outstanding.spec.ts
+  - lib/credit.ts
 ---
 # Dashboard
 
@@ -44,6 +46,7 @@ Every figure on Overview is derived from batches and sales; nothing is stored. "
 - The Top customers card owns its toggle and a query keyed by window, like the Margin card. `topCustomersQuery` parses `products` with a zod schema because Postgres hands it back as untyped JSON. The Products line wraps instead of truncating, so all 3 Products and "+N more" are always visible; when it was one clipped line the tail, which is exactly "+N more", was the part cut off. Only the Customer name truncates. The card sets `min-w-0` so a long unbroken name cannot stretch the single mobile grid column past the screen.
 - The Active stock and Total inventory value card is a container-query box: its two halves sit side by side from 480px of card width and stack below that, instead of from a viewport width. The Ask panel docks at 1280px and narrows the column to a 268px card, where `text-5xl` figures in half-width columns spilled past the card; stacked, they fit ([[chat]]). Panel closed, the card is pixel-identical to before.
 - The Stock status and Fast vs slow moving row is a container-query box too: two columns (400px and the rest) from 640px of row width, stacked below that. At 1280px with the Ask panel docked the row is 540px wide, and the old viewport rule (`lg:`) left Fast vs slow moving 148px, 28px less than its bar values need, so they ran under the panel. Panel closed the row is 664px at 1024, 920px at 1280 and 1080px at 1440, so the closed dashboard is pixel-identical to before from 1024 up. Below that the rule differs from the old viewport one: at viewports 672 to 767 and 1000 to 1023 the row is wide enough for two columns (it was stacked), and both layouts fit. `tests/e2e/chat.spec.ts` measures every `section` on Overview at 1280 and 1440 with the panel open, with sales in the data so the bars exist ([[chat]]).
+- Outstanding reads the Credit screen's own `creditQuery` and `creditTotals`, so the two screens cannot disagree and there is no second sum to keep in step ([[credit]]). It is not a column on `v_dashboard_kpis`: that would be a second calculation of the same figure and would add `dashboard-kpis` to every credit write, while the `credit` key already refreshes after sales, Corrections and Later payments. Overview waits for it with the other KPIs, so the side panel appears whole and the skeleton draws three tiles. It is the one KPI tile in full rupees: compact would show ₹1.2L beside the Credit screen's ₹1,23,456, and the two must read the same. It has no MTD prefix because it is what is owed today, whichever month the Bill was sold in.
 - KPI tiles use compact rupees: ₹5.2L, ₹1.2Cr. A negative amount puts the sign before the symbol (-₹5,050, -₹2.5L); `tests/tooling/format.test.ts` guards it.
 - The Margin chart's y-axis uses `formatRupeesAxis` (₹75K, ₹1L, ₹1.5Cr, -₹3K) instead of the compact form, because the compact form prints anything under 1 lakh in full (₹75,000) and that is wider than the 52 px axis, so the ₹ was clipped at the card's left edge. The tooltip keeps exact amounts through `formatRupees`.
 
