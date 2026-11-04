@@ -74,4 +74,6 @@ A later payment is one receipt: a `credit_payments` row (date, audit) with `cred
 
 `credit.test.ts` is the seam: the add-up rule, Walk-in refusal, the pay-by default for every weekday, overpay and date refusals, a receipt split across modes, a zero balance closing the Bill, Admin-only edit and delete, an operator and a stranger refused, a Correction that would take the total below what was received, the extension history and `days_left`, Money received and the Margin table equal to Margin. The Outstanding cases walk the client's example, ₹10,000 with ₹6,000 then ₹4,000, and check that Money received and the month-to-date figures stay as they are; they pin rules that already held, so they pass without the Overview tile. `tests/e2e/credit.spec.ts` is the one thin flow: sell on credit, record a mixed payment, see the Bill leave the open list and find it under Paid. `tests/e2e/overview-outstanding.spec.ts` is the Overview flow: the tile reads ₹4,000, Credit agrees, and it reads ₹0 after a Later payment. The seven credit captures in `capture.spec.ts` run only with `CAPTURE=<dir>`. Memorial Batches keep the sums easy: a rate is a per piece price, so 5 pieces at 2000 is exactly a ₹10,000 Bill.
 
+A Viewer ([[access-model]]) reads every card but gets no Change date or Record payment.
+
 Related: [[testing]], [[readable-refusals]].

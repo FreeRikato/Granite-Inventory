@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Archive, CircleOff } from "lucide-react";
 import { AgeingBanner } from "@/components/ageing-badge";
+import { useCanWrite } from "@/components/shell/member-provider";
 import { Button } from "@/components/ui/button";
 import { stackLabel } from "@/lib/domain";
 import { formatDate, formatDims } from "@/lib/format";
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function BatchCard({ batch, showStack = false, actions }: Props) {
+  const canWrite = useCanWrite();
   const stale = batch.ageing_band === "STALE";
   return (
     <article
@@ -61,7 +63,7 @@ export function BatchCard({ batch, showStack = false, actions }: Props) {
         </dl>
         <div className="flex shrink-0 items-center gap-2">
           {actions}
-          {!batch.sold_out && !batch.archived_at && batch.id ? (
+          {canWrite && !batch.sold_out && !batch.archived_at && batch.id ? (
             <Button asChild variant="outline" size="sm" className="h-9 bg-card font-semibold">
               <Link href={`/sell?batch=${batch.id}`}>Sell from this Batch</Link>
             </Button>

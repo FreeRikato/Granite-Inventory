@@ -1431,6 +1431,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      can_write: { Args: never; Returns: boolean }
       chat_query: { Args: { q: string }; Returns: Json }
       correct_batch: {
         Args: {

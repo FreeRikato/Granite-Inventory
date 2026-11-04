@@ -7,6 +7,7 @@ import { RowMark, useRowRemoval } from "@/lib/query/row-state";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerDialog, type CustomerDraft } from "@/components/customer-dialog";
+import { useCanWrite } from "@/components/shell/member-provider";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export function CustomerActions({ customer, canDelete }: Props) {
+  const canEdit = useCanWrite();
   const router = useRouter();
   const afterWrite = useAfterWrite();
   const removal = useRowRemoval("delete-customer");
@@ -48,7 +50,7 @@ export function CustomerActions({ customer, canDelete }: Props) {
   return (
     <div className="flex items-center gap-2">
       <RowMark state={removal.state} />
-      {!customer.is_walk_in ? (
+      {canEdit && !customer.is_walk_in ? (
         <Button
           variant="outline"
           className="bg-card"

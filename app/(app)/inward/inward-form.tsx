@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddButton } from "@/components/add-button";
+import { useCanWrite } from "@/components/shell/member-provider";
 import { Field } from "@/components/field";
 import { Notice } from "@/components/notice";
 import { SearchSelect, type OptionAction, type SearchOption } from "@/components/search-select";
@@ -84,6 +85,7 @@ const EMPTY: FormState = {
 };
 
 export function InwardForm({ products: initialProducts, suppliers: initialSuppliers, recentStacks, canManage }: Props) {
+  const canWrite = useCanWrite();
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -142,6 +144,7 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!canWrite) return;
     clear();
     startTransition(async () => {
       const result = await saveBatchAction({
@@ -295,6 +298,9 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
 
   return (
     <form onSubmit={submit} className="rounded-card bg-card p-6 shadow-sm md:p-8" noValidate>
+      {canWrite ? null : (
+        <Notice className="mb-5">View only. Recent batches are below; a Viewer cannot save a Batch.</Notice>
+      )}
       <h2 className="text-base font-semibold">Log New Purchase</h2>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -316,14 +322,16 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
               value={form.supplierId}
               onChange={(v) => set("supplierId", v)}
-              placeholder="Select or add supplier"
+              placeholder={canWrite ? "Select or add supplier" : "Search suppliers"}
               searchPlaceholder="Search suppliers..."
-              onCreate={(name) => setNewSupplier({ id: null, name, phone: "" })}
+              onCreate={canWrite ? (name) => setNewSupplier({ id: null, name, phone: "" }) : undefined}
               createLabel={(q) => `Add supplier "${q}"`}
               optionActions={listActions("suppliers")}
               className="min-w-0 flex-1"
             />
-            <AddButton label="Add new supplier" onClick={() => setNewSupplier({ id: null, name: "", phone: "" })} />
+            {canWrite ? (
+              <AddButton label="Add new supplier" onClick={() => setNewSupplier({ id: null, name: "", phone: "" })} />
+            ) : null}
           </div>
         </Field>
         <Field label="Product" htmlFor="product">
@@ -340,19 +348,24 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
               onChange={(v) => {
                 set("productId", v);
               }}
-              placeholder="Select or add product"
+              placeholder={canWrite ? "Select or add product" : "Search products"}
               searchPlaceholder="Search products..."
-              onCreate={(name) =>
-                setNewProduct({ id: null, name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })
+              onCreate={
+                canWrite
+                  ? (name) =>
+                      setNewProduct({ id: null, name, abbreviation: suggestAbbreviation(name), category: "GRANITE" })
+                  : undefined
               }
               createLabel={(q) => `Add product "${q}"`}
               optionActions={listActions("products")}
               className="min-w-0 flex-1"
             />
-            <AddButton
-              label="Add new product"
-              onClick={() => setNewProduct({ id: null, name: "", abbreviation: "", category: "GRANITE" })}
-            />
+            {canWrite ? (
+              <AddButton
+                label="Add new product"
+                onClick={() => setNewProduct({ id: null, name: "", abbreviation: "", category: "GRANITE" })}
+              />
+            ) : null}
           </div>
         </Field>
       </div>
@@ -461,17 +474,19 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
                 const picked = stackOptions.find((o) => o.value === v);
                 if (picked) setForm((prev) => ({ ...prev, slot: picked.slot, stackNumber: picked.stackNumber }));
               }}
-              placeholder="Pick or add a batch number"
+              placeholder={canWrite ? "Pick or add a batch number" : "Search batch numbers"}
               searchPlaceholder="Search batch numbers..."
               emptyText="No recent batch number matches."
-              onCreate={(stackNumber) => setNewStack({ slot: slot ?? "4FT", stackNumber })}
+              onCreate={canWrite ? (stackNumber) => setNewStack({ slot: slot ?? "4FT", stackNumber }) : undefined}
               createLabel={(q) => `Add batch number "${q}"`}
               className="min-w-0 flex-1"
             />
-            <AddButton
-              label="Add new batch number"
-              onClick={() => setNewStack({ slot: slot ?? "4FT", stackNumber: "" })}
-            />
+            {canWrite ? (
+              <AddButton
+                label="Add new batch number"
+                onClick={() => setNewStack({ slot: slot ?? "4FT", stackNumber: "" })}
+              />
+            ) : null}
           </div>
         </Field>
         <div className="flex flex-col gap-1.5">
@@ -488,15 +503,17 @@ export function InwardForm({ products: initialProducts, suppliers: initialSuppli
         </Notice>
       ) : null}
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          type="submit"
-          disabled={pending || !form.productId || !form.supplierId || !hasSize || !form.stackNumber}
-          className="h-11 px-6 font-semibold"
-        >
-          {pending ? "Saving..." : "Save Batch"}
-        </Button>
-      </div>
+      {canWrite ? (
+        <div className="mt-6 flex justify-end">
+          <Button
+            type="submit"
+            disabled={pending || !form.productId || !form.supplierId || !hasSize || !form.stackNumber}
+            className="h-11 px-6 font-semibold"
+          >
+            {pending ? "Saving..." : "Save Batch"}
+          </Button>
+        </div>
+      ) : null}
 
       <Dialog
         open={newProduct !== null}

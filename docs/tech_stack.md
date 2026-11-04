@@ -43,7 +43,7 @@ Decided on 11 Sep 2026 after reviewing the Pencil designs (Auth, Operator Deskto
 
 2. **shadcn/ui + Tailwind v4**. The Pencil components are shadcn, so `npx shadcn add sidebar command combobox dialog tabs badge chart data-table` gives the full design vocabulary. Theme tokens from the Pencil file go into `globals.css` as CSS vars.
 
-3. **Supabase Auth, Google provider only**. Allowlist is a `team_members(email, role)` table. An RLS policy of the form `auth.jwt()->>'email' in (select email from team_members)` on every table means an unlisted Google account signs in successfully but sees nothing. Both roles read everything including costs (decided in the grilling session); only `ADMIN` passes the write policies and the correction functions.
+3. **Supabase Auth, Google provider only**. Allowlist is a `team_members(email, role)` table. An RLS policy of the form `auth.jwt()->>'email' in (select email from team_members)` on every table means an unlisted Google account signs in successfully but sees nothing. All Roles read everything including costs (decided in the grilling session); only `ADMIN` passes the write policies and the correction functions.
 
 4. **Postgres owns the business rules.** The FIFO/no-merge rule and margin math must never be wrong, so:
    - `record_sale(batch_id, qty, ...)` is a `plpgsql` function: locks the batch row, checks `available_units >= qty`, decrements, snapshots purchase price, computes stone margin and stickering margin. One transaction, no race between two operators.

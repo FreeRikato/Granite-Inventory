@@ -10,7 +10,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import type { Role } from "@/lib/domain";
+import { ROLE_LABEL, type Role } from "@/lib/domain";
 
 export type NavItem = {
   readonly href: string;
@@ -46,5 +46,5 @@ export function isActivePath(pathname: string, href: string): boolean {
 }
 
 export function roleLabel(role: Role): string {
-  return role === "ADMIN" ? "Admin" : "Yard operator";
+  return ROLE_LABEL[role];
 }

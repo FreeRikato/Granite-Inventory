@@ -12,6 +12,7 @@ export const dbUrl = process.env.DATABASE_URL ?? "postgresql://postgres:postgres
 export const TEST_USERS = {
   admin: { email: "admin@test.local", role: "ADMIN" },
   operator: { email: "operator@test.local", role: "YARD_OPERATOR" },
+  viewer: { email: "viewer@test.local", role: "VIEWER" },
   stranger: { email: "stranger@test.local", role: null },
 } as const;
 
@@ -48,8 +49,8 @@ export async function ensureTestUsers(): Promise<void> {
   }
   await sql(`delete from public.team_members where email like '%@test.local'`);
   await sql(
-    `insert into public.team_members (email, name, role) values ($1, 'Test Admin', 'ADMIN'), ($2, 'Test Operator', 'YARD_OPERATOR')`,
-    [TEST_USERS.admin.email, TEST_USERS.operator.email],
+    `insert into public.team_members (email, name, role) values ($1, 'Test Admin', 'ADMIN'), ($2, 'Test Operator', 'YARD_OPERATOR'), ($3, 'Test Viewer', 'VIEWER')`,
+    [TEST_USERS.admin.email, TEST_USERS.operator.email, TEST_USERS.viewer.email],
   );
 }
 

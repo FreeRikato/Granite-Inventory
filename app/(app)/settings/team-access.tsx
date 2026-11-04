@@ -20,9 +20,10 @@ import { addMemberAction, removeMemberAction, setMemberRoleAction } from "./acti
 type Props = {
   readonly members: readonly Tables<"team_members">[];
   readonly currentEmail: string;
+  readonly canManage: boolean;
 };
 
-export function TeamAccess({ members, currentEmail }: Props) {
+export function TeamAccess({ members, currentEmail, canManage }: Props) {
   const afterWrite = useAfterWrite();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -70,7 +71,7 @@ export function TeamAccess({ members, currentEmail }: Props) {
                 </span>
                 <span className="truncate text-xs text-muted-foreground">{m.email}</span>
               </span>
-              {!me ? (
+              {canManage && !me ? (
                 <span className="flex w-full flex-wrap gap-3 pl-12 sm:w-auto sm:flex-nowrap sm:pl-0">
                   <Select
                     value={m.role}
@@ -111,69 +112,73 @@ export function TeamAccess({ members, currentEmail }: Props) {
           );
         })}
       </ul>
-      <Button variant="outline" className="mt-4 bg-card" onClick={() => setOpen(true)}>
-        <UserPlus className="size-4" /> Invite a Google account
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite a Google account</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <Field
-              label="Google email"
-              htmlFor="tm-email"
-              hint="They sign in with this Google account. No email is sent."
-            >
-              <Input
-                id="tm-email"
-                type="email"
-                value={draft.email}
-                onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-                autoFocus
-              />
-            </Field>
-            <Field label="Name" htmlFor="tm-name">
-              <Input
-                id="tm-name"
-                value={draft.name}
-                maxLength={NAME_MAX}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              />
-            </Field>
-            <Field label="Role" htmlFor="tm-role">
-              <Select
-                value={draft.role}
-                onValueChange={(v) => {
-                  if (isRole(v)) setDraft({ ...draft, role: v });
-                }}
-              >
-                <SelectTrigger id="tm-role" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {ROLE_LABEL[r]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                disabled={pending || !draft.email}
-                onClick={() => run(() => addMemberAction(draft), `${draft.email} can now sign in`)}
-              >
-                Add member
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {canManage ? (
+        <>
+          <Button variant="outline" className="mt-4 bg-card" onClick={() => setOpen(true)}>
+            <UserPlus className="size-4" /> Invite a Google account
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite a Google account</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                <Field
+                  label="Google email"
+                  htmlFor="tm-email"
+                  hint="They sign in with this Google account. No email is sent."
+                >
+                  <Input
+                    id="tm-email"
+                    type="email"
+                    value={draft.email}
+                    onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                    autoFocus
+                  />
+                </Field>
+                <Field label="Name" htmlFor="tm-name">
+                  <Input
+                    id="tm-name"
+                    value={draft.name}
+                    maxLength={NAME_MAX}
+                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Role" htmlFor="tm-role">
+                  <Select
+                    value={draft.role}
+                    onValueChange={(v) => {
+                      if (isRole(v)) setDraft({ ...draft, role: v });
+                    }}
+                  >
+                    <SelectTrigger id="tm-role" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {ROLE_LABEL[r]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={pending || !draft.email}
+                    onClick={() => run(() => addMemberAction(draft), `${draft.email} can now sign in`)}
+                  >
+                    Add member
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : null}
     </section>
   );
 }

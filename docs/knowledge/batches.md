@@ -90,4 +90,6 @@ The create and correct functions take the same arguments, so `lib/rpc-args.ts` b
 
 The Inward page is a static shell; its lists and recent batches come from the browser cache ([[browser-reads]]).
 
+On Inward a Viewer ([[access-model]]) keeps the form as a look-up, with the add controls and Save Batch gone and `submit` returning early.
+
 Related: [[yard]], [[sales-and-stock-lines]].
