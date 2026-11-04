@@ -20,7 +20,15 @@ import { ViewError, ViewReady } from "@/components/view-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { creditTotals } from "@/lib/credit";
-import { formatNumber, formatPercent, formatRupees, formatRupeesCompact, formatSize, formatSqft, todayIso } from "@/lib/format";
+import {
+  formatNumber,
+  formatPercent,
+  formatRupees,
+  formatRupeesCompact,
+  formatSize,
+  formatSqft,
+  todayIso,
+} from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
   creditQuery,
