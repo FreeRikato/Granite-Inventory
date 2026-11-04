@@ -140,6 +140,7 @@ test("group by size lists every size with its batch numbers and lives in the url
   await expect(stacks.nth(0).getByTestId("yard-batch").nth(0)).toContainText("Batch number:4 ft Slot · 12");
   await expect(stacks.nth(0).getByTestId("clamp")).toContainText("New batch arrived 229 days later");
   await expect(stacks.nth(2).getByTestId("yard-batch")).toHaveAttribute("data-batch-code", "DS-CROSS-01");
+  await expect(stacks.nth(2).getByTestId("yard-batch")).not.toContainText("Batch number");
 
   await page.reload();
   await expect(toggle.getByRole("radio", { name: "Size" })).toBeChecked();

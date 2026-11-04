@@ -96,7 +96,7 @@ export function YardView({ skeleton }: { readonly skeleton: ReactNode }) {
                 : "No stock in the yard right now."}
           </p>
         ) : (
-          <StackList chunks={chunks} windowed={windowed} showStack={query.group === "size"} editLists={editLists} />
+          <StackList chunks={chunks} windowed={windowed} editLists={editLists} />
         )}
       </div>
     </ViewReady>
@@ -112,12 +112,7 @@ function frameClass({ leading, trailing }: StackChunk) {
   ].join(" ");
 }
 
-type ListProps = {
-  readonly showStack: boolean;
-  readonly editLists: EditLists | null;
-};
-
-function StackChunkSection({ chunk, showStack, editLists }: ListProps & { readonly chunk: StackChunk }) {
+function StackChunkSection({ chunk, editLists }: { chunk: StackChunk; editLists: EditLists | null }) {
   const { group } = chunk;
   const count = group.batches.length;
   return (
@@ -140,7 +135,7 @@ function StackChunkSection({ chunk, showStack, editLists }: ListProps & { readon
             {gap !== null ? <Clamp days={gap} /> : null}
             <BatchCard
               batch={batch}
-              showStack={showStack}
+              showStack={group.showStack}
               actions={editLists ? <BatchActions batch={batch} lists={editLists} /> : undefined}
             />
           </div>
@@ -153,20 +148,23 @@ function StackChunkSection({ chunk, showStack, editLists }: ListProps & { readon
 function StackList({
   chunks,
   windowed,
-  showStack,
   editLists,
-}: ListProps & { readonly chunks: readonly StackChunk[]; readonly windowed: boolean }) {
-  if (windowed) return <VirtualStacks chunks={chunks} showStack={showStack} editLists={editLists} />;
+}: {
+  chunks: readonly StackChunk[];
+  windowed: boolean;
+  editLists: EditLists | null;
+}) {
+  if (windowed) return <VirtualStacks chunks={chunks} editLists={editLists} />;
   return (
     <div className="flex flex-col gap-4">
       {chunks.map((chunk) => (
-        <StackChunkSection key={chunk.key} chunk={chunk} showStack={showStack} editLists={editLists} />
+        <StackChunkSection key={chunk.key} chunk={chunk} editLists={editLists} />
       ))}
     </div>
   );
 }
 
-function VirtualStacks({ chunks, showStack, editLists }: ListProps & { readonly chunks: readonly StackChunk[] }) {
+function VirtualStacks({ chunks, editLists }: { chunks: readonly StackChunk[]; editLists: EditLists | null }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   useLayoutEffect(() => {
@@ -192,7 +190,7 @@ function VirtualStacks({ chunks, showStack, editLists }: ListProps & { readonly 
             className={`absolute left-0 top-0 w-full ${chunk.trailing ? "pb-4" : ""}`}
             style={{ transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)` }}
           >
-            <StackChunkSection chunk={chunk} showStack={showStack} editLists={editLists} />
+            <StackChunkSection chunk={chunk} editLists={editLists} />
           </div>
         );
       })}

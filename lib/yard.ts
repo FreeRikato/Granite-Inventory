@@ -80,7 +80,10 @@ export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"])
   }
   return [...list].sort((a, b) => {
     if (a.line_key !== b.line_key) {
-      return byDate(lineStart.get(a.line_key ?? "") ?? a, lineStart.get(b.line_key ?? "") ?? b) * dir;
+      return (
+        byDate(lineStart.get(a.line_key ?? "") ?? a, lineStart.get(b.line_key ?? "") ?? b) * dir ||
+        compare(a.line_key ?? "", b.line_key ?? "")
+      );
     }
     return byDate(a, b) * dir;
   });
@@ -89,6 +92,7 @@ export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"])
 export type YardSection = {
   readonly key: string;
   readonly title: string;
+  readonly showStack: boolean;
   readonly batches: readonly YardBatch[];
   readonly available: number;
 };
@@ -125,6 +129,7 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
       return {
         key,
         title: slot && stackNumber ? stackLabel(slot, stackNumber) : "No batch number",
+        showStack: false,
         slot,
         stackNumber,
         batches,
@@ -143,26 +148,20 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
 const NO_SIZE = "size|none";
 
 export function groupBySize(list: readonly YardBatch[]): YardSection[] {
-  const groups = bucket(list, (b) =>
+  const lastIfNone = (ft: number | null) => ft ?? Number.MAX_VALUE;
+  const smallestFirst = [...list].sort(
+    (a, b) => lastIfNone(a.length_ft) - lastIfNone(b.length_ft) || lastIfNone(a.breadth_ft) - lastIfNone(b.breadth_ft),
+  );
+  const groups = bucket(smallestFirst, (b) =>
     b.length_ft === null || b.breadth_ft === null ? NO_SIZE : `size|${b.length_ft}|${b.breadth_ft}`,
   );
-  return [...groups.entries()]
-    .map(([key, batches]) => {
-      const length = batches[0]?.length_ft ?? null;
-      const breadth = batches[0]?.breadth_ft ?? null;
-      return {
-        key,
-        title: key === NO_SIZE ? "No size" : formatDims(length, breadth),
-        length: length ?? 0,
-        breadth: breadth ?? 0,
-        batches,
-        available: availableIn(batches),
-      };
-    })
-    .sort((a, b) => {
-      if (a.key === NO_SIZE || b.key === NO_SIZE) return a.key === NO_SIZE ? 1 : -1;
-      return a.length - b.length || a.breadth - b.breadth;
-    });
+  return [...groups.entries()].map(([key, batches]) => ({
+    key,
+    title: key === NO_SIZE ? "No size" : formatDims(batches[0]?.length_ft ?? null, batches[0]?.breadth_ft ?? null),
+    showStack: true,
+    batches,
+    available: availableIn(batches),
+  }));
 }
 
 export type YardEntry = {

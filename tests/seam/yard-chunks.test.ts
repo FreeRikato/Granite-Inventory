@@ -137,6 +137,31 @@ describe("groupBySize", () => {
     ]);
   });
 
+  it("keeps Stock Lines apart when their first Batches tie on date, in either sort", () => {
+    const tied = (n: number, line: string, day: string, gap: number | null) =>
+      sized(n, 4, 2, {
+        line_key: line,
+        purchase_date: `2026-01-${day}`,
+        created_at: `2026-01-${day}T00:00:00Z`,
+        days_since_previous: gap,
+      });
+    const list = [tied(1, "a", "01", null), tied(2, "b", "01", null), tied(3, "a", "05", 4), tied(4, "b", "05", 4)];
+    const lines = (sort: "oldest" | "newest") =>
+      chunkStacks(groupBySize(list), sort, Infinity).flatMap((c) => c.entries.map((e) => [e.batch.batch_code, e.gap]));
+    expect(lines("oldest")).toEqual([
+      ["B-1", null],
+      ["B-3", 4],
+      ["B-2", null],
+      ["B-4", 4],
+    ]);
+    expect(lines("newest")).toEqual([
+      ["B-3", null],
+      ["B-1", 4],
+      ["B-4", null],
+      ["B-2", 4],
+    ]);
+  });
+
   it("gives its chunks keys that no Stack can share, so measured heights never carry over", () => {
     const size = chunkStacks(groupBySize([sized(1, 4, 2), sized(2, null, null)]), "oldest");
     const stack = chunkStacks(

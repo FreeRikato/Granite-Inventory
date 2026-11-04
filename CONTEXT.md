@@ -179,7 +179,7 @@ Per Sale: (Sale Price − Landed Cost) × quantity, where the Sale Price is Area
 _Avoid_: Profit, markup
 
 **Size**:
-Length and breadth in feet plus thickness in millimetres of every piece in a Batch. Required for Granite and Tiles; absent for Memorial, which is tracked by unit count. Group by Size in the Yard and Overview's Moving sizes compare length and breadth only, ignoring thickness.
+Length and breadth in feet plus thickness in millimetres of every piece in a Batch. Required for Granite and Tiles; absent for Memorial, which is tracked by unit count. Group by Size in the Yard and Overview's Fast vs slow moving compare length and breadth only, ignoring thickness.
 _Avoid_: Dimension (alone), spec
 
 **Slot**:
