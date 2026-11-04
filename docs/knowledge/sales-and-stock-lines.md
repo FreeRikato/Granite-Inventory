@@ -31,6 +31,8 @@ A Sale stores what was typed, not the per piece price: `sale_rate` (per sq ft fo
 
 The 20261030100000 migration moved every earlier Sale over: `sale_rate = round(sale_price / coalesce(area, 1), 10)` with the Area read from its Batch. It rebuilds the views that depend on `sales` through the `pg_depend` walk the purchase side used, keeps their options and grants, and raises if any Sale's `sale_price` differs from what it was, so revenue and margin cannot move silently. Ten decimals are enough that `rate x area` rounds back to the same paise for every stored price.
 
+The same snapshot is what Square feet sold sums ([[daily-sales]], [[dashboard]]), so it follows the rule above: history stays put when a Batch's Size is edited and moves when a Sale is corrected onto another Batch.
+
 The client mirrors the derivation in `lib/sale-price.ts` (`pieceArea`, `salePricePerPiece`) so the Sell preview shows what the database will store. It rounds a half paise up despite float noise, as Postgres does; the value stored is always the database's.
 
 ## The Stickering rates

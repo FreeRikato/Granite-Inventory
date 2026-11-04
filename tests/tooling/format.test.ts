@@ -7,6 +7,7 @@ import {
   formatRupeesAxis,
   formatRupeesCompact,
   formatSaleLine,
+  formatSqft,
   formatStickeringLine,
 } from "@/lib/format";
 
@@ -24,6 +25,15 @@ describe("formatRupeesCompact", () => {
     expect(formatRupeesCompact(-25000000)).toBe("-₹2.5Cr");
     expect(formatRupeesCompact(-5050)).toBe("-₹5,050");
     expect(formatRupeesCompact(250000)).toBe("₹2.5L");
+  });
+});
+
+describe("formatSqft", () => {
+  it("groups the Indian way and shows at most two decimals", () => {
+    expect(formatSqft(10)).toBe("10 sq ft");
+    expect(formatSqft(123456.5)).toBe("1,23,456.5 sq ft");
+    expect(formatSqft(30.375)).toBe("30.38 sq ft");
+    expect(formatSqft(0)).toBe("0 sq ft");
   });
 });
 

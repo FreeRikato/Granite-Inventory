@@ -24,6 +24,7 @@ test("overview shows KPIs, donut, fast moving bars and the stale panel linking t
   await expect(page.getByTestId("kpi-active")).toHaveText("26");
   await expect(page.getByTestId("kpi-value")).toHaveText("₹38,650");
   await expect(page.getByTestId("kpi-revenue")).toHaveText("₹4,950");
+  await expect(page.getByTestId("kpi-sqft")).toHaveText("24 sq ft");
   await expect(page.getByTestId("active-pct")).toHaveText("65%");
   await expect(page.getByRole("list", { name: "Units sold by size" })).toContainText("4 × 2 ft");
   await expect(page.getByTestId("stale-row")).toHaveCount(1);

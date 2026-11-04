@@ -51,10 +51,18 @@ export function formatAreaTotal(lengthFt: string, breadthFt: string, quantity: n
     : "";
 }
 
-const rateFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+const twoDecimals = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+
+export function formatSqftAmount(value: number): string {
+  return twoDecimals.format(value);
+}
+
+export function formatSqft(value: number): string {
+  return `${formatSqftAmount(value)} sq ft`;
+}
 
 export function formatRate(value: number): string {
-  return `₹${rateFmt.format(value)}`;
+  return `₹${twoDecimals.format(value)}`;
 }
 
 function formatWorking(working: {

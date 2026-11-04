@@ -44,6 +44,8 @@ test("a Sale shows on today's Daily Sales, not the day before, and an Admin can 
 
   await page.goto("/sales");
   await expect(page.getByTestId("daily-billed")).toHaveText("₹6,600");
+  await expect(page.getByTestId("daily-sqft")).toHaveText("32 sq ft");
+  await expect(page.getByTestId("customer-sqft")).toHaveText(/Murugan Constructions.*32 sq ft/);
   await expect(page.getByTestId("daily-received")).toHaveText("₹6,600");
   await expect(page.getByTestId("bill-row")).toContainText("Murugan Constructions");
   await expect(page.getByRole("button", { name: "Next day" })).toBeDisabled();
@@ -52,6 +54,8 @@ test("a Sale shows on today's Daily Sales, not the day before, and an Admin can 
   await expect(page).toHaveURL(/\/sales\?date=\d{4}-\d{2}-\d{2}$/);
   await expect(page.getByText("No sales on this day")).toBeVisible();
   await expect(page.getByTestId("daily-billed")).toHaveText("₹0");
+  await expect(page.getByTestId("daily-sqft")).toHaveText("0 sq ft");
+  await expect(page.getByTestId("customer-sqft")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Today" }).click();
   await expect(page).toHaveURL(/\/sales$/);
@@ -104,8 +108,9 @@ test("an open Bill sums its Sales and reads in the same columns as them", async 
     .locator(":scope > div")
     .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().width)));
   expect(kpis[1]).toBe(kpis[0]);
-  expect(kpis[3]).toBe(kpis[0]);
-  expect(kpis[2]).toBeGreaterThan(kpis[0] ?? 0);
+  expect(kpis[2]).toBe(kpis[0]);
+  expect(kpis[4]).toBe(kpis[0]);
+  expect(kpis[3]).toBeGreaterThan(kpis[0] ?? 0);
   const toggle = page.getByRole("button", { name: "2 items" });
   await toggle.click();
 
@@ -136,4 +141,25 @@ test("an open Bill sums its Sales and reads in the same columns as them", async 
     return Math.round(range.getBoundingClientRect().left);
   });
   expect(stone.left).toBe(itemCount);
+});
+
+test("a Customer who bought only Memorial reads Memorial only, not zero square feet", async ({ page, signIn }) => {
+  const db = await signedInClient("admin");
+  const doom = await createProduct(db, { name: "Doom Cross", abbreviation: "DC", category: "MEMORIAL" });
+  const supplierId = await createSupplier(db, "Doom Quarry");
+  const batch = await createBatch(db, {
+    productId: doom,
+    supplierId,
+    length: null,
+    units: 5,
+    purchaseDate: daysAgo(5),
+  });
+  const customerId = await createCustomer(db, { name: "Temple Trust", phone: "9843012377" });
+  const recorded = await recordBill(db, { customerId, lines: [{ batchId: batch.data?.id ?? "", quantity: 2 }] });
+  if (recorded.error) throw recorded.error;
+
+  await signIn("admin");
+  await page.goto("/sales");
+  await expect(page.getByTestId("customer-sqft")).toHaveText(/Temple Trust.*Memorial only/);
+  await expect(page.getByTestId("daily-sqft")).toHaveText("0 sq ft");
 });

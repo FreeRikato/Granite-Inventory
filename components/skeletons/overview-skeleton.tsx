@@ -24,7 +24,7 @@ export function OverviewSkeleton() {
           ))}
         </CardSkeleton>
         <CardSkeleton className="flex flex-col divide-y divide-border py-0">
-          {Array.from({ length: 3 }, (_, i) => (
+          {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="py-5">
               <Skeleton className="h-14" />
             </div>
