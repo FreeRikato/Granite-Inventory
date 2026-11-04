@@ -28,10 +28,6 @@ export const CHART_EXAMPLE = [
   'note = Text("Steel Grey led in September with 14 units.")',
 ].join("\n");
 
-export function istToday(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
-}
-
 function describeView(view: ChatView): string {
   return `${view.name}(${view.columns.map((c) => `${c.name} ${c.type}`).join(", ")})`;
 }

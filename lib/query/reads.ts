@@ -350,6 +350,90 @@ export const creditPaymentsQuery = (billId: string) =>
     },
   });
 
+export type DailySummary = Database["public"]["Functions"]["daily_summary"]["Returns"][number];
+
+export type DayReceipt = {
+  readonly id: string;
+  readonly billId: string;
+  readonly customerId: string;
+  readonly customerName: string;
+  readonly saleDate: string;
+  readonly lines: readonly ReceiptLine[];
+};
+
+export async function readDailySales(db: Db, day: string) {
+  const [summary, sales, paid, credit, receipts, received] = await Promise.all([
+    db.rpc("daily_summary", { p_date: day }).single(),
+    allRows<Tables<"v_sales">>(
+      (from, to) =>
+        db
+          .from("v_sales")
+          .select("*")
+          .eq("sale_date", day)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(from, to),
+      (row) => row.id ?? "",
+    ),
+    allRows(
+      (from, to) =>
+        db
+          .from("bill_payments")
+          .select("bill_id, payment_mode, amount, bills!inner(sale_date)")
+          .eq("bills.sale_date", day)
+          .order("bill_id")
+          .order("payment_mode")
+          .range(from, to),
+      (row) => `${row.bill_id}:${row.payment_mode}`,
+    ),
+    allRows<Tables<"v_credit">>(
+      (from, to) => db.from("v_credit").select("*").eq("sale_date", day).order("bill_id").range(from, to),
+      (row) => row.bill_id ?? "",
+    ),
+    allRows(
+      (from, to) =>
+        db
+          .from("credit_payments")
+          .select("id, bill_id, paid_on, credit_payment_lines(payment_mode, amount), bills!inner(sale_date)")
+          .eq("bills.sale_date", day)
+          .order("paid_on")
+          .order("created_at")
+          .order("id")
+          .range(from, to),
+      (row) => row.id,
+    ),
+    allRows(
+      (from, to) =>
+        db
+          .from("credit_payments")
+          .select(
+            "id, bill_id, credit_payment_lines(payment_mode, amount), bills!inner(sale_date, customer_id, customers!inner(name))",
+          )
+          .eq("paid_on", day)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(from, to),
+      (row) => row.id,
+    ),
+  ]);
+  if (summary.error) throw new Error(summary.error.message);
+  const laterToday: readonly DayReceipt[] = received.map((r) => ({
+    id: r.id,
+    billId: r.bill_id,
+    customerId: r.bills.customer_id,
+    customerName: r.bills.customers.name,
+    saleDate: r.bills.sale_date,
+    lines: receiptLines(r.credit_payment_lines),
+  }));
+  return { summary: summary.data, sales, paid, credit, receipts, laterToday };
+}
+
+export const dailySalesQuery = (day: string) =>
+  queryOptions({
+    queryKey: ["daily-sales", day],
+    queryFn: () => readDailySales(createClient(), day),
+  });
+
 export const customerOwedQuery = queryOptions({
   queryKey: ["customer-owed"],
   queryFn: () =>

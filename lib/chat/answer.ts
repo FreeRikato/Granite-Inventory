@@ -10,7 +10,8 @@ import {
 import { allRows, type Db } from "@/lib/query/reads";
 import { componentPrompt } from "@/lib/chat/library-prompt";
 import { aliasCustomerNames, type NamedCustomer } from "@/lib/chat/alias";
-import { buildSystemPrompt, istToday, loadChatViews } from "@/lib/chat/system-prompt";
+import { buildSystemPrompt, loadChatViews } from "@/lib/chat/system-prompt";
+import { istToday } from "@/lib/format";
 import type { ChatModel } from "@/lib/chat/model";
 import { createChatTools } from "@/lib/chat/tools";
 

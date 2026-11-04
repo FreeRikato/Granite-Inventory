@@ -132,6 +132,10 @@ export function todayIso(): string {
   return local.toISOString().slice(0, 10);
 }
 
+export function istToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+}
+
 export function relativeDays(iso: string): string {
   const then = new Date(`${iso}T00:00:00`);
   const now = new Date(`${todayIso()}T00:00:00`);
