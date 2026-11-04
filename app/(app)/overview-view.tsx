@@ -20,7 +20,7 @@ import { ViewError, ViewReady } from "@/components/view-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { creditTotals } from "@/lib/credit";
-import { formatNumber, formatPercent, formatRupees, formatRupeesCompact, formatSize, todayIso } from "@/lib/format";
+import { formatNumber, formatPercent, formatRupees, formatRupeesCompact, formatSize, formatSqft, todayIso } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import {
   creditQuery,
@@ -374,6 +374,12 @@ export function OverviewView({ skeleton }: { readonly skeleton: ReactNode }) {
             </span>
           </div>
           <OutstandingKpi />
+          <div className="flex flex-col gap-1 py-5">
+            <span className="text-sm text-muted-foreground">Square feet sold this month</span>
+            <span className="text-2xl font-bold tabular" data-testid="kpi-sqft">
+              {formatSqft(k?.mtd_sqft ?? 0)}
+            </span>
+          </div>
           <div className="flex flex-col gap-1 py-5">
             <span className="text-sm text-muted-foreground">MTD Margin</span>
             <span className="text-2xl font-bold tabular" data-testid="kpi-margin">

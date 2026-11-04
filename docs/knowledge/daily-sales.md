@@ -1,6 +1,7 @@
 ---
 code:
   - supabase/migrations/20261106100000_daily_summary.sql
+  - supabase/migrations/20261107110000_square_feet_sold.sql
   - lib/daily-sales.ts
   - lib/bill-context.ts
   - lib/format.ts
@@ -14,6 +15,7 @@ code:
   - app/(app)/sales/sales-view.tsx
   - app/(app)/sales/day-picker.tsx
   - app/(app)/sales/later-payments.tsx
+  - app/(app)/sales/customer-square-feet.tsx
   - app/(app)/customers/[id]/page.tsx
   - app/(app)/customers/[id]/sales-rows.tsx
   - app/(app)/customers/[id]/sale-actions.tsx
@@ -33,6 +35,12 @@ One day's Sales and money on one screen ([Daily Sales, Added to credit](../../CO
 Every figure reads the date the rest of the app reads: a Sale by its Sale date, money by `received_on` in `v_payments`. That is why a backdated Bill lands on its own day and not the day it was typed, and why `daily_summary` is not filtered on `created_at`. The seam test compares it with `received_by_period` for the same day, so Overview and this screen cannot drift ([[credit]], [[dashboard]]).
 
 Added to credit reads `bill_payments` and not `v_bill_balances`, because the balance falls as later payments arrive and this figure must stay as it stood at the sale. It therefore reconciles the day: Billed minus Added to credit is what was paid at the sale, and adding the Later payments list gives Money received.
+
+## Square feet
+
+`sqft` and `customer_sqft` sum quantity × `area_sqft` from the Sale, not the Batch's Size, so an Edit batch that changes a Size does not rewrite a past day, and they are read by Sale date like Billed ([[sales-and-stock-lines]]). `sum` skips the null Area of a Memorial Sale, so a Customer who also bought sized stone keeps their figure and a Customer who bought only Memorial sums to null. That null is the point: it reaches the screen as "Memorial only", where a zero would read as nothing bought. The list keeps those Customers rather than dropping them, so it names everyone in the Sales table, and sorts them last with `nulls last`. A note above the rows says Memorial is not counted, which also explains a day whose total is 0 sq ft with money billed.
+
+The list is one Customer per row because the Sales table is one Bill per row: a Customer can have several Bills and Sales without a Bill in a day. It rides in `daily_summary` as jsonb, like `top_customers`' `products`, so the total and its rows come from the same read, and `readDailySales` parses it with zod.
 
 ## Which day is today
 
@@ -64,6 +72,6 @@ Sale rows indent the Stone by the width of the chevron and its gap, so a Sale's 
 
 ## One control height
 
-Every control on the page is 36px, the height of `ConfirmDelete`'s button: the day picker's arrows, field and Today button, and Edit. The Daily Sales skeleton draws the picker at the same size so the page does not move when it loads. The four figures take fixed columns from `lg` up, so their dividers do not move from day to day as the amounts change; Money received is wider because its note names all three Payment Modes, and "Bank Transfer" uses non-breaking spaces so a narrow screen breaks between modes and not inside one. Later payments rows use the table's row padding.
+Every control on the page is 36px, the height of `ConfirmDelete`'s button: the day picker's arrows, field and Today button, and Edit. The Daily Sales skeleton draws the picker at the same size so the page does not move when it loads. The five figures take fixed columns from `xl` up, so their dividers do not move from day to day as the amounts change; at `lg` five columns leave about 70px for a figure and ₹1,23,456 runs into its neighbour, so `lg` is a plain three-column grid with no dividers. The Square feet unit is small and muted, as on MTD Margin, so a four-digit figure stays on one line in its column. Money received is wider because its note names all three Payment Modes, and "Bank Transfer" uses non-breaking spaces so a narrow screen breaks between modes and not inside one. Later payments rows use the table's row padding.
 
 Related: [[sales-and-stock-lines]], [[bill-payments]], [[testing]].

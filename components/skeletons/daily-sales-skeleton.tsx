@@ -6,7 +6,7 @@ export function DailySalesSkeleton() {
     <div data-skeleton="sales" className="contents">
       <DataAgeRowSkeleton />
       <Skeleton className="h-9 w-62" />
-      <KpiRowSkeleton count={4} />
+      <KpiRowSkeleton count={5} />
       <CardSkeleton className="flex flex-col gap-3">
         <TitleSkeleton />
         {Array.from({ length: 4 }, (_, i) => (

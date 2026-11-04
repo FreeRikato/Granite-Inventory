@@ -8,12 +8,13 @@ import { useMember } from "@/components/shell/member-provider";
 import { ViewError, ViewReady } from "@/components/view-state";
 import { billContext } from "@/lib/bill-context";
 import { dayFromParam } from "@/lib/daily-sales";
-import { formatPercent, formatRupees, istToday } from "@/lib/format";
+import { formatPercent, formatRupees, formatSqftAmount, istToday } from "@/lib/format";
 import { useHydrated } from "@/lib/query/provider";
 import { customersQuery, dailySalesQuery, yardBatchesQuery, type DailySummary } from "@/lib/query/reads";
 import { cn } from "@/lib/utils";
 import type { SaleEditLists } from "../customers/[id]/sale-actions";
 import { SalesTable } from "../customers/[id]/sales-rows";
+import { CustomerSquareFeet } from "./customer-square-feet";
 import { DayPicker } from "./day-picker";
 import { LaterPayments } from "./later-payments";
 
@@ -33,7 +34,7 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
 
   const editLists: SaleEditLists | null =
     batches.data && customers.data ? { batches: batches.data, customers: customers.data } : null;
-  const { summary, sales, laterToday } = daily.data;
+  const { summary, customerSqft, sales, laterToday } = daily.data;
 
   return (
     <ViewReady>
@@ -47,6 +48,7 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
         aria-busy={daily.isPlaceholderData}
       >
         <Summary summary={summary} />
+        {customerSqft.length > 0 ? <CustomerSquareFeet rows={customerSqft} /> : null}
         <section className="rounded-card bg-card p-6 shadow-sm">
           <h2 className="text-base font-semibold">Sales</h2>
           {sales.length === 0 ? (
@@ -71,10 +73,11 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
 function Summary({ summary }: { readonly summary: DailySummary }) {
   return (
     <dl
-      className="grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_1.5fr_1fr] lg:gap-x-0 lg:divide-x lg:divide-border"
+      className="grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_1.5fr_1fr] xl:gap-x-0 xl:divide-x xl:divide-border"
       data-testid="daily-summary"
     >
       <Kpi label="Billed" value={formatRupees(summary.billed)} testId="daily-billed" />
+      <Kpi label="Square feet" value={formatSqftAmount(summary.sqft)} unit="sq ft" testId="daily-sqft" />
       <Kpi
         label="Margin"
         value={formatRupees(summary.margin)}
@@ -95,19 +98,22 @@ function Summary({ summary }: { readonly summary: DailySummary }) {
 function Kpi({
   label,
   value,
+  unit,
   note,
   testId,
 }: {
   readonly label: string;
   readonly value: string;
+  readonly unit?: string;
   readonly note?: string;
   readonly testId: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 lg:pr-6 lg:pl-6 lg:first:pl-0">
+    <div className="flex min-w-0 flex-col gap-1 xl:pr-4 xl:pl-4 xl:first:pl-0">
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-2xl font-bold tabular" data-testid={testId}>
         {value}
+        {unit ? <span className="text-sm font-medium text-muted-foreground"> {unit}</span> : null}
       </dd>
       {note ? <dd className="text-xs text-muted-foreground tabular">{note}</dd> : null}
     </div>

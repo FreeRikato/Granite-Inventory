@@ -84,6 +84,7 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
     expect(k?.mtd_margin).toBe(3 * 500 + 3 * 200 + 2 * 400);
     expect(k?.mtd_margin_pct).toBe(27.88);
     expect(k?.mtd_sales).toBe(2);
+    expect(k?.mtd_sqft).toBe(3 * 8 + 2 * 15);
     expect(k?.month_start).toBe(iso(monthStart));
 
     const { data: fast } = await operator.rpc("fast_moving", { p_days: 90, p_limit: 5 });
@@ -99,9 +100,9 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
   it("memorial sales are grouped by product and an empty yard reads as zeros", async () => {
     const { data: empty } = await operator
       .from("v_dashboard_kpis")
-      .select("active_stock, inventory_value, mtd_revenue, mtd_margin_pct")
+      .select("active_stock, inventory_value, mtd_revenue, mtd_margin_pct, mtd_sqft")
       .single();
-    expect(empty).toEqual({ active_stock: 0, inventory_value: 0, mtd_revenue: 0, mtd_margin_pct: null });
+    expect(empty).toEqual({ active_stock: 0, inventory_value: 0, mtd_revenue: 0, mtd_margin_pct: null, mtd_sqft: 0 });
 
     const doom = await createProduct(operator, { name: "Doom Stone", abbreviation: "DS", category: "MEMORIAL" });
     const supplierId = await createSupplier(operator, "Madurai Quarry");
@@ -116,5 +117,8 @@ describe("dashboard: v_dashboard_kpis and fast_moving", () => {
     await recordSale(operator, { batchId: batch.data?.id ?? "", customerId, quantity: 4 });
     const { data: fast } = await operator.rpc("fast_moving", {});
     expect(fast).toEqual([{ label: "Doom Stone", units: 4 }]);
+
+    const { data: memorialOnly } = await operator.from("v_dashboard_kpis").select("mtd_sqft").single();
+    expect(memorialOnly).toEqual({ mtd_sqft: 0 });
   });
 });

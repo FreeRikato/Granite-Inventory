@@ -51,6 +51,16 @@ export function formatAreaTotal(lengthFt: string, breadthFt: string, quantity: n
     : "";
 }
 
+const sqftFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+
+export function formatSqftAmount(value: number): string {
+  return sqftFmt.format(value);
+}
+
+export function formatSqft(value: number): string {
+  return `${formatSqftAmount(value)} sq ft`;
+}
+
 const rateFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
 
 export function formatRate(value: number): string {

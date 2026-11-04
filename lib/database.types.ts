@@ -965,6 +965,7 @@ export type Database = {
           mtd_margin_pct: number | null
           mtd_revenue: number | null
           mtd_sales: number | null
+          mtd_sqft: number | null
           units_sold_total: number | null
         }
         Relationships: []
@@ -1207,6 +1208,7 @@ export type Database = {
           mtd_margin_pct: number | null
           mtd_revenue: number | null
           mtd_sales: number | null
+          mtd_sqft: number | null
           units_sold_total: number | null
         }
         Relationships: []
@@ -1580,9 +1582,11 @@ export type Database = {
           bank_transfer: number
           billed: number
           cash: number
+          customer_sqft: Json
           margin: number
           margin_pct: number
           received: number
+          sqft: number
           upi: number
         }[]
       }

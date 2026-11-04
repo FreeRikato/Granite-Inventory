@@ -352,6 +352,12 @@ export const creditPaymentsQuery = (billId: string) =>
 
 export type DailySummary = Database["public"]["Functions"]["daily_summary"]["Returns"][number];
 
+const customerSqftRows = z.array(
+  z.object({ customer_id: z.string(), customer_name: z.string(), sqft: z.number().nullable() }),
+);
+
+export type CustomerSqft = z.infer<typeof customerSqftRows>[number];
+
 export type DayReceipt = {
   readonly id: string;
   readonly billId: string;
@@ -425,7 +431,8 @@ export async function readDailySales(db: Db, day: string) {
     saleDate: r.bills.sale_date,
     lines: receiptLines(r.credit_payment_lines),
   }));
-  return { summary: summary.data, sales, paid, credit, receipts, laterToday };
+  const customerSqft = customerSqftRows.parse(summary.data.customer_sqft);
+  return { summary: summary.data, customerSqft, sales, paid, credit, receipts, laterToday };
 }
 
 export const dailySalesQuery = (day: string) =>

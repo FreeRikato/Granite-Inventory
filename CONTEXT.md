@@ -115,8 +115,12 @@ The payment amounts that came in per Payment Mode over a period, summed from eac
 _Avoid_: Collected (the Margin Table's word for the same sum over its own range), Revenue
 
 **Daily Sales**:
-The screen that reviews one day: its Sales by Sale date and its Later payments by the day received, under totals for Billed, Margin, Money received per Payment Mode and Added to credit. Opens on today in IST, and a day's Money received equals what Overview shows for that day. Backdated entries appear on their business date, not the day they were typed.
+The screen that reviews one day: its Sales by Sale date and its Later payments by the day received, under totals for Billed, Square feet sold, Margin, Money received per Payment Mode and Added to credit, with Square feet sold listed per Customer. Opens on today in IST, and a day's Money received equals what Overview shows for that day. Backdated entries appear on their business date, not the day they were typed.
 _Avoid_: Day book, sales report, activity log
+
+**Square feet sold**:
+The Area of each piece on a Sale times its pieces, summed: 1 × 1, 1 × 2, 1 × 3 and 1 × 4 ft on one Bill is 10 sq ft. Reads the Area stored on the Sale, so a later Edit batch does not rewrite it, and a Correction or deleted Sale moves it. Memorial has no Size, so it is left out, and a Customer who bought only Memorial shows "Memorial only" instead of a figure. Never stored. Shown on Daily Sales for the day and per Customer, and on Overview for the month.
+_Avoid_: Area sold, total area (Area is one piece)
 
 **Added to credit**:
 The part of a day's Credit Bills not paid at the sale: their totals minus their Payment Splits. Measured at the sale, so a Later payment never lowers it, and a Correction of the Bill does move it. A ₹50,000 Credit Bill with ₹20,000 paid now adds ₹30,000.
