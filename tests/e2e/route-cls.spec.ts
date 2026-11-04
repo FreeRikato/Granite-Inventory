@@ -49,6 +49,12 @@ const ROUTES: readonly Route[] = [
     path: (id) => `/customers/${id}`,
     ready: (page) => page.getByRole("heading", { name: "Skeleton Customer" }),
   },
+  {
+    name: "sales",
+    fades: true,
+    path: () => "/sales",
+    ready: (page) => page.getByTestId("daily-summary"),
+  },
 ];
 
 async function watchRoute(page: Page): Promise<void> {

@@ -1573,6 +1573,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      daily_summary: {
+        Args: { p_date: string }
+        Returns: {
+          added_to_credit: number
+          bank_transfer: number
+          billed: number
+          cash: number
+          margin: number
+          margin_pct: number
+          received: number
+          upi: number
+        }[]
+      }
       delete_batch: { Args: { p_batch_id: string }; Returns: undefined }
       delete_bill: { Args: { p_bill_id: string }; Returns: undefined }
       delete_credit_payment: {

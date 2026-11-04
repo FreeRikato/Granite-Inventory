@@ -1,4 +1,5 @@
 import {
+  CalendarDays,
   Globe,
   LayoutGrid,
   MinusCircle,
@@ -26,6 +27,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/yard", label: "Yard Slots", shortLabel: "Yard", icon: MapIcon, shell: true },
   { href: "/customers", label: "Customers", shortLabel: "Customers", icon: Users, shell: true },
   { href: "/credit", label: "Credit", shortLabel: "Credit", icon: Wallet, shell: true },
+  { href: "/sales", label: "Daily Sales", shortLabel: "Daily Sales", icon: CalendarDays, shell: true },
   { href: "/public-link", label: "Public Catalog", shortLabel: "Catalog", icon: Globe },
 ];
 

@@ -25,6 +25,7 @@ Data and rules (Postgres)
 - [[corrections]]: Admin edits and deletes that keep Available consistent
 - [[bill-payments]]: a Bill paid in more than one Payment Mode, and Margin shared across them
 - [[credit]]: a Bill sold on credit, later payments, pay-by dates and the Credit screen
+- [[daily-sales]]: one day's Sales and money, the day in the URL and how its totals match Overview
 - [[readable-refusals]]: every refusal reads as a business rule, never raw Postgres
 - [[public-catalog]]: what anonymous visitors can read
 - [[product-images]]: one photo per Product, the Storage bucket, upload and cleanup

@@ -114,6 +114,14 @@ How money came in: Cash, UPI or Bank Transfer. A Bill may be paid in more than o
 The payment amounts that came in per Payment Mode over a period, summed from each Bill's Payment Split, from later payments on Credit Bills and from Sales without a Bill. It counts what the Customer paid, not Margin. A payment made at the sale falls in the period of its Sale date; a later payment falls in the period of the day it was received. Shown on Overview in the Money received card.
 _Avoid_: Collected (the Margin Table's word for the same sum over its own range), Revenue
 
+**Daily Sales**:
+The screen that reviews one day: its Sales by Sale date and its Later payments by the day received, under totals for Billed, Margin, Money received per Payment Mode and Added to credit. Opens on today in IST, and a day's Money received equals what Overview shows for that day. Backdated entries appear on their business date, not the day they were typed.
+_Avoid_: Day book, sales report, activity log
+
+**Added to credit**:
+The part of a day's Credit Bills not paid at the sale: their totals minus their Payment Splits. Measured at the sale, so a Later payment never lowers it, and a Correction of the Bill does move it. A ₹50,000 Credit Bill with ₹20,000 paid now adds ₹30,000.
+_Avoid_: Outstanding (the sum of Balances today), Credit given
+
 **Payment Split**:
 How one Bill was paid: an amount per Payment Mode, each mode at most once, for example ₹30,000 Cash + ₹20,000 UPI on a ₹50,000 Bill. The amounts always add up exactly to what the Customer pays for the Bill (Stone Sale Price plus Stickering Price over its Sales). A Bill paid in one mode has one payment of its whole total, which follows the total when a Sale is corrected or deleted. A mixed Bill's Margin is shared across its payments in proportion to amount. On a Credit Bill the Payment Split is what was paid at the sale and may add up to less than the total; the rest is the Balance.
 _Avoid_: Part payment (for the split itself; a part payment is the Credit way to pay less than the total)

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
 import {
@@ -27,6 +28,8 @@ export type LaterPayment = {
   readonly lines: readonly { readonly paymentMode: PaymentMode; readonly amount: number }[];
 };
 
+type Lead = "date" | "customer";
+
 type Entry =
   | { readonly kind: "sale"; readonly sale: Sale }
   | { readonly kind: "bill"; readonly billId: string; readonly lines: Sale[] };
@@ -51,33 +54,79 @@ function groupByBill(sales: readonly Sale[]): readonly Entry[] {
   return entries;
 }
 
-export function SalesRows({
+export function SalesTable({
   sales,
   editLists,
   billPayments,
   credit,
   laterPayments,
+  lead = "date",
 }: {
   readonly sales: readonly Sale[];
   readonly editLists: SaleEditLists | null;
   readonly billPayments: Readonly<Record<string, BillPayments>>;
   readonly credit: ReadonlyMap<string, CreditRow>;
   readonly laterPayments: Readonly<Record<string, readonly LaterPayment[]>>;
+  readonly lead?: Lead;
 }) {
-  return groupByBill(sales).map((entry) =>
-    entry.kind === "bill" ? (
-      <BillRows
-        key={entry.billId}
-        billId={entry.billId}
-        lines={entry.lines}
-        editLists={editLists}
-        bill={billPayments[entry.billId] ?? null}
-        credit={credit.get(entry.billId) ?? null}
-        later={laterPayments[entry.billId] ?? []}
-      />
-    ) : (
-      <SaleRow key={entry.sale.id} sale={entry.sale} editLists={editLists} />
-    ),
+  return (
+    <div className="mt-3 overflow-x-auto">
+      <table className="block w-full text-sm sm:table">
+        <thead className="hidden text-left text-xs text-muted-foreground sm:table-header-group">
+          <tr>
+            <th className="py-2 pr-4 font-medium">{lead === "customer" ? "Customer" : "Date"}</th>
+            <th className="py-2 pr-4 font-medium">Stone</th>
+            <th className="py-2 pr-4 font-medium">Batch</th>
+            <th className="py-2 pr-4 text-right font-medium">Qty</th>
+            <th className="py-2 pr-4 text-right font-medium">Total</th>
+            <th className="py-2 text-right font-medium">Margin</th>
+            {editLists ? (
+              <th className="py-2 pl-4">
+                <span className="sr-only">Sale actions</span>
+              </th>
+            ) : null}
+          </tr>
+        </thead>
+        <tbody className="block sm:table-row-group">
+          {groupByBill(sales).map((entry) =>
+            entry.kind === "bill" ? (
+              <BillRows
+                key={entry.billId}
+                billId={entry.billId}
+                lines={entry.lines}
+                editLists={editLists}
+                bill={billPayments[entry.billId] ?? null}
+                credit={credit.get(entry.billId) ?? null}
+                later={laterPayments[entry.billId] ?? []}
+                lead={lead}
+              />
+            ) : (
+              <SaleRow key={entry.sale.id} sale={entry.sale} editLists={editLists} lead={lead} />
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function LeadCell({ sale, lead }: { readonly sale: Sale | undefined; readonly lead: Lead }) {
+  return (
+    <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
+      {lead === "customer" ? (
+        <>
+          <MobileLabel className="mr-2">Customer</MobileLabel>
+          <Link href={`/customers/${sale?.customer_id}`} className="font-medium hover:underline">
+            {sale?.customer_name}
+          </Link>
+        </>
+      ) : (
+        <>
+          <MobileLabel className="mr-2">Date</MobileLabel>
+          {sale?.sale_date ? formatDate(sale.sale_date) : ""}
+        </>
+      )}
+    </td>
   );
 }
 
@@ -88,6 +137,7 @@ function BillRows({
   bill,
   credit,
   later,
+  lead,
 }: {
   readonly billId: string;
   readonly lines: readonly Sale[];
@@ -95,11 +145,11 @@ function BillRows({
   readonly bill: BillPayments | null;
   readonly credit: CreditRow | null;
   readonly later: readonly LaterPayment[];
+  readonly lead: Lead;
 }) {
   const [open, setOpen] = useState(false);
   const itemCount = `${lines.length} ${lines.length === 1 ? "item" : "items"}`;
   const total = lines.reduce((sum, line) => sum + (line.revenue ?? 0), 0);
-  const date = lines[0]?.sale_date;
 
   return (
     <Fragment>
@@ -107,10 +157,7 @@ function BillRows({
         className={cn("block border-t border-border py-2.5 sm:table-row sm:py-0", rowStateClass)}
         data-testid="bill-row"
       >
-        <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
-          <MobileLabel className="mr-2">Date</MobileLabel>
-          {date ? formatDate(date) : ""}
-        </td>
+        <LeadCell sale={lines[0]} lead={lead} />
         <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4" colSpan={3}>
           <button
             type="button"
@@ -154,6 +201,7 @@ function BillRows({
               sale={line}
               editLists={editLists}
               bill={bill ? { ...bill, lines: lines.length } : null}
+              lead={lead}
               nested
             />
           ))
@@ -192,11 +240,13 @@ function SaleRow({
   sale: s,
   editLists,
   bill = null,
+  lead,
   nested = false,
 }: {
   readonly sale: Sale;
   readonly editLists: SaleEditLists | null;
   readonly bill?: (BillPayments & { readonly lines: number }) | null;
+  readonly lead: Lead;
   readonly nested?: boolean;
 }) {
   return (
@@ -208,10 +258,13 @@ function SaleRow({
       )}
       data-testid="sale-row"
     >
-      <td className="block py-1.5 pr-0 sm:table-cell sm:py-2.5 sm:pr-4 sm:whitespace-nowrap">
-        <MobileLabel className="mr-2">Date</MobileLabel>
-        {s.sale_date ? formatDate(s.sale_date) : ""}
-      </td>
+      {nested && lead === "customer" ? (
+        <td className="hidden sm:table-cell">
+          <span className="sr-only">{s.customer_name}</span>
+        </td>
+      ) : (
+        <LeadCell sale={s} lead={lead} />
+      )}
       <td className="block py-1.5 pr-0 font-medium sm:table-cell sm:py-2.5 sm:pr-4">
         <MobileLabel className="mr-2">Stone</MobileLabel>
         {s.product_name}

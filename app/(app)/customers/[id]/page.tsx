@@ -8,10 +8,9 @@ import { CommandPalette } from "@/components/shell/command-palette";
 import { ViewReady } from "@/components/view-state";
 import { rowStateClass } from "@/lib/query/row-style";
 import { CustomerActions } from "./customer-actions";
-import { isPaymentMode } from "@/lib/domain";
-import { toCreditRow } from "@/lib/query/reads";
-import { type BillPayments, type SaleEditLists } from "./sale-actions";
-import { SalesRows, type LaterPayment } from "./sales-rows";
+import { billContext } from "@/lib/bill-context";
+import { type SaleEditLists } from "./sale-actions";
+import { SalesTable } from "./sales-rows";
 
 export default async function CustomerPage(props: PageProps<"/customers/[id]">) {
   const { id } = await props.params;
@@ -40,39 +39,12 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
       getSession(),
     ]);
   if (!customer) notFound();
-  const billTotals = new Map<string, number>();
-  for (const sale of sales ?? []) {
-    if (sale.bill_id) billTotals.set(sale.bill_id, (billTotals.get(sale.bill_id) ?? 0) + (sale.revenue ?? 0));
-  }
-  const creditRows = new Map((credit ?? []).map((row) => [row.bill_id ?? "", toCreditRow(row)]));
-  const billPayments: Record<string, BillPayments> = {};
-  for (const p of paid ?? []) {
-    if (!isPaymentMode(p.payment_mode)) continue;
-    const bill = billPayments[p.bill_id] ?? {
-      total: billTotals.get(p.bill_id) ?? 0,
-      onCredit: creditRows.has(p.bill_id),
-      laterTotal: 0,
-      payments: [],
-    };
-    billPayments[p.bill_id] = {
-      ...bill,
-      payments: [...bill.payments, { paymentMode: p.payment_mode, amount: p.amount }],
-    };
-  }
-  for (const [billId, row] of creditRows) {
-    billPayments[billId] ??= { total: row.total, onCredit: true, laterTotal: 0, payments: [] };
-  }
-  const laterPayments: Record<string, LaterPayment[]> = {};
-  for (const r of receipts ?? []) {
-    const lines = r.credit_payment_lines.flatMap((l) =>
-      isPaymentMode(l.payment_mode) ? [{ paymentMode: l.payment_mode, amount: l.amount }] : [],
-    );
-    const known = billPayments[r.bill_id];
-    if (known) {
-      billPayments[r.bill_id] = { ...known, laterTotal: known.laterTotal + lines.reduce((t, l) => t + l.amount, 0) };
-    }
-    laterPayments[r.bill_id] = [...(laterPayments[r.bill_id] ?? []), { id: r.id, paidOn: r.paid_on, lines }];
-  }
+  const { billPayments, creditRows, laterPayments } = billContext({
+    sales: sales ?? [],
+    paid: paid ?? [],
+    credit: credit ?? [],
+    receipts: receipts ?? [],
+  });
   const isAdmin = session.status === "member" && session.member.role === "ADMIN";
   const editLists: SaleEditLists | null = isAdmin
     ? {
@@ -136,34 +108,13 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
         {!sales || sales.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">No sales recorded for this customer.</p>
         ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="block w-full text-sm sm:table">
-              <thead className="hidden text-left text-xs text-muted-foreground sm:table-header-group">
-                <tr>
-                  <th className="py-2 pr-4 font-medium">Date</th>
-                  <th className="py-2 pr-4 font-medium">Stone</th>
-                  <th className="py-2 pr-4 font-medium">Batch</th>
-                  <th className="py-2 pr-4 text-right font-medium">Qty</th>
-                  <th className="py-2 pr-4 text-right font-medium">Total</th>
-                  <th className="py-2 text-right font-medium">Margin</th>
-                  {editLists ? (
-                    <th className="py-2 pl-4">
-                      <span className="sr-only">Sale actions</span>
-                    </th>
-                  ) : null}
-                </tr>
-              </thead>
-              <tbody className="block sm:table-row-group">
-                <SalesRows
-                  sales={sales}
-                  editLists={editLists}
-                  billPayments={billPayments}
-                  credit={creditRows}
-                  laterPayments={laterPayments}
-                />
-              </tbody>
-            </table>
-          </div>
+          <SalesTable
+            sales={sales}
+            editLists={editLists}
+            billPayments={billPayments}
+            credit={creditRows}
+            laterPayments={laterPayments}
+          />
         )}
       </section>
     </ViewReady>

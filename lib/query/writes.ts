@@ -50,6 +50,7 @@ const SALE_READS = [
   "credit",
   "credit-payments",
   "customer-owed",
+  "daily-sales",
 ];
 const CREDIT_READS = [
   "credit",
@@ -58,6 +59,7 @@ const CREDIT_READS = [
   "customer-owed",
   "payments-by-mode",
   "received-by-period",
+  "daily-sales",
 ];
 const BATCH_READS = ["yard-batches", "stock-lines", "recent-batches", "recent-stacks", "dashboard-kpis"];
 const PRODUCT_NAME_READS = [
@@ -67,6 +69,7 @@ const PRODUCT_NAME_READS = [
   "recent-batches",
   "fast-moving",
   "top-customers",
+  "daily-sales",
 ];
 const SUPPLIER_NAME_READS = ["suppliers", "yard-batches", "stock-lines", "recent-batches"];
 
@@ -80,14 +83,14 @@ const EFFECTS: Record<Write, Effect> = {
   "delete-credit-payment": { keys: CREDIT_READS, serverRefresh: false },
   "extend-pay-by": { keys: CREDIT_READS, serverRefresh: false },
   "inward-batch": { keys: BATCH_READS, serverRefresh: false },
-  "correct-batch": { keys: [...BATCH_READS, "fast-moving", "top-customers"], serverRefresh: false },
+  "correct-batch": { keys: [...BATCH_READS, "fast-moving", "top-customers", "daily-sales"], serverRefresh: false },
   "archive-batch": {
     keys: ["yard-batches", "stock-lines", "recent-batches", "dashboard-kpis"],
     serverRefresh: false,
   },
   "delete-batch": { keys: BATCH_READS, serverRefresh: false },
   "add-customer": { keys: ["customers", "customer-list"], serverRefresh: false },
-  "edit-customer": { keys: ["customers", "customer-list", "top-customers"], serverRefresh: true },
+  "edit-customer": { keys: ["customers", "customer-list", "top-customers", "daily-sales"], serverRefresh: true },
   "delete-customer": { keys: ["customers", "customer-list"], serverRefresh: false },
   "create-product": { keys: ["products"], serverRefresh: false },
   "create-supplier": { keys: ["suppliers"], serverRefresh: false },
