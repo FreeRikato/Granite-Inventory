@@ -31,3 +31,13 @@ test("the yard mounts only the cards near the viewport", async ({ page, signIn }
   const labelled = await page.locator('[data-testid="yard-stack"][aria-label]').count();
   expect(labelled).toBe(await page.getByTestId("yard-stack").getByRole("heading", { level: 2 }).count());
 });
+
+test("group by size still windows past the threshold", async ({ page, signIn }) => {
+  await signIn("operator");
+  await page.goto("/yard?group=size");
+  await expect(page.getByRole("heading", { level: 2, name: "4 × 2 ft" })).toBeVisible();
+
+  expect(await page.getByTestId("yard-batch").count()).toBeLessThan(100);
+  await expect(page.getByTestId("yard-stack").getByRole("heading", { level: 2 })).toHaveCount(1);
+  await expect(page.getByText("1200 purchases · 12000 available")).toBeVisible();
+});

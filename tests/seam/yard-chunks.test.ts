@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { CHUNK_SIZE, chunkStacks, groupByStack, matchesFilters, parseYardQuery, type YardBatch } from "@/lib/yard";
+import {
+  CHUNK_SIZE,
+  chunkStacks,
+  groupBySize,
+  groupByStack,
+  matchesFilters,
+  parseYardQuery,
+  type YardBatch,
+} from "@/lib/yard";
 
 function batch(n: number): YardBatch {
   const day = String(n).padStart(2, "0");
@@ -72,6 +80,92 @@ describe("chunkStacks", () => {
 
   it("keeps a stack of any size as one chunk when the size is unbounded", () => {
     expect(chunkStacks(stackOf(CHUNK_SIZE * 5), "oldest", Infinity)).toHaveLength(1);
+  });
+});
+
+describe("groupBySize", () => {
+  const sized = (n: number, length_ft: number | null, breadth_ft: number | null, extra: Partial<YardBatch> = {}) => ({
+    ...batch(n),
+    length_ft,
+    breadth_ft,
+    ...extra,
+  });
+
+  it("gives every Size a heading, smallest first, with No size last", () => {
+    const sections = groupBySize([
+      sized(1, null, null),
+      sized(2, 10, 2),
+      sized(3, 5, 3),
+      sized(4, 4, 2.5),
+      sized(5, 4, 2),
+    ]);
+    expect(sections.map((s) => s.title)).toEqual(["4 × 2 ft", "4 × 2.5 ft", "5 × 3 ft", "10 × 2 ft", "No size"]);
+  });
+
+  it("puts Batches of one length and breadth together across Products, Slots and thicknesses", () => {
+    const sections = groupBySize([
+      sized(1, 4, 2, { product_id: "product-a", slot: "4FT", thickness_mm: 16, line_key: "a16" }),
+      sized(2, 4, 2, { product_id: "product-b", slot: "CUSTOM", thickness_mm: 20, line_key: "b20" }),
+    ]);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]?.batches.map((b) => b.batch_code)).toEqual(["B-1", "B-2"]);
+  });
+
+  it("leaves Archived Batches out of a heading's available count", () => {
+    const [section] = groupBySize([
+      sized(1, 4, 2, { available: 3 }),
+      sized(2, 4, 2, { available: 4, archived_at: "2026-02-01T00:00:00Z" }),
+    ]);
+    expect(section?.batches).toHaveLength(2);
+    expect(section?.available).toBe(3);
+  });
+
+  it("keeps a Stock Line together and clamps only inside it when a heading mixes Products", () => {
+    const list = [
+      sized(1, 4, 2, { line_key: "a", days_since_previous: null }),
+      sized(2, 4, 2, { line_key: "b", days_since_previous: null }),
+      sized(3, 4, 2, { line_key: "a", days_since_previous: 2 }),
+      sized(4, 4, 2, { line_key: "b", days_since_previous: 2 }),
+    ];
+    const chunks = chunkStacks(groupBySize(list), "oldest", 3);
+    const entries = chunks.flatMap((c) => c.entries);
+    expect(entries.map((e) => e.batch.batch_code)).toEqual(["B-1", "B-3", "B-2", "B-4"]);
+    expect(entries.map((e) => e.gap)).toEqual([null, 2, null, 2]);
+    expect(chunks.map((c) => [c.leading, c.trailing])).toEqual([
+      [true, false],
+      [false, true],
+    ]);
+  });
+
+  it("gives its chunks keys that no Stack can share, so measured heights never carry over", () => {
+    const size = chunkStacks(groupBySize([sized(1, 4, 2), sized(2, null, null)]), "oldest");
+    const stack = chunkStacks(
+      groupByStack([
+        { ...batch(1), slot: "4", stack_number: "2" },
+        { ...batch(2), stack_number: null },
+      ]),
+      "oldest",
+    );
+    const stackKeys = new Set(stack.map((c) => c.key));
+    expect(size.filter((c) => stackKeys.has(c.key))).toEqual([]);
+  });
+});
+
+describe("parseYardQuery group", () => {
+  it("defaults to Slot, so existing links keep working", () => {
+    expect(parseYardQuery({}).group).toBe("slot");
+    expect(parseYardQuery({ group: "anything" }).group).toBe("slot");
+  });
+
+  it("reads Group by Size from the URL", () => {
+    expect(parseYardQuery({ group: "size" }).group).toBe("size");
+  });
+});
+
+describe("groupByStack title", () => {
+  it("names a Stack and the section of Batches with no number", () => {
+    const sections = groupByStack([batch(1), { ...batch(2), stack_number: null }]);
+    expect(sections.map((s) => s.title)).toEqual(["4 ft Slot · 1", "No batch number"]);
   });
 });
 

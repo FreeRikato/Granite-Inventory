@@ -109,7 +109,9 @@ This is the first iteration after one rough call with the client. Expect heavy c
 
 ## Yard view
 
-- One section per Stack (Slot plus Batch number), ordered by Slot then Batch number, with Batches oldest first inside (Newest first as the only alternative sort). Batches without a Batch number share a final "No batch number" section. No slot tabs or size sub-tabs.
+- "Group by" picks Slot (the default) or Size. It lives in the URL (`?group=size`), is not remembered between visits, and narrows with every filter and sort.
+- Group by Slot: one section per Stack (Slot plus Batch number), ordered by Slot then Batch number, with Batches oldest first inside (Newest first as the only alternative sort). Batches without a Batch number share a final "No batch number" section. No slot tabs or size sub-tabs.
+- Group by Size: one section per exact length and breadth, thickness ignored, as in Fast vs slow moving; no ranges. Sections run smallest length, then smallest breadth, headed like 4 × 2 ft, with Batches of every Product and Slot together and each card showing its Batch number. Batches with no Size share a final "No size" section. Stock Lines, Clamps and the available count work as in a Stack.
 - Filters: search text (also matches the Batch number), Slot, Product, Thickness, Supplier, Age.
 - Sold Out Batches hidden by default, "Show sold out" toggle. Archived Batches hidden by default, "Show archived" toggle; their Available is left out of the Stack's count.
 - "Less than 5 left" toggle (`?low=1`) keeps only Batches whose own Available is under 5; Stack and Stock Line totals are not used. It narrows with every other filter and leaves Sold Out to "Show sold out", so it shows 1 to 4 left by default and 0 to 4 with sold out shown.

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, X } from "lucide-react";
+import { SegmentedToggle } from "@/components/dashboard/segmented-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +22,11 @@ type Props = {
 };
 
 const ALL = "__all__";
+
+const GROUP_OPTIONS = [
+  { value: "slot", label: "Slot" },
+  { value: "size", label: "Size" },
+] as const;
 
 export function YardFilters({ query, slots, products, thicknesses, suppliers }: Props) {
   const router = useRouter();
@@ -112,6 +118,15 @@ export function YardFilters({ query, slots, products, thicknesses, suppliers }: 
             <SelectItem value="newest">Sort: Newest first</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 pl-1">
+          <span className="text-sm text-muted-foreground">Group by</span>
+          <SegmentedToggle
+            label="Group by"
+            options={GROUP_OPTIONS}
+            value={query.group}
+            onChange={(v) => update({ group: v === "size" ? "size" : null })}
+          />
+        </div>
         <div className="flex items-center gap-2 pl-1">
           <Switch id="low-stock" checked={query.low} onCheckedChange={(c) => update({ low: c ? "1" : null })} />
           <Label htmlFor="low-stock" className="text-sm text-muted-foreground">

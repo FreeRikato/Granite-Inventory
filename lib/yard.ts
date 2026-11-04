@@ -1,5 +1,6 @@
 import type { Tables } from "@/lib/database.types";
-import { isAgeFilter, slotChoices, type AgeFilter } from "@/lib/domain";
+import { isAgeFilter, slotChoices, stackLabel, type AgeFilter } from "@/lib/domain";
+import { formatDims } from "@/lib/format";
 
 export type YardBatch = Tables<"v_yard_batches">;
 
@@ -16,6 +17,7 @@ export type YardQuery = {
   readonly sold: boolean;
   readonly archived: boolean;
   readonly low: boolean;
+  readonly group: "slot" | "size";
 };
 
 export const LOW_STOCK_BELOW = 5;
@@ -45,6 +47,7 @@ export function parseYardQuery(raw: Raw): YardQuery {
     sold: one(raw, "sold") === "1",
     archived: one(raw, "archived") === "1",
     low: one(raw, "low") === "1",
+    group: one(raw, "group") === "size" ? "size" : "slot",
   };
 }
 
@@ -83,34 +86,49 @@ export function sortBatches(list: readonly YardBatch[], sort: YardQuery["sort"])
   });
 }
 
-export type StackGroup = {
+export type YardSection = {
   readonly key: string;
-  readonly slot: string | null;
-  readonly stackNumber: string | null;
+  readonly title: string;
   readonly batches: readonly YardBatch[];
   readonly available: number;
 };
 
-export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
+export type StackGroup = YardSection & {
+  readonly slot: string | null;
+  readonly stackNumber: string | null;
+};
+
+function bucket(list: readonly YardBatch[], keyOf: (b: YardBatch) => string): Map<string, YardBatch[]> {
   const groups = new Map<string, YardBatch[]>();
   for (const b of list) {
-    const key = b.stack_number ? `${b.slot}|${b.stack_number}` : "none";
+    const key = keyOf(b);
     const group = groups.get(key);
     if (group) group.push(b);
     else groups.set(key, [b]);
   }
+  return groups;
+}
+
+function availableIn(batches: readonly YardBatch[]): number {
+  return batches.reduce((n, b) => n + (b.archived_at ? 0 : (b.available ?? 0)), 0);
+}
+
+export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
+  const groups = bucket(list, (b) => (b.stack_number ? `${b.slot}|${b.stack_number}` : "none"));
   const order = slotChoices(list.map((b) => b.slot));
   const rank = (slot: string | null) => (slot ? order.indexOf(slot) : order.length);
   return [...groups.entries()]
     .map(([key, batches]) => {
       const first = batches[0];
       const slot = key !== "none" ? (first?.slot ?? null) : null;
+      const stackNumber = key === "none" ? null : (first?.stack_number ?? null);
       return {
         key,
+        title: slot && stackNumber ? stackLabel(slot, stackNumber) : "No batch number",
         slot,
-        stackNumber: key === "none" ? null : (first?.stack_number ?? null),
+        stackNumber,
         batches,
-        available: batches.reduce((n, b) => n + (b.archived_at ? 0 : (b.available ?? 0)), 0),
+        available: availableIn(batches),
       };
     })
     .sort((a, b) => {
@@ -122,6 +140,31 @@ export function groupByStack(list: readonly YardBatch[]): StackGroup[] {
     });
 }
 
+const NO_SIZE = "size|none";
+
+export function groupBySize(list: readonly YardBatch[]): YardSection[] {
+  const groups = bucket(list, (b) =>
+    b.length_ft === null || b.breadth_ft === null ? NO_SIZE : `size|${b.length_ft}|${b.breadth_ft}`,
+  );
+  return [...groups.entries()]
+    .map(([key, batches]) => {
+      const length = batches[0]?.length_ft ?? null;
+      const breadth = batches[0]?.breadth_ft ?? null;
+      return {
+        key,
+        title: key === NO_SIZE ? "No size" : formatDims(length, breadth),
+        length: length ?? 0,
+        breadth: breadth ?? 0,
+        batches,
+        available: availableIn(batches),
+      };
+    })
+    .sort((a, b) => {
+      if (a.key === NO_SIZE || b.key === NO_SIZE) return a.key === NO_SIZE ? 1 : -1;
+      return a.length - b.length || a.breadth - b.breadth;
+    });
+}
+
 export type YardEntry = {
   readonly batch: YardBatch;
   readonly gap: number | null;
@@ -129,7 +172,7 @@ export type YardEntry = {
 
 export type StackChunk = {
   readonly key: string;
-  readonly group: StackGroup;
+  readonly group: YardSection;
   readonly leading: boolean;
   readonly trailing: boolean;
   readonly entries: readonly YardEntry[];
@@ -139,7 +182,7 @@ export const CHUNK_SIZE = 6;
 
 export const WINDOW_AFTER = 100;
 
-export function chunkStacks(groups: readonly StackGroup[], sort: YardQuery["sort"], size = CHUNK_SIZE): StackChunk[] {
+export function chunkStacks(groups: readonly YardSection[], sort: YardQuery["sort"], size = CHUNK_SIZE): StackChunk[] {
   return groups.flatMap((group) => {
     const sorted = sortBatches(group.batches, sort);
     const entries = sorted.map((batch, i) => {
