@@ -25,7 +25,7 @@ export function DayPicker({ day, today }: { readonly day: string; readonly today
     <div className="flex flex-wrap items-center gap-2" data-testid="day-picker">
       <Button
         variant="outline"
-        size="icon"
+        size="icon-lg"
         className="bg-card"
         aria-label="Previous day"
         onClick={() => step(shiftDay(day, -1))}
@@ -35,7 +35,7 @@ export function DayPicker({ day, today }: { readonly day: string; readonly today
       <Input
         type="date"
         aria-label="Day"
-        className="w-40 bg-card"
+        className="h-9 w-40 bg-card"
         min="2000-01-01"
         max={today}
         value={value}
@@ -44,7 +44,7 @@ export function DayPicker({ day, today }: { readonly day: string; readonly today
       />
       <Button
         variant="outline"
-        size="icon"
+        size="icon-lg"
         className="bg-card"
         aria-label="Next day"
         disabled={day >= today}
@@ -53,7 +53,7 @@ export function DayPicker({ day, today }: { readonly day: string; readonly today
         <ChevronRight className="size-4" />
       </Button>
       {day === today ? null : (
-        <Button variant="ghost" onClick={() => step(today)}>
+        <Button variant="ghost" size="lg" onClick={() => step(today)}>
           Today
         </Button>
       )}

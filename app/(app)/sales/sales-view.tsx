@@ -50,7 +50,7 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
         <section className="rounded-card bg-card p-6 shadow-sm">
           <h2 className="text-base font-semibold">Sales</h2>
           {sales.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">No sales on this day</p>
+            <p className="mt-3 text-sm text-muted-foreground">No sales on this day.</p>
           ) : (
             <SalesTable
               sales={sales}
@@ -70,7 +70,10 @@ export function SalesView({ skeleton }: { readonly skeleton: ReactNode }) {
 
 function Summary({ summary }: { readonly summary: DailySummary }) {
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 lg:flex lg:divide-x lg:divide-border" data-testid="daily-summary">
+    <dl
+      className="grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_1.5fr_1fr] lg:gap-x-0 lg:divide-x lg:divide-border"
+      data-testid="daily-summary"
+    >
       <Kpi label="Billed" value={formatRupees(summary.billed)} testId="daily-billed" />
       <Kpi
         label="Margin"
@@ -81,7 +84,7 @@ function Summary({ summary }: { readonly summary: DailySummary }) {
       <Kpi
         label="Money received"
         value={formatRupees(summary.received)}
-        note={`Cash ${formatRupees(summary.cash)} · UPI ${formatRupees(summary.upi)} · Bank Transfer ${formatRupees(summary.bank_transfer)}`}
+        note={`Cash ${formatRupees(summary.cash)} · UPI ${formatRupees(summary.upi)} · Bank\u00a0Transfer\u00a0${formatRupees(summary.bank_transfer)}`}
         testId="daily-received"
       />
       <Kpi label="Added to credit" value={formatRupees(summary.added_to_credit)} testId="daily-credit" />

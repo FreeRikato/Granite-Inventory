@@ -5,7 +5,7 @@ export function DailySalesSkeleton() {
   return (
     <div data-skeleton="sales" className="contents">
       <DataAgeRowSkeleton />
-      <Skeleton className="h-9 w-64" />
+      <Skeleton className="h-9 w-62" />
       <KpiRowSkeleton count={4} />
       <CardSkeleton className="flex flex-col gap-3">
         <TitleSkeleton />
